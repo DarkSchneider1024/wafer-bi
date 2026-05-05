@@ -96,33 +96,28 @@ jobs:
 
 如果您在設定 GitHub Secrets 時遇到檔案打不開或找不到值的問題，請參考以下整理好的資訊：
 
-### A. 已經幫您找出的值 (直接複製貼上)
-*   **`OKE_CLUSTER_ID`**: `ocid1.cluster.oc1.ap-tokyo-1.aaaaaaaa7k366si4cixyzm3qxms6emhocd3tvbnt3g43btuu2chtlr3vnqoq`
-*   **`OCI_REGION`**: `ap-tokyo-1`
-*   **`OCI_USER_OCID`**: `ocid1.user.oc1..aaaaaaaaial3eluyqo562nhiq26zza3trdnryku3bofjjcclpku2w42dqela`
-*   **`OCI_TENANCY_OCID`**: `ocid1.tenancy.oc1..aaaaaaaa6b7x5ugoiJuasi4nui6y37vrnj5ooo3dwiajv4vgwqbomx3cwjyq`
-*   **`OCI_FINGERPRINT`**: `97:77:f5:19:77:80:0b:cc:08:de:57:b1:11:a8:c2:ae`
+## 6. 安全性與參數獲取 SOP (Secrets Management)
 
-### B. 尚未完成的值 (需手動操作)
+為了保障安全性，GitHub Secrets 應手動從 OCI 控制台獲取。請依照以下 SOP 填寫 GitHub 倉庫的 **Settings > Secrets > Actions**。
 
-#### 1. `OCI_PRIVATE_KEY` (最重要)
-*   **問題**：下載的 `.pem` 檔案打不開或被瀏覽器擋住。
-*   **解法**：
-    1.  到 OCI 的 **API Keys** 頁面點擊 **Add API Key**。
-    2.  點擊下載私鑰後，若瀏覽器警告，請點擊「保留」。
-    3.  在下載資料夾找到檔案後，**按右鍵 -> 開啟方式 -> 記事本**。
-    4.  複製裡面所有文字（包含橫線）貼到 GitHub。
+### A. 認證參數獲取 SOP
 
-#### 2. `OCI_AUTH_TOKEN`
-*   **解法**：
-    1.  進入 OCI 的 **Auth Tokens** 頁面。
-    2.  點擊 **Generate Token**，輸入名字後產生。
-    3.  **立刻複製**那一串亂碼，貼到 GitHub。
+| 參數名稱 | 獲取路徑 (SOP) |
+| :--- | :--- |
+| **`OKE_CLUSTER_ID`** | **Developer Services** > **Kubernetes Clusters** > 點擊您的叢集 > 複製頁面頂部的 **OCID**。 |
+| **`OCI_USER_OCID`** | 點擊右上角 **個人頭像** > **User Settings** > 複製 **OCID**。 |
+| **`OCI_TENANCY_OCID`** | 點擊右上角 **個人頭像** > **Tenancy** > 複製 **OCID**。 |
+| **`OCI_REGION`** | 查看網址或右上角區域。例如東京為 `ap-tokyo-1`。 |
+| **`OCI_FINGERPRINT`** | **User Settings** > 左側 **API Keys** > 複製列表中對應 Key 的 **Fingerprint**。 |
+| **`OCI_PRIVATE_KEY`** | 生成 API Key 時下載的 `.pem` 檔案內容（需包含 `BEGIN/END` 橫線）。 |
 
-#### 3. `OCI_TENANCY_NAMESPACE`
-*   **解法**：在 OCI 租戶 (Tenancy) 詳情頁面，尋找 **Object Storage Namespace** 欄位（通常是一串英文字）。
+### B. 映像檔倉庫 (OCIR) 參數
 
-### C. 部署順序
-1.  在 GitHub 設定好這 9 個 Secrets。
-2.  推送代碼：`git push origin main`。
-3.  到 GitHub **Actions** 頁面看結果。
+| 參數名稱 | 獲取路徑 (SOP) |
+| :--- | :--- |
+| **`OCI_TENANCY_NAMESPACE`** | 點擊右上角 **個人頭像** > **Tenancy** > 找 **Object Storage Namespace**。 |
+| **`OCI_USER_NAME`** | 您的 OCI 登入帳號（通常是您的 Email）。 |
+| **`OCI_AUTH_TOKEN`** | **User Settings** > 左側 **Auth Tokens** > **Generate Token**。 |
+
+> [!CAUTION]
+> **絕對不要**將上述任何真實數值直接寫入代碼或 Markdown 文件並推送到 Git 分支。請務必使用 GitHub Secrets 進行管理。

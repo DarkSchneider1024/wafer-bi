@@ -34,6 +34,8 @@ spec:
                 sleep 2
               done
               echo "PostgreSQL is ready!"
+      imagePullSecrets:
+        - name: ocirsecret
       containers:
         - name: user-service
           image: k8sdemo/user-service:latest

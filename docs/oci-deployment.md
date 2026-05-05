@@ -41,9 +41,9 @@ kubectl apply -f wafer-bi-deployment.yaml -n wafer-bi
 4.  複製其 **IP Address** 欄位（例如：`161.33.136.81`）。
 5.  在瀏覽器輸入 `http://[您的IP]` 即可訪問。
 
-> [!TIP]
-> 如果您想透過指令查看，可以在 Cloud Shell 執行：
-> `kubectl get svc frontend-service -n k8sdemo`
+> [!IMPORTANT]
+> **通訊埠映射說明**：
+> 雖然前端開發伺服器 (Vite) 運行在容器內的 `5173` 埠，但透過 K8S Service 的映射 (`port: 80` -> `targetPort: 5173`)，外部使用者只需透過標準的 **80 埠**（即直接輸入 IP）即可存取，不需要在網址後方加上 `:5173`。
 
 ## 5. 資源清理
 

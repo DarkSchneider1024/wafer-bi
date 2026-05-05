@@ -33,21 +33,17 @@ kubectl apply -f wafer-bi-deployment.yaml -n wafer-bi
 
 ## 4. 外部存取 (Load Balancer)
 
-若要獲得公網 IP，請將 Service 類型更改為 `LoadBalancer`：
+部署完成後，OKE 會自動為前端服務配發一個公網 IP。請依照以下步驟找到您的網址：
 
-```yaml
-# 修改範例
-kind: Service
-metadata:
-  name: wafer-frontend-svc
-spec:
-  type: LoadBalancer  # OCI 會自動配發公網 IP
-  ports:
-  - port: 80
-    targetPort: 5173
-```
+1.  登錄 OCI 主控台。
+2.  點擊左上角導覽菜單 -> **Networking (網路)** -> **Load Balancers (負載平衡器)**。
+3.  在列表中尋找狀態為 **Active** 且健康狀態為 **Ok** 的項目。
+4.  複製其 **IP Address** 欄位（例如：`161.33.136.81`）。
+5.  在瀏覽器輸入 `http://[您的IP]` 即可訪問。
 
-執行 `kubectl get svc -n wafer-bi` 獲取 `EXTERNAL-IP`。
+> [!TIP]
+> 如果您想透過指令查看，可以在 Cloud Shell 執行：
+> `kubectl get svc frontend-service -n k8sdemo`
 
 ## 5. 資源清理
 

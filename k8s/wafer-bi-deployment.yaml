@@ -20,9 +20,11 @@ spec:
       labels:
         app: wafer-backend
     spec:
+      imagePullSecrets:
+        - name: ocirsecret
       containers:
       - name: backend
-        image: wafer-bi-backend:latest
+        image: ap-tokyo-1.ocir.io/axmial3eluyq/wafer-bi-backend:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8000
@@ -67,9 +69,11 @@ spec:
       labels:
         app: wafer-frontend
     spec:
+      imagePullSecrets:
+        - name: ocirsecret
       containers:
       - name: frontend
-        image: wafer-bi-frontend:latest
+        image: ap-tokyo-1.ocir.io/axmial3eluyq/wafer-bi-frontend:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5173

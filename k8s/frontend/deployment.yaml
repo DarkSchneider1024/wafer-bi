@@ -16,6 +16,8 @@ spec:
       labels:
         app: frontend
     spec:
+      imagePullSecrets:
+        - name: ocirsecret
       containers:
         - name: frontend
           image: ap-tokyo-1.ocir.io/axmial3eluyq/wafer-bi-frontend:latest

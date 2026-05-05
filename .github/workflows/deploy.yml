@@ -11,30 +11,76 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Login to OCIR
-        run: |
-          echo "${{ secrets.OCI_AUTH_TOKEN }}" | docker login ${{ secrets.OCI_REGION }}.ocir.io -u "${{ secrets.OCI_TENANCY_NAMESPACE }}/${{ secrets.OCI_USER_NAME }}" --password-stdin
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.OCI_REGION }}.ocir.io
+          username: ${{ secrets.OCI_TENANCY_NAMESPACE }}/${{ secrets.OCI_USER_NAME }}
+          password: ${{ secrets.OCI_AUTH_TOKEN }}
 
       - name: Build and Push Backend
-        run: |
-          docker build -t ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-backend:latest ./services/wafer-bi
-          docker push ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-backend:latest
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/wafer-bi
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-backend:latest
 
       - name: Build and Push Frontend
-        run: |
-          docker build -t ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-frontend:latest ./services/frontend
-          docker push ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-frontend:latest
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/frontend
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-frontend:latest
 
       - name: Install OCI CLI
         run: |
           pip install oci-cli
           mkdir -p ~/.oci
+          echo "[DEFAULT]" > ~/.oci/config
+          echo "user=${{ secrets.OCI_USER_OCID }}" >> ~/.oci/config
+          echo "fingerprint=${{ secrets.OCI_FINGERPRINT }}" >> ~/.oci/config
+          echo "tenancy=${{ secrets.OCI_TENANCY_OCID }}" >> ~/.oci/config
+          echo "region=${{ secrets.OCI_REGION }}" >> ~/.oci/config
+          echo "key_file=~/.oci/key.pem" >> ~/.oci/config
+          echo "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
+          sed -i 's/user=.*/user=${{ secrets.OCI_USER_OCID }}/' ~/.oci/config
+          echo "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/key.pem
+          chmod 600 ~/.oci/key.pem
 
       - name: Deploy to Kubernetes
         run: |
-          oci ce cluster create-kubeconfig --cluster-id ${{ secrets.OKE_CLUSTER_ID }} --file $HOME/.kube/config --region ${{ secrets.OCI_REGION }} --token-version 2.0.0
-          kubectl apply -f k8s/namespace.yaml
+          oci ce cluster create-kubeconfig --cluster-id ${{ secrets.OKE_CLUSTER_ID }} --file ~/.kube/config --region ${{ secrets.OCI_REGION }} --token-version 2.0.0 --kube-endpoint PUBLIC_ENDPOINT
+          
+          # Create Image Pull Secret in all relevant namespaces
+          kubectl create namespace k8sdemo || true
+          kubectl create namespace wafer-bi || true
+          
+          kubectl create secret docker-registry ocirsecret \
+            --docker-server=${{ secrets.OCI_REGION }}.ocir.io \
+            --docker-username=${{ secrets.OCI_TENANCY_NAMESPACE }}/${{ secrets.OCI_USER_NAME }} \
+            --docker-password=${{ secrets.OCI_AUTH_TOKEN }} \
+            --namespace k8sdemo --dry-run=client -o yaml | kubectl apply -f -
+
+          kubectl create secret docker-registry ocirsecret \
+            --docker-server=${{ secrets.OCI_REGION }}.ocir.io \
+            --docker-username=${{ secrets.OCI_TENANCY_NAMESPACE }}/${{ secrets.OCI_USER_NAME }} \
+            --docker-password=${{ secrets.OCI_AUTH_TOKEN }} \
+            --namespace wafer-bi --dry-run=client -o yaml | kubectl apply -f -
+
           kubectl apply -f k8s/ --recursive
+          
+          # Force rollout restart to pick up new multi-arch images
+          kubectl rollout restart deployment frontend -n k8sdemo
+          kubectl rollout restart deployment wafer-frontend -n wafer-bi
+          kubectl rollout restart deployment wafer-backend -n wafer-bi
           kubectl rollout restart deployment wafer-backend -n wafer-bi
           kubectl rollout restart deployment wafer-frontend -n wafer-bi
         env:

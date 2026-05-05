@@ -21,6 +21,8 @@ spec:
       labels:
         app: api-gateway
     spec:
+      imagePullSecrets:
+        - name: ocirsecret
       containers:
         - name: api-gateway
           image: k8sdemo/api-gateway:latest

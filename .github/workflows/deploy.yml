@@ -57,30 +57,31 @@ jobs:
 
       - name: Deploy to Kubernetes
         run: |
-          oci ce cluster create-kubeconfig --cluster-id ${{ secrets.OKE_CLUSTER_ID }} --file ~/.kube/config --region ${{ secrets.OCI_REGION }} --token-version 2.0.0 --kube-endpoint PUBLIC_ENDPOINT
+          oci ce cluster create-kubeconfig --cluster-id "${{ secrets.OKE_CLUSTER_ID }}" --file ~/.kube/config --region "${{ secrets.OCI_REGION }}" --token-version 2.0.0 --kube-endpoint PUBLIC_ENDPOINT
           
-          # Create Image Pull Secret in all relevant namespaces
-          kubectl create namespace k8sdemo || true
-          kubectl create namespace wafer-bi || true
+          # Create Namespaces if not exist
+          kubectl get namespace k8sdemo || kubectl create namespace k8sdemo
+          kubectl get namespace wafer-bi || kubectl create namespace wafer-bi
           
+          # Create Image Pull Secret with proper quoting to avoid shell errors
           kubectl create secret docker-registry ocirsecret \
-            --docker-server=${{ secrets.OCI_REGION }}.ocir.io \
-            --docker-username=${{ secrets.OCI_TENANCY_NAMESPACE }}/${{ secrets.OCI_USER_NAME }} \
-            --docker-password=${{ secrets.OCI_AUTH_TOKEN }} \
+            --docker-server="${{ secrets.OCI_REGION }}.ocir.io" \
+            --docker-username="${{ secrets.OCI_TENANCY_NAMESPACE }}/${{ secrets.OCI_USER_NAME }}" \
+            --docker-password="${{ secrets.OCI_AUTH_TOKEN }}" \
             --namespace k8sdemo --dry-run=client -o yaml | kubectl apply -f -
 
           kubectl create secret docker-registry ocirsecret \
-            --docker-server=${{ secrets.OCI_REGION }}.ocir.io \
-            --docker-username=${{ secrets.OCI_TENANCY_NAMESPACE }}/${{ secrets.OCI_USER_NAME }} \
-            --docker-password=${{ secrets.OCI_AUTH_TOKEN }} \
+            --docker-server="${{ secrets.OCI_REGION }}.ocir.io" \
+            --docker-username="${{ secrets.OCI_TENANCY_NAMESPACE }}/${{ secrets.OCI_USER_NAME }}" \
+            --docker-password="${{ secrets.OCI_AUTH_TOKEN }}" \
             --namespace wafer-bi --dry-run=client -o yaml | kubectl apply -f -
 
           kubectl apply -f k8s/ --recursive
           
-          # Force rollout restart to pick up new multi-arch images
-          kubectl rollout restart deployment frontend -n k8sdemo
-          kubectl rollout restart deployment wafer-frontend -n wafer-bi
-          kubectl rollout restart deployment wafer-backend -n wafer-bi
+          # Force rollout restart
+          kubectl rollout restart deployment frontend -n k8sdemo || true
+          kubectl rollout restart deployment wafer-frontend -n wafer-bi || true
+          kubectl rollout restart deployment wafer-backend -n wafer-bi || true
           kubectl rollout restart deployment wafer-backend -n wafer-bi
           kubectl rollout restart deployment wafer-frontend -n wafer-bi
         env:

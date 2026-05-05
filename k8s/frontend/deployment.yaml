@@ -18,10 +18,10 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: k8sdemo/frontend:latest
+          image: ap-tokyo-1.ocir.io/axmial3eluyq/wafer-bi-frontend:latest
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 80
+            - containerPort: 5173
               name: http
           resources:
             requests:
@@ -33,12 +33,12 @@ spec:
           livenessProbe:
             httpGet:
               path: /
-              port: 80
+              port: 5173
             initialDelaySeconds: 5
             periodSeconds: 15
           readinessProbe:
             httpGet:
               path: /
-              port: 80
+              port: 5173
             initialDelaySeconds: 3
             periodSeconds: 10

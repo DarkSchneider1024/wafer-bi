@@ -27,6 +27,10 @@ data:
   REDIS_HOST: "redis-service"
   REDIS_PORT: "6379"
 
+  # Wafer BI
+  WAFER_BI_HOST: "wafer-backend-svc.wafer-bi.svc.cluster.local"
+  WAFER_BI_PORT: "8000"
+
   # PostgreSQL
   POSTGRES_HOST: "postgres-service"
   POSTGRES_PORT: "5432"

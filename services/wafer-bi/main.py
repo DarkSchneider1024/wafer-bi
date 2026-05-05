@@ -88,9 +88,16 @@ async def get_lot_wafers(lot_id: str, parameter: str = "Thickness"):
     result = {}
     for wafer_id in sorted(lot_df["wafer_id"].unique()):
         wafer_data = lot_df[lot_df["wafer_id"] == wafer_id]
+        
+        # Sample points for thumbnail (every 4th point to keep it fast)
+        sampled = wafer_data.iloc[::4]
+        
         result[wafer_id] = {
             "avg": float(wafer_data["value"].mean()),
-            "std": float(wafer_data["value"].std())
+            "std": float(wafer_data["value"].std()),
+            "min": float(wafer_data["value"].min()),
+            "max": float(wafer_data["value"].max()),
+            "data": [[int(x), int(y), float(v)] for x, y, v in zip(sampled["x"], sampled["y"], sampled["value"])]
         }
     
     return result

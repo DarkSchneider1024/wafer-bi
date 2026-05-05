@@ -4,7 +4,9 @@ import axios from 'axios';
 import { LayoutGrid, TrendingUp, Filter, ChevronRight, BarChart3, FlaskConical } from 'lucide-react';
 import './index.css';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = window.location.hostname === 'localhost' 
+  ? 'http://localhost:8000/api' 
+  : '/api';
 
 function App() {
   const [meta, setMeta] = useState<{ lots: string[], wafers: string[], parameters: string[] }>({ 

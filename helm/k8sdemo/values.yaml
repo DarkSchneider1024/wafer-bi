@@ -1,0 +1,141 @@
+# Default values for k8sdemo
+# This file can be overridden by values-staging.yaml or values-production.yaml
+
+global:
+  namespace: k8sdemo
+  imageRegistry: k8sdemo
+
+# ============ API Gateway ============
+apiGateway:
+  name: api-gateway
+  replicas: 2
+  image:
+    repository: k8sdemo/api-gateway
+    tag: latest
+    pullPolicy: IfNotPresent
+  port: 8080
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPU: 70
+
+# ============ Product Service ============
+productService:
+  name: product-service
+  replicas: 2
+  image:
+    repository: k8sdemo/product-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  port: 5000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPU: 70
+
+# ============ Order Service ============
+orderService:
+  name: order-service
+  replicas: 2
+  image:
+    repository: k8sdemo/order-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  port: 3001
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPU: 70
+
+# ============ User Service ============
+userService:
+  name: user-service
+  replicas: 2
+  image:
+    repository: k8sdemo/user-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  port: 3002
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 300m
+      memory: 128Mi
+
+# ============ Frontend ============
+frontend:
+  name: frontend
+  replicas: 2
+  image:
+    repository: k8sdemo/frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  port: 80
+
+# ============ PostgreSQL ============
+postgres:
+  enabled: true
+  image: postgres:16-alpine
+  port: 5432
+  storage: 5Gi
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+
+# ============ Redis ============
+redis:
+  enabled: true
+  image: redis:7-alpine
+  port: 6379
+  maxMemory: 128mb
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 192Mi
+
+# ============ Ingress ============
+ingress:
+  enabled: true
+  className: nginx
+  host: k8sdemo.local
+
+# ============ Monitoring ============
+monitoring:
+  enabled: false
+  prometheus:
+    port: 9090
+  grafana:
+    port: 3000

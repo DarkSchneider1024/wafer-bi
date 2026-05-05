@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: k8sdemo
+  labels:
+    app: postgres
+    app.kubernetes.io/part-of: k8sdemo
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  # In cloud, use a StorageClass like gp3 (AWS), pd-standard (GCP)
+  # storageClassName: gp3

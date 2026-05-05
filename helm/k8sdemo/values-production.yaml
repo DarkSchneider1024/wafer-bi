@@ -1,0 +1,59 @@
+# Production overrides — higher replicas, more resources, tighter limits
+global:
+  namespace: k8sdemo-prod
+
+apiGateway:
+  replicas: 3
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+  hpa:
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPU: 60
+
+productService:
+  replicas: 3
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+  hpa:
+    minReplicas: 3
+    maxReplicas: 15
+
+orderService:
+  replicas: 3
+  hpa:
+    minReplicas: 3
+    maxReplicas: 15
+
+userService:
+  replicas: 3
+
+postgres:
+  storage: 50Gi
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+
+redis:
+  maxMemory: 512mb
+  resources:
+    limits:
+      cpu: 500m
+      memory: 640Mi
+
+monitoring:
+  enabled: true

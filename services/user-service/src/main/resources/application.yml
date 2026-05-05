@@ -1,0 +1,54 @@
+server:
+  port: ${USER_SERVICE_PORT:3002}
+
+spring:
+  application:
+    name: user-service
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:k8sdemo}
+    username: ${POSTGRES_USER:admin}
+    password: ${POSTGRES_PASSWORD:postgres_password_123}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      max-lifetime: 300000  # 5 minutes
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+# JWT
+app:
+  jwt:
+    secret: ${JWT_SECRET:default_secret}
+    expiration-ms: 86400000  # 24 hours
+
+# Actuator — expose health check endpoints
+management:
+  endpoints:
+    web:
+      base-path: /
+      path-mapping:
+        health: healthz
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    readinessstate:
+      enabled: true
+    livenessstate:
+      enabled: true
+
+# Logging
+logging:
+  level:
+    com.k8sdemo: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

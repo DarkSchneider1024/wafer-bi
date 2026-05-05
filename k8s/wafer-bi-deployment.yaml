@@ -1,0 +1,101 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: wafer-bi
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wafer-backend
+  namespace: wafer-bi
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: wafer-backend
+  template:
+    metadata:
+      labels:
+        app: wafer-backend
+    spec:
+      containers:
+      - name: backend
+        image: wafer-bi-backend:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: wafer-backend-svc
+  namespace: wafer-bi
+spec:
+  selector:
+    app: wafer-backend
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000
+  type: ClusterIP
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wafer-frontend
+  namespace: wafer-bi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wafer-frontend
+  template:
+    metadata:
+      labels:
+        app: wafer-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: wafer-bi-frontend:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5173
+        env:
+        - name: VITE_API_URL
+          value: "http://wafer-backend-svc:8000"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: wafer-frontend-svc
+  namespace: wafer-bi
+spec:
+  selector:
+    app: wafer-frontend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 5173
+  type: NodePort

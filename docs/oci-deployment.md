@@ -82,19 +82,19 @@ jobs:
         run: |
           docker build -t ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi:latest ./services/wafer-bi
           docker push ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi:latest
-      - name: Setup OCI CLI & Kubeconfig
-        uses: oracle-actions/setup-oci-cli@v1
-        with:
-          user_ocid: ${{ secrets.OCI_USER_OCID }}
-          tenancy_ocid: ${{ secrets.OCI_TENANCY_OCID }}
-          fingerprint: ${{ secrets.OCI_FINGERPRINT }}
-          region: ${{ secrets.OCI_REGION }}
-          private_key: ${{ secrets.OCI_PRIVATE_KEY }}
+      - name: Install OCI CLI
+        run: pip install oci-cli
       - name: Deploy to OKE
         run: |
           oci ce cluster create-kubeconfig --cluster-id ${{ secrets.OKE_CLUSTER_ID }} --file $HOME/.kube/config --region ${{ secrets.OCI_REGION }} --token-version 2.0.0
           kubectl apply -f k8s/
           kubectl rollout restart deployment wafer-backend
+        env:
+          OCI_CLI_USER: ${{ secrets.OCI_USER_OCID }}
+          OCI_CLI_TENANCY: ${{ secrets.OCI_TENANCY_OCID }}
+          OCI_CLI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
+          OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_PRIVATE_KEY }}
+          OCI_CLI_REGION: ${{ secrets.OCI_REGION }}
 
 ## 6. 救援指南：如果 Secrets 設定遇到困難
 

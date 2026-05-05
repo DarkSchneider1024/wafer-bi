@@ -25,14 +25,10 @@ jobs:
           docker build -t ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-frontend:latest ./services/frontend
           docker push ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-frontend:latest
 
-      - name: Setup OCI CLI
-        uses: oracle-actions/setup-oci-cli@v1
-        with:
-          user_ocid: ${{ secrets.OCI_USER_OCID }}
-          tenancy_ocid: ${{ secrets.OCI_TENANCY_OCID }}
-          fingerprint: ${{ secrets.OCI_FINGERPRINT }}
-          region: ${{ secrets.OCI_REGION }}
-          private_key: ${{ secrets.OCI_PRIVATE_KEY }}
+      - name: Install OCI CLI
+        run: |
+          pip install oci-cli
+          mkdir -p ~/.oci
 
       - name: Deploy to Kubernetes
         run: |
@@ -41,3 +37,9 @@ jobs:
           kubectl apply -f k8s/ --recursive
           kubectl rollout restart deployment wafer-backend -n wafer-bi
           kubectl rollout restart deployment wafer-frontend -n wafer-bi
+        env:
+          OCI_CLI_USER: ${{ secrets.OCI_USER_OCID }}
+          OCI_CLI_TENANCY: ${{ secrets.OCI_TENANCY_OCID }}
+          OCI_CLI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
+          OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_PRIVATE_KEY }}
+          OCI_CLI_REGION: ${{ secrets.OCI_REGION }}

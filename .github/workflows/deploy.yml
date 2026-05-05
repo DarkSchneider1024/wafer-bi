@@ -1,0 +1,43 @@
+name: Deploy to OCI OKE
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Login to OCIR
+        run: |
+          echo "${{ secrets.OCI_AUTH_TOKEN }}" | docker login ${{ secrets.OCI_REGION }}.ocir.io -u "${{ secrets.OCI_TENANCY_NAMESPACE }}/${{ secrets.OCI_USER_NAME }}" --password-stdin
+
+      - name: Build and Push Backend
+        run: |
+          docker build -t ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-backend:latest ./services/wafer-bi
+          docker push ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-backend:latest
+
+      - name: Build and Push Frontend
+        run: |
+          docker build -t ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-frontend:latest ./services/frontend
+          docker push ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-frontend:latest
+
+      - name: Setup OCI CLI
+        uses: oracle-actions/setup-oci-cli@v1
+        with:
+          user_ocid: ${{ secrets.OCI_USER_OCID }}
+          tenancy_ocid: ${{ secrets.OCI_TENANCY_OCID }}
+          fingerprint: ${{ secrets.OCI_FINGERPRINT }}
+          region: ${{ secrets.OCI_REGION }}
+          private_key: ${{ secrets.OCI_PRIVATE_KEY }}
+
+      - name: Deploy to Kubernetes
+        run: |
+          oci ce cluster create-kubeconfig --cluster-id ${{ secrets.OKE_CLUSTER_ID }} --file $HOME/.kube/config --region ${{ secrets.OCI_REGION }} --token-version 2.0.0
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/ --recursive
+          kubectl rollout restart deployment wafer-backend -n wafer-bi
+          kubectl rollout restart deployment wafer-frontend -n wafer-bi

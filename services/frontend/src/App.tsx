@@ -6,7 +6,7 @@ import './index.css';
 
 const API_BASE = window.location.hostname === 'localhost' 
   ? 'http://localhost:8000/api' 
-  : '/api';
+  : '/api/wafer';
 
 function App() {
   const [meta, setMeta] = useState<{ lots: string[], wafers: string[], parameters: string[] }>({ 

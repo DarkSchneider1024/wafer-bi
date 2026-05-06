@@ -1,0 +1,17 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    # Let's Encrypt 生產環境 API
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # 憑證到期或發放通知的 Email (請換成您的 Email，但我先幫您填一個範例，或者您可以自行修改)
+    email: gueiwan1024@gmail.com
+    # 儲存 Let's Encrypt 帳號密鑰的 Secret 名稱
+    privateKeySecretRef:
+      name: letsencrypt-prod-account-key
+    solvers:
+    - http01:
+        ingress:
+          class: nginx

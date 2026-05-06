@@ -14,12 +14,11 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - carrot-atelier.online
-        - www.carrot-atelier.online
-      secretName: carrot-atelier-tls
+        - wafer.carrot-atelier.online
+      secretName: wafer-bi-tls
   rules:
-    - host: carrot-atelier.online
-      http: &http_rules
+    - host: wafer.carrot-atelier.online
+      http:
         paths:
           # Wafer BI Frontend
           - path: /()(.*)
@@ -37,5 +36,3 @@ spec:
                 name: wafer-backend-svc
                 port:
                   number: 8000
-    - host: www.carrot-atelier.online
-      http: *http_rules

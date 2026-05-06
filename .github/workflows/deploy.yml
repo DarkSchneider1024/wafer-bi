@@ -40,6 +40,22 @@ jobs:
           push: true
           tags: ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-frontend:latest
 
+      - name: Build and Push API Gateway
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/api-gateway
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/api-gateway:latest
+
+      - name: Build and Push User Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/user-service
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/user-service:latest
+
       - name: Install OCI CLI
         run: |
           pip install oci-cli
@@ -78,12 +94,12 @@ jobs:
 
           kubectl apply -f k8s/ --recursive
           
-          # Force rollout restart
+          # Force rollout restart for all services to pull latest images
           kubectl rollout restart deployment frontend -n k8sdemo || true
+          kubectl rollout restart deployment api-gateway -n k8sdemo || true
+          kubectl rollout restart deployment user-service -n k8sdemo || true
           kubectl rollout restart deployment wafer-frontend -n wafer-bi || true
           kubectl rollout restart deployment wafer-backend -n wafer-bi || true
-          kubectl rollout restart deployment wafer-backend -n wafer-bi
-          kubectl rollout restart deployment wafer-frontend -n wafer-bi
         env:
           OCI_CLI_USER: ${{ secrets.OCI_USER_OCID }}
           OCI_CLI_TENANCY: ${{ secrets.OCI_TENANCY_OCID }}

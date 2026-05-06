@@ -20,7 +20,7 @@ spec:
         - name: ocirsecret
       containers:
         - name: frontend
-          image: ap-tokyo-1.ocir.io/axmial3eluyq/wafer-bi-frontend:latest
+          image: ap-tokyo-1.ocir.io/nrf3s0wa8lv5/wafer-bi-frontend:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5173
@@ -42,5 +42,5 @@ spec:
             httpGet:
               path: /
               port: 5173
-            initialDelaySeconds: 3
+            initialDelaySeconds: 15
             periodSeconds: 10

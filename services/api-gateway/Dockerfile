@@ -9,8 +9,8 @@ FROM node:20-slim
 WORKDIR /app
 
 # Security: run as non-root user
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -S appuser -u 1001 -G appgroup
+RUN groupadd --gid 1001 appgroup && \
+    useradd --uid 1001 --gid appgroup --shell /bin/sh appuser
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY src/ ./src/

@@ -7,7 +7,6 @@ metadata:
     app.kubernetes.io/part-of: k8sdemo
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
 spec:
@@ -20,19 +19,19 @@ spec:
     - host: wafer.carrot-atelier.online
       http:
         paths:
-          # Wafer BI Frontend
-          - path: /()(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: wafer-frontend-svc
-                port:
-                  number: 80
-          # Wafer BI Backend API
-          - path: /api(/|$)(.*)
-            pathType: ImplementationSpecific
+          # Wafer BI Backend API (Must be defined first/longer prefix)
+          - path: /api
+            pathType: Prefix
             backend:
               service:
                 name: wafer-backend-svc
                 port:
                   number: 8000
+          # Wafer BI Frontend
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: wafer-frontend-svc
+                port:
+                  number: 80

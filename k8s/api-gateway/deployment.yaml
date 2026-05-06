@@ -25,7 +25,7 @@ spec:
         - name: ocirsecret
       containers:
         - name: api-gateway
-          image: k8sdemo/api-gateway:latest
+          image: ap-tokyo-1.ocir.io/nrf3s0wa8lv5/api-gateway:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

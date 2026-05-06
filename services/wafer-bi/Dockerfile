@@ -7,8 +7,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Generate data if not exists (optional, but good for demo)
-# RUN python data_generator.py
+# Generate data if not exists
+RUN python data_generator.py
 
 EXPOSE 8000
 

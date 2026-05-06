@@ -15,7 +15,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DELTA_PATH = "./wafer_delta_table"
+DELTA_PATH = "/app/wafer_delta_table"
 
 def ensure_data():
     import os

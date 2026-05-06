@@ -3,7 +3,7 @@ import numpy as np
 from deltalake import write_deltalake
 import os
 
-def generate_wafer_data(lot_id, wafer_id, param_name, grid_size=30):
+def generate_wafer_data(product_id, lot_id, wafer_id, param_name, grid_size=30):
     """Generates synthetic measurement data for a single wafer and parameter."""
     x = np.arange(grid_size)
     y = np.arange(grid_size)
@@ -28,6 +28,7 @@ def generate_wafer_data(lot_id, wafer_id, param_name, grid_size=30):
     
     valid_indices = np.where(mask)
     df = pd.DataFrame({
+        "product_id": product_id,
         "lot_id": lot_id,
         "wafer_id": wafer_id,
         "parameter": param_name,
@@ -40,17 +41,21 @@ def generate_wafer_data(lot_id, wafer_id, param_name, grid_size=30):
 
 def main():
     all_data = []
-    lots = ["Lot1", "Lot2"]
+    products = ["PRD-001", "PRD-002"]
+    lots = ["Lot1", "Lot2", "Lot3", "Lot4"]
     parameters = ["Thickness", "Resistance"]
     wafers_per_lot = 25
     
-    print("Generating multi-parameter data...")
-    for lot in lots:
-        for param in parameters:
-            for w_idx in range(1, wafers_per_lot + 1):
-                wafer_id = f"W{w_idx:02d}"
-                df = generate_wafer_data(lot, wafer_id, param)
-                all_data.append(df)
+    print("Generating multi-parameter data with Product IDs...")
+    for idx, product in enumerate(products):
+        # Assign lots to products
+        assigned_lots = lots[idx*2 : (idx+1)*2]
+        for lot in assigned_lots:
+            for param in parameters:
+                for w_idx in range(1, wafers_per_lot + 1):
+                    wafer_id = f"W{w_idx:02d}"
+                    df = generate_wafer_data(product, lot, wafer_id, param)
+                    all_data.append(df)
     
     full_df = pd.concat(all_data, ignore_index=True)
     

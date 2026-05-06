@@ -38,9 +38,74 @@ body {
 #root { width: 100%; }
 
 .dashboard {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 280px;
+  background: var(--card-bg);
+  border-right: 1px solid var(--border-color);
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  backdrop-filter: blur(12px);
+}
+
+.main-content {
+  flex: 1;
   padding: 2rem;
-  max-width: 1400px;
+  max-width: calc(1400px + 4rem);
   margin: 0 auto;
+  overflow-y: auto;
+}
+
+.sidebar-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+}
+
+.sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.settings-container {
+  position: relative;
+}
+
+.settings-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  min-width: 200px;
+  backdrop-filter: blur(20px);
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  gap: 1rem;
+}
+
+.settings-item span {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
 }
 
 .header {

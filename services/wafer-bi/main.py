@@ -36,6 +36,7 @@ def get_df():
 async def get_meta():
     df = get_df()
     return {
+        "products": sorted(df["product_id"].unique().tolist()) if "product_id" in df.columns else [],
         "lots": sorted(df["lot_id"].unique().tolist()),
         "wafers": sorted(df["wafer_id"].unique().tolist()),
         "parameters": sorted(df["parameter"].unique().tolist())
@@ -142,6 +143,7 @@ async def get_lot_stats(lot_id: str, parameter: str = "Thickness"):
 async def get_report(
     page: int = 1, 
     limit: int = 100, 
+    product_id: str = None,
     lot_id: str = None, 
     wafer_id: str = None,
     sort_by: str = "wafer_id",
@@ -150,6 +152,8 @@ async def get_report(
     df = get_df()
     
     # Filtering
+    if product_id:
+        df = df[df["product_id"] == product_id]
     if lot_id:
         df = df[df["lot_id"] == lot_id]
     if wafer_id:
@@ -164,7 +168,11 @@ async def get_report(
     end = start + limit
     
     # Selection of columns to return
-    report_df = df.iloc[start:end][["lot_id", "wafer_id", "parameter", "x", "y", "value"]]
+    cols = ["lot_id", "wafer_id", "parameter", "x", "y", "value"]
+    if "product_id" in df.columns:
+        cols.insert(0, "product_id")
+        
+    report_df = df.iloc[start:end][cols]
     
     return {
         "total": total,

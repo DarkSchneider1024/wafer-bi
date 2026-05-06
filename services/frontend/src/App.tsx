@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import ReactECharts from 'echarts-for-react';
 import axios from 'axios';
 import { 
-  LayoutGrid, TrendingUp, Filter, ChevronRight, 
+  LayoutGrid, Filter, ChevronRight, 
   BarChart3, FlaskConical, Sun, Moon, Languages 
 } from 'lucide-react';
 import './index.css';

@@ -13,6 +13,10 @@ metadata:
     nginx.ingress.kubernetes.io/rate-limit-window: "1m"
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - 141.147.162.214
+      secretName: oci-tls-secret
   rules:
     - http:
         paths:

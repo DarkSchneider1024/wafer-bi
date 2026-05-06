@@ -21,7 +21,7 @@ spec:
       containers:
         - name: frontend
           image: ap-tokyo-1.ocir.io/nrf3s0wa8lv5/wafer-bi-frontend:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 5173
               name: http

@@ -17,7 +17,15 @@ app.add_middleware(
 
 DELTA_PATH = "./wafer_delta_table"
 
+def ensure_data():
+    import os
+    if not os.path.exists(DELTA_PATH):
+        print("Delta table not found. Generating sample data...")
+        import data_generator
+        data_generator.main()
+
 def get_df():
+    ensure_data()
     try:
         dt = DeltaTable(DELTA_PATH)
         return dt.to_pandas()

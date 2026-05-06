@@ -130,6 +130,27 @@ async def get_lot_stats(lot_id: str, parameter: str = "Thickness"):
         "trend": stats["mean"].tolist()
     }
 
+@app.get("/api/report")
+async def get_report(page: int = 1, limit: int = 100, lot_id: str = None):
+    df = get_df()
+    
+    if lot_id:
+        df = df[df["lot_id"] == lot_id]
+        
+    total = len(df)
+    start = (page - 1) * limit
+    end = start + limit
+    
+    # Selection of columns to return
+    report_df = df.iloc[start:end][["lot_id", "wafer_id", "parameter", "x", "y", "value"]]
+    
+    return {
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "data": report_df.to_dict(orient="records")
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

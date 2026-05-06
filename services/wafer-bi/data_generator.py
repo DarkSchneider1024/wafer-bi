@@ -54,7 +54,7 @@ def main():
     
     full_df = pd.concat(all_data, ignore_index=True)
     
-    delta_path = "./wafer_delta_table"
+    delta_path = "/app/wafer_delta_table"
     print(f"Writing to Delta Lake at {delta_path}...")
     write_deltalake(delta_path, full_df, mode="overwrite")
     print("Done!")

@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: postgres:16.1
+          image: docker.io/library/postgres:16.1
           imagePullPolicy: Always
           ports:
             - containerPort: 5432

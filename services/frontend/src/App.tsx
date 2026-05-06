@@ -24,6 +24,9 @@ function App() {
   const [reportData, setReportData] = useState<any[]>([]);
   const [reportTotal, setReportTotal] = useState(0);
   const [reportPage, setReportPage] = useState(1);
+  const [sortField, setSortField] = useState('wafer_id');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [filterWafer, setFilterWafer] = useState('');
   const [loadingReport, setLoadingReport] = useState(false);
 
   useEffect(() => {
@@ -51,13 +54,13 @@ function App() {
 
   useEffect(() => {
     if (view === 'data-report') {
-      fetchReport(1);
+      fetchReport(1, sortField, sortOrder, filterWafer);
     }
-  }, [view, selectedLot]);
+  }, [view, selectedLot, sortField, sortOrder, filterWafer]);
 
-  const fetchReport = (page: number) => {
+  const fetchReport = (page: number, sort: string = sortField, order: string = sortOrder, filter: string = filterWafer) => {
     setLoadingReport(true);
-    axios.get(`${API_BASE}/report?page=${page}&limit=100&lot_id=${selectedLot}`)
+    axios.get(`${API_BASE}/report?page=${page}&limit=100&lot_id=${selectedLot}&wafer_id=${filter}&sort_by=${sort}&sort_order=${order}`)
       .then(res => {
         setReportData(res.data.data);
         setReportTotal(res.data.total);
@@ -65,6 +68,12 @@ function App() {
         setLoadingReport(false);
       })
       .catch(() => setLoadingReport(false));
+  };
+
+  const handleSort = (field: string) => {
+    const newOrder = sortField === field && sortOrder === 'asc' ? 'desc' : 'asc';
+    setSortField(field);
+    setSortOrder(newOrder);
   };
 
   const getHeatmapOption = (data: any, isThumbnail = false) => {
@@ -311,10 +320,24 @@ function App() {
       {view === 'data-report' && (
         <div className="report-view">
           <div className="glass-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
               <h3 style={{ margin: 0 }}>Raw Data Report (Lot: {selectedLot})</h3>
-              <div style={{ fontSize: '0.9rem', color: '#94a3b8' }}>
-                Total Records: <span style={{ color: '#818cf8', fontWeight: 600 }}>{reportTotal}</span>
+              
+              <div className="controls" style={{ flex: 1, justifyContent: 'flex-end' }}>
+                <div className="control-group">
+                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Search Wafer:</span>
+                  <input 
+                    type="text" 
+                    placeholder="W01, W02..." 
+                    className="search-input"
+                    value={filterWafer}
+                    onChange={(e) => setFilterWafer(e.target.value.toUpperCase())}
+                    style={{ background: '#1e293b', border: '1px solid #334155', color: 'white', padding: '0.3rem 0.6rem', borderRadius: '4px', width: '100px' }}
+                  />
+                </div>
+                <div style={{ fontSize: '0.9rem', color: '#94a3b8' }}>
+                  Total: <span style={{ color: '#818cf8', fontWeight: 600 }}>{reportTotal}</span>
+                </div>
               </div>
             </div>
 
@@ -322,17 +345,31 @@ function App() {
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Lot ID</th>
-                    <th>Wafer ID</th>
-                    <th>Parameter</th>
-                    <th>X</th>
-                    <th>Y</th>
-                    <th>Value</th>
+                    <th onClick={() => handleSort('lot_id')} style={{ cursor: 'pointer' }}>
+                      Lot ID {sortField === 'lot_id' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th onClick={() => handleSort('wafer_id')} style={{ cursor: 'pointer' }}>
+                      Wafer ID {sortField === 'wafer_id' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th onClick={() => handleSort('parameter')} style={{ cursor: 'pointer' }}>
+                      Parameter {sortField === 'parameter' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th onClick={() => handleSort('x')} style={{ cursor: 'pointer' }}>
+                      X {sortField === 'x' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th onClick={() => handleSort('y')} style={{ cursor: 'pointer' }}>
+                      Y {sortField === 'y' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th onClick={() => handleSort('value')} style={{ cursor: 'pointer' }}>
+                      Value {sortField === 'value' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {loadingReport ? (
                     <tr><td colSpan={6} style={{ textAlign: 'center', padding: '3rem' }}>Loading data...</td></tr>
+                  ) : reportData.length === 0 ? (
+                    <tr><td colSpan={6} style={{ textAlign: 'center', padding: '3rem' }}>No records found.</td></tr>
                   ) : reportData.map((row, idx) => (
                     <tr key={idx}>
                       <td>{row.lot_id}</td>

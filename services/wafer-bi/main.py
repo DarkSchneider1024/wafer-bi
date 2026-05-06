@@ -131,11 +131,25 @@ async def get_lot_stats(lot_id: str, parameter: str = "Thickness"):
     }
 
 @app.get("/api/report")
-async def get_report(page: int = 1, limit: int = 100, lot_id: str = None):
+async def get_report(
+    page: int = 1, 
+    limit: int = 100, 
+    lot_id: str = None, 
+    wafer_id: str = None,
+    sort_by: str = "wafer_id",
+    sort_order: str = "asc"
+):
     df = get_df()
     
+    # Filtering
     if lot_id:
         df = df[df["lot_id"] == lot_id]
+    if wafer_id:
+        df = df[df["wafer_id"] == wafer_id]
+        
+    # Sorting
+    if sort_by in df.columns:
+        df = df.sort_values(by=sort_by, ascending=(sort_order == "asc"))
         
     total = len(df)
     start = (page - 1) * limit

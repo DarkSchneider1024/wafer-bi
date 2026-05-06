@@ -13,13 +13,14 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - carrot-design-atelier.online
+        - carrot-atelier.online
+        - www.carrot-atelier.online
       secretName: oci-tls-secret
   rules:
-    - host: carrot-design-atelier.online
-      http:
+    - host: carrot-atelier.online
+      http: &http_rules
         paths:
-          # Wafer BI Frontend (In wafer-bi namespace)
+          # Wafer BI Frontend
           - path: /()(.*)
             pathType: ImplementationSpecific
             backend:
@@ -27,8 +28,7 @@ spec:
                 name: wafer-frontend-svc
                 port:
                   number: 80
-
-          # Wafer BI Backend API (In wafer-bi namespace)
+          # Wafer BI Backend API
           - path: /api(/|$)(.*)
             pathType: ImplementationSpecific
             backend:
@@ -36,3 +36,5 @@ spec:
                 name: wafer-backend-svc
                 port:
                   number: 8000
+    - host: www.carrot-atelier.online
+      http: *http_rules

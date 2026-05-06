@@ -3,72 +3,65 @@
 ## 1. 系統概述
 
 本專案是一個**整合式企業微服務生態系統**，部署在 Kubernetes 上。它展示了 K8S 如何編排不同類型的業務負載：
-1. **用戶管理系統 (Identity)**：基於 Java Spring Boot 的企業級身份驗證服務。
-2. **Wafer BI 分析平台 (Data)**：處理工業級晶圓數據，展示 Delta Lake 與高效能分析 API。
+1. **用戶管理系統 (Identity)**：基於 Java Spring Boot 的企業級身份驗證服務，整合 Liquibase 版本控制。
+2. **Wafer BI 分析平台 (Data)**：處理工業級晶圓數據，展示 Delta Lake 與高效能分析 API，前端採用 Nginx 生產級部署。
 
-## 2. 技術選型
+## 2. 技術選型 (更新版)
 
 | 技術 | 選擇 | 理由 |
 |------|------|------|
-| API Gateway | Node.js (Express) | 輕量、適合反向代理與認證攔截 |
-| User Service | Java (Spring Boot 3) | 展示 JVM 容器化最佳實踐與企業級架構 |
-| Wafer BI Service | Python (FastAPI) | 適合數據處理與統計計算 |
-| Data Layer | Delta Lake | 展示現代化數據湖架構 |
-| Database | PostgreSQL 16 | 用戶資料持久化 |
-| Orchestration | Kubernetes | 容器編排、自動伸縮 |
+| **Frontend** | React + **Nginx** | 多階段構建，Nginx 託管靜態檔案，效能最優且穩定 |
+| **API Gateway** | Node.js (Express) | 輕量、流量轉發與跨域處理 |
+| **User Service** | Java (Spring Boot 3) | 企業級架構，使用 **Liquibase** 管理資料庫版本 |
+| **Wafer BI** | Python (FastAPI) | 適合數據處理，自動生成測試數據並讀取 Delta Lake |
+| **Traffic** | **Ingress + TLS** | 支援 HTTPS 加密，整合 **Cert-Manager** 管理憑證 |
+| **CI/CD** | GitHub Actions | 支援 **Multi-arch (amd64/arm64)** 跨平台編譯與自動部署 |
 
 ---
 
-## 相關文件
-- [Oracle Cloud (OCI) 部署指南](./oci-deployment.md)
-- [面試指南](./interview-guide.md)
+## 相關文件索引
+- [🎡 K8S 核心名詞與架構詳解](./k8s-arch-guide.md) (推薦新手閱讀)
+- [🗄️ 資料庫 Schema 與 Liquibase 指南](./database-architecture.md)
+- [🚀 Oracle Cloud (OCI) 部署指南](./oci-deployment.md)
+- [📝 面試應對指南](./interview-guide.md)
+
+---
 
 ## 3. 架構設計
 
-### 整體架構圖
-
-```
-                        ┌──────────────────────────────┐
-                        │      Ingress Controller       │
-                        │      (Nginx Ingress)          │
-                        └──────┬──────────┬─────────────┘
-                               │          │
-                 ┌─────────────▼──┐  ┌────▼──────────┐
-                 │   Frontend     │  │  API Gateway   │
-                 │ (React+Nginx)  │  │  (Node.js)     │
-                 └───────────────┬┘  └────┬───────────┘
-                                 │        │
-           ┌─────────────────────┼────────┼───────────────────────┐
-           │ Namespace: identity │        │ Namespace: wafer-bi   │
-           └─────────────────────┘        └───────────────────────┘
-                     │                            │
-            ┌────────▼────────┐          ┌────────▼────────┐
-            │  User Service   │          │ Wafer BI Service│
-            │ (Spring Boot 3) │          │ (FastAPI)       │
-            └────────┬────────┘          └────────┬────────┘
-                     │                            │
-            ┌────────▼────────┐          ┌────────▼────────┐
-            │   PostgreSQL    │          │   Delta Lake    │
-            │   (Users DB)    │          │  (Parquet Files)│
-            └─────────────────┘          └─────────────────┘
+### 整體流量圖
+```mermaid
+graph TD
+    Client((User Browser)) -->|HTTPS| Ingress[Nginx Ingress Controller]
+    
+    subgraph "k8sdemo Namespace"
+        Ingress -->|/| FE[Frontend - Nginx]
+        Ingress -->|/api| GW[API Gateway]
+        GW --> US[User Service]
+        US --> DB[(PostgreSQL)]
+    end
+    
+    subgraph "wafer-bi Namespace"
+        GW --> WB[Wafer BI Backend]
+        WB --> DL((Delta Lake))
+    end
 ```
 
 ## 4. Kubernetes 資源說明
 
 ### 命名空間 (Namespace)
-- `identity`: 存放 User Service 與 PostgreSQL。
-- `wafer-bi`: 存放 Wafer BI Backend 與 Frontend。
+- `k8sdemo`: 核心展示區，包含網頁前端、API Gateway、用戶服務與資料庫。
+- `wafer-bi`: 數據分析區，專門處理大數據相關的 BI 負載。
 
-### 服務特性
-- **User Service**: 使用 RollingUpdate 策略，配置了 Readiness Probe 檢查資料庫連線。
-- **Wafer BI**: 展示了高效能數據讀取，並透過 NodePort 暴露前端。
+### 核心特性
+- **HTTPS 安全性**: 透過 `cert-manager` 與 `oci-tls-secret` 實現全站傳輸加密。
+- **資料庫遷移**: `user-service` 啟動時會透過 **Liquibase** 自動同步表格結構，無需手動執行 SQL。
+- **跨平台相容**: 所有映像檔均支援 `amd64` 與 `arm64` 架構，可運行於 OCI 的 Intel 或 Ampere 節點。
+- **數據自修復**: `wafer-bi` 具備自動數據生成功能，確保系統在任何情況下都有展示數據。
 
-## 5. 部署流程
-
-### 本地 K8S (Minikube)
-1. 建立命名空間：`kubectl apply -f k8s/namespace.yaml`
-2. 部署 User Service：`kubectl apply -f k8s/user-service/`
-3. 部署 Wafer BI：`kubectl apply -f k8s/wafer-bi-deployment.yaml`
+## 5. 部署與開發
+- **生產環境**: 透過 GitHub Actions 自動化部署，詳見 [OCI 部署文件](./oci-deployment.md)。
+- **架構原理**: 關於 Pod、Service 與 Docker 的層級關係，請參考 [K8S 學習指南](./k8s-arch-guide.md)。
 
 ---
-> **面試重點**：本專案刻意減少了重複的 CRUD 服務（如電商商品/訂單），轉而強化了**數據分析 (BI)** 與 **企業級認證 (Spring Boot)** 的整合，展示了在 K8S 上處理複雜異質負載的能力。
+*本文件旨在說明 Wafer BI 系統的最新技術現況與維運標準。*

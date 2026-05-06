@@ -9,40 +9,30 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /$2
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    nginx.ingress.kubernetes.io/rate-limit: "100"
-    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
 spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - 141.147.162.214
+        - carrot-design-atelier.online
       secretName: oci-tls-secret
   rules:
-    - http:
+    - host: carrot-design-atelier.online
+      http:
         paths:
-          # Frontend — serves React SPA
+          # Wafer BI Frontend (In wafer-bi namespace)
           - path: /()(.*)
             pathType: ImplementationSpecific
             backend:
               service:
-                name: frontend-service
+                name: wafer-frontend-svc
                 port:
                   number: 80
 
-          # API Gateway — routes to backend services
+          # Wafer BI Backend API (In wafer-bi namespace)
           - path: /api(/|$)(.*)
             pathType: ImplementationSpecific
             backend:
               service:
-                name: api-gateway-service
+                name: wafer-backend-svc
                 port:
-                  number: 8080
-
-          # Grafana Dashboard
-          - path: /grafana(/|$)(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: grafana-service
-                port:
-                  number: 3000
+                  number: 8000

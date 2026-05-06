@@ -15,12 +15,16 @@ function App() {
   const [selectedLot, setSelectedLot] = useState('Lot1');
   const [selectedWafer, setSelectedWafer] = useState('W01');
   const [selectedParam, setSelectedParam] = useState('Thickness');
-  const [view, setView] = useState<'lot-overview' | 'wafer-detail' | 'statistical-analysis'>('lot-overview');
+  const [view, setView] = useState<'lot-overview' | 'wafer-detail' | 'statistical-analysis' | 'data-report'>('lot-overview');
   
   const [lotData, setLotData] = useState<any>(null);
   const [waferData, setWaferData] = useState<any>(null);
   const [cdfData, setCdfData] = useState<any>(null);
   const [statsData, setStatsData] = useState<any>(null);
+  const [reportData, setReportData] = useState<any[]>([]);
+  const [reportTotal, setReportTotal] = useState(0);
+  const [reportPage, setReportPage] = useState(1);
+  const [loadingReport, setLoadingReport] = useState(false);
 
   useEffect(() => {
     axios.get(`${API_BASE}/meta`).then(res => {
@@ -44,6 +48,24 @@ function App() {
     }
     axios.get(`${API_BASE}/cdf/${selectedLot}?parameter=${selectedParam}`).then(res => setCdfData(res.data));
   }, [selectedLot, selectedWafer, selectedParam, view]);
+
+  useEffect(() => {
+    if (view === 'data-report') {
+      fetchReport(1);
+    }
+  }, [view, selectedLot]);
+
+  const fetchReport = (page: number) => {
+    setLoadingReport(true);
+    axios.get(`${API_BASE}/report?page=${page}&limit=100&lot_id=${selectedLot}`)
+      .then(res => {
+        setReportData(res.data.data);
+        setReportTotal(res.data.total);
+        setReportPage(page);
+        setLoadingReport(false);
+      })
+      .catch(() => setLoadingReport(false));
+  };
 
   const getHeatmapOption = (data: any, isThumbnail = false) => {
     if (!data) return {};
@@ -189,6 +211,12 @@ function App() {
         >
           Statistical Analysis
         </div>
+        <div 
+          className={`nav-tab ${view === 'data-report' ? 'active' : ''}`}
+          onClick={() => setView('data-report')}
+        >
+          Data Report
+        </div>
       </nav>
 
       {view === 'lot-overview' && (
@@ -275,6 +303,66 @@ function App() {
               <div style={{ height: '400px' }}>
                 <ReactECharts option={getTrendOption()} style={{ height: '100%' }} />
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {view === 'data-report' && (
+        <div className="report-view">
+          <div className="glass-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h3 style={{ margin: 0 }}>Raw Data Report (Lot: {selectedLot})</h3>
+              <div style={{ fontSize: '0.9rem', color: '#94a3b8' }}>
+                Total Records: <span style={{ color: '#818cf8', fontWeight: 600 }}>{reportTotal}</span>
+              </div>
+            </div>
+
+            <div className="table-container" style={{ overflowX: 'auto', maxHeight: '600px' }}>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Lot ID</th>
+                    <th>Wafer ID</th>
+                    <th>Parameter</th>
+                    <th>X</th>
+                    <th>Y</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loadingReport ? (
+                    <tr><td colSpan={6} style={{ textAlign: 'center', padding: '3rem' }}>Loading data...</td></tr>
+                  ) : reportData.map((row, idx) => (
+                    <tr key={idx}>
+                      <td>{row.lot_id}</td>
+                      <td>{row.wafer_id}</td>
+                      <td>{row.parameter}</td>
+                      <td>{row.x}</td>
+                      <td>{row.y}</td>
+                      <td style={{ color: '#6366f1', fontWeight: 600 }}>{row.value.toFixed(4)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="pagination" style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem', alignItems: 'center' }}>
+              <button 
+                className="btn-page"
+                disabled={reportPage <= 1 || loadingReport}
+                onClick={() => fetchReport(reportPage - 1)}
+              >
+                Previous 100
+              </button>
+              <span style={{ color: '#f8fafc' }}>Page {reportPage} of {Math.ceil(reportTotal / 100)}</span>
+              <button 
+                className="btn-page"
+                disabled={reportPage >= Math.ceil(reportTotal / 100) || loadingReport}
+                onClick={() => fetchReport(reportPage + 1)}
+              >
+                Next 100
+              </button>
             </div>
           </div>
         </div>

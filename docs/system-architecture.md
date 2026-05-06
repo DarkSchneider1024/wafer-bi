@@ -21,7 +21,7 @@
 
 ## 相關文件
 - [Oracle Cloud (OCI) 部署指南](./oci-deployment.md)
-- [面試指南](../INTERVIEW_GUIDE.md)
+- [面試指南](./interview-guide.md)
 
 ## 3. 架構設計
 

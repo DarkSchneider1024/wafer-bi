@@ -23,7 +23,7 @@ spec:
           image: ap-tokyo-1.ocir.io/nrf3s0wa8lv5/wafer-bi-frontend:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 5173
+            - containerPort: 80
               name: http
           resources:
             requests:
@@ -35,12 +35,10 @@ spec:
           livenessProbe:
             httpGet:
               path: /
-              port: 5173
-            initialDelaySeconds: 60
-            periodSeconds: 15
+              port: 80
+            initialDelaySeconds: 30
           readinessProbe:
             httpGet:
               path: /
-              port: 5173
-            initialDelaySeconds: 60
-            periodSeconds: 10
+              port: 80
+            initialDelaySeconds: 15

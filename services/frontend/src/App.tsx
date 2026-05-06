@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import ReactECharts from 'echarts-for-react';
 import axios from 'axios';
 import { LayoutGrid, TrendingUp, Filter, ChevronRight, BarChart3, FlaskConical } from 'lucide-react';

@@ -25,7 +25,7 @@ spec:
       containers:
       - name: backend
         image: ap-tokyo-1.ocir.io/nrf3s0wa8lv5/wafer-bi-backend:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
         resources:

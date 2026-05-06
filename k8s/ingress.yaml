@@ -19,7 +19,7 @@ spec:
     - host: wafer.carrot-atelier.online
       http:
         paths:
-          # Wafer BI Backend API (Must be defined first/longer prefix)
+          # Wafer BI Backend API
           - path: /api
             pathType: Prefix
             backend:

@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ReactECharts from 'echarts-for-react';
 import axios from 'axios';
 import { 
   LayoutGrid, Filter, ChevronRight, 
-  BarChart3, FlaskConical, Sun, Moon, Languages 
+  BarChart3, FlaskConical, Sun, Moon, Languages,
+  Settings, Package, Database, Search
 } from 'lucide-react';
 import './index.css';
 
@@ -12,7 +13,7 @@ const API_BASE = '/api';
 // --- i18n Translations ---
 const translations = {
   en: {
-    title: "Wafer BI Analytics",
+    title: "Wafer BI",
     lotOverview: "Lot Overview",
     waferDetail: "Wafer Detail",
     statsAnalysis: "Statistical Analysis",
@@ -26,10 +27,17 @@ const translations = {
     lotStats: "Lot Statistics",
     paramVariation: "Variation (Boxplot)",
     lotTrend: "Lot Trend (Mean)",
-    recordsPerPage: "Records per page: 100"
+    recordsPerPage: "Records per page: 100",
+    settings: "Settings",
+    language: "Language",
+    theme: "Theme",
+    product: "Product",
+    lot: "Lot",
+    parameter: "Parameter",
+    filters: "Filters"
   },
   zh: {
-    title: "晶圓商業智能分析",
+    title: "晶圓 BI 分析",
     lotOverview: "批次概覽",
     waferDetail: "晶圓詳情",
     statsAnalysis: "統計分析",
@@ -43,17 +51,29 @@ const translations = {
     lotStats: "批次統計",
     paramVariation: "參數變異 (箱型圖)",
     lotTrend: "批次趨勢 (平均值)",
-    recordsPerPage: "每頁顯示: 100 筆"
+    recordsPerPage: "每頁顯示: 100 筆",
+    settings: "設置",
+    language: "語言",
+    theme: "主題",
+    product: "產品名稱",
+    lot: "批次編號",
+    parameter: "測試參數",
+    filters: "篩選條件"
   }
 };
 
 function App() {
   // --- States ---
   const [lang, setLang] = useState<'en' | 'zh'>('zh');
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const [meta, setMeta] = useState<{ lots: string[], wafers: string[], parameters: string[] }>({ 
-    lots: [], wafers: [], parameters: [] 
+  const [theme, setTheme] = useState<'dark' | 'light'>('light');
+  const [showSettings, setShowSettings] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
+
+  const [meta, setMeta] = useState<{ products: string[], lots: string[], wafers: string[], parameters: string[] }>({ 
+    products: [], lots: [], wafers: [], parameters: [] 
   });
+  
+  const [selectedProduct, setSelectedProduct] = useState('');
   const [selectedLot, setSelectedLot] = useState('Lot1');
   const [selectedWafer, setSelectedWafer] = useState('W01');
   const [selectedParam, setSelectedParam] = useState('Thickness');
@@ -79,8 +99,19 @@ function App() {
   }, [theme]);
 
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+        setShowSettings(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
     axios.get(`${API_BASE}/meta`).then(res => {
       setMeta(res.data);
+      if (res.data.products?.length > 0) setSelectedProduct(res.data.products[0]);
       if (res.data.parameters?.length > 0) setSelectedParam(res.data.parameters[0]);
     });
   }, []);
@@ -105,11 +136,12 @@ function App() {
     if (view === 'data-report') {
       fetchReport(1, sortField, sortOrder, filterWafer);
     }
-  }, [view, selectedLot, sortField, sortOrder, filterWafer]);
+  }, [view, selectedProduct, selectedLot, sortField, sortOrder, filterWafer]);
 
   const fetchReport = (page: number, sort: string = sortField, order: string = sortOrder, filter: string = filterWafer) => {
     setLoadingReport(true);
-    axios.get(`${API_BASE}/report?page=${page}&limit=100&lot_id=${selectedLot}&wafer_id=${filter}&sort_by=${sort}&sort_order=${order}`)
+    const url = `${API_BASE}/report?page=${page}&limit=100&product_id=${selectedProduct}&lot_id=${selectedLot}&wafer_id=${filter}&sort_by=${sort}&sort_order=${order}`;
+    axios.get(url)
       .then(res => {
         setReportData(res.data.data);
         setReportTotal(res.data.total);
@@ -127,7 +159,16 @@ function App() {
 
   const getHeatmapOption = (data: any, isThumbnail = false) => {
     if (!data) return {};
+    const gridSize = 30;
+    const categories = Array.from({ length: gridSize }, (_, i) => i + 1);
+    
     return {
+      title: {
+        text: isThumbnail ? '' : `[${selectedProduct}] ${selectedLot} - ${selectedWafer} : ${selectedParam} Map`,
+        left: 'center',
+        top: '2%',
+        textStyle: { color: 'var(--text-primary)', fontSize: 16 }
+      },
       tooltip: { 
         show: !isThumbnail, 
         position: 'top',
@@ -136,15 +177,23 @@ function App() {
           return `Die (${x}, ${y})<br/>${selectedParam}: ${val.toFixed(2)}`;
         }
       },
+      toolbox: {
+        show: !isThumbnail,
+        right: '2%',
+        top: '2%',
+        feature: {
+          saveAsImage: { title: 'Save' }
+        }
+      },
       grid: { 
-        top: isThumbnail ? '5%' : '10%', 
-        bottom: isThumbnail ? '5%' : '15%', 
-        left: isThumbnail ? '5%' : '10%', 
-        right: isThumbnail ? '5%' : '10%',
+        top: isThumbnail ? '10%' : '15%', 
+        bottom: '10%', 
+        left: '10%', 
+        right: '10%',
         containLabel: false
       },
-      xAxis: { type: 'category', show: false },
-      yAxis: { type: 'category', show: false },
+      xAxis: { type: 'category', data: categories, show: false },
+      yAxis: { type: 'category', data: categories, show: false },
       visualMap: {
         min: data.min,
         max: data.max,
@@ -157,14 +206,20 @@ function App() {
           color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026']
         }
       },
+      graphic: [{
+        type: 'circle',
+        shape: { cx: '50%', cy: '50%', r: isThumbnail ? '40%' : '42%' },
+        style: { fill: 'transparent', stroke: 'rgba(150, 150, 150, 0.3)', lineWidth: 2 },
+        silent: true,
+        left: 'center',
+        top: 'center'
+      }],
       series: [{
         name: 'Wafer Map',
         type: 'heatmap',
-        data: data.data,
+        data: data.data.map((item: any) => [categories.indexOf(item[0]), categories.indexOf(item[1]), item[2]]),
         label: { show: false },
-        emphasis: {
-          itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 0, 0, 0.5)' }
-        }
+        emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
       }]
     };
   };
@@ -172,8 +227,21 @@ function App() {
   const getCDFOption = () => {
     if (!cdfData) return {};
     return {
-      title: { text: `CDF - ${selectedParam}`, left: 'center', textStyle: { color: 'var(--text-primary)', fontSize: 14 } },
+      title: { 
+        text: `[${selectedProduct}] ${selectedLot} : ${selectedParam} CDF Distribution`, 
+        left: 'center', 
+        top: '2%',
+        textStyle: { color: 'var(--text-primary)', fontSize: 16 } 
+      },
       tooltip: { trigger: 'axis' },
+      toolbox: {
+        right: '2%',
+        top: '2%',
+        feature: {
+          saveAsImage: { title: 'Save' }
+        }
+      },
+      grid: { top: '15%', bottom: '15%', left: '10%', right: '10%' },
       xAxis: { type: 'value', axisLine: { lineStyle: { color: 'var(--text-secondary)' } } },
       yAxis: { type: 'value', axisLine: { lineStyle: { color: 'var(--text-secondary)' } } },
       series: [{
@@ -189,8 +257,21 @@ function App() {
   const getBoxplotOption = () => {
     if (!statsData) return {};
     return {
-      title: { text: `${selectedParam} ${t.paramVariation}`, left: 'center', textStyle: { color: 'var(--text-primary)' } },
+      title: { 
+        text: `[${selectedProduct}] ${selectedLot} : ${selectedParam} Variation (Boxplot)`, 
+        left: 'center', 
+        top: '2%',
+        textStyle: { color: 'var(--text-primary)', fontSize: 16 } 
+      },
       tooltip: { trigger: 'item' },
+      toolbox: {
+        right: '2%',
+        top: '2%',
+        feature: {
+          saveAsImage: { title: 'Save' }
+        }
+      },
+      grid: { top: '15%', bottom: '15%', left: '10%', right: '10%' },
       xAxis: { type: 'category', data: statsData.wafer_ids, axisLine: { lineStyle: { color: 'var(--text-secondary)' } } },
       yAxis: { type: 'value', splitLine: { lineStyle: { color: 'var(--border-color)' } } },
       series: [{
@@ -205,8 +286,21 @@ function App() {
   const getTrendOption = () => {
     if (!statsData) return {};
     return {
-      title: { text: `${selectedParam} ${t.lotTrend}`, left: 'center', textStyle: { color: 'var(--text-primary)' } },
+      title: { 
+        text: `[${selectedProduct}] ${selectedLot} : ${selectedParam} Trend (Mean)`, 
+        left: 'center', 
+        top: '2%',
+        textStyle: { color: 'var(--text-primary)', fontSize: 16 } 
+      },
       tooltip: { trigger: 'axis' },
+      toolbox: {
+        right: '2%',
+        top: '2%',
+        feature: {
+          saveAsImage: { title: 'Save' }
+        }
+      },
+      grid: { top: '15%', bottom: '15%', left: '10%', right: '10%' },
       xAxis: { type: 'category', data: statsData.wafer_ids, axisLine: { lineStyle: { color: 'var(--text-secondary)' } } },
       yAxis: { type: 'value', axisLine: { lineStyle: { color: 'var(--text-secondary)' } } },
       series: [{
@@ -220,197 +314,204 @@ function App() {
 
   return (
     <div className="dashboard">
-      <header className="header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <BarChart3 size={32} color="var(--accent-color)" />
-          <h1>{t.title}</h1>
+      <aside className="sidebar">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+          <BarChart3 size={28} color="var(--accent-color)" />
+          <h2 style={{ margin: 0, fontSize: '1.25rem' }}>{t.title}</h2>
         </div>
-        
-        <div className="controls">
-          <div className="control-group">
-            <Languages size={18} />
-            <select value={lang} onChange={(e) => setLang(e.target.value as any)}>
-              <option value="zh">繁體中文</option>
-              <option value="en">English</option>
+
+        <div className="sidebar-group">
+          <div className="sidebar-title">{t.filters}</div>
+          
+          <div className="control-group" style={{ background: 'transparent', padding: 0, border: 'none' }}>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+              <Package size={14} style={{ marginRight: '4px' }} /> {t.product}
+            </label>
+            <select value={selectedProduct} onChange={(e) => setSelectedProduct(e.target.value)} style={{ width: '100%' }}>
+              {meta.products.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>
-          
-          <button className="btn-icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
 
-          <div className="control-group">
-            <Filter size={18} />
-            <select value={selectedLot} onChange={(e) => setSelectedLot(e.target.value)}>
+          <div className="control-group" style={{ background: 'transparent', padding: 0, border: 'none', marginTop: '1rem' }}>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+              <Database size={14} style={{ marginRight: '4px' }} /> {t.lot}
+            </label>
+            <select value={selectedLot} onChange={(e) => setSelectedLot(e.target.value)} style={{ width: '100%' }}>
               {meta.lots.map(lot => <option key={lot} value={lot}>{lot}</option>)}
             </select>
           </div>
-          
-          <div className="control-group">
-            <FlaskConical size={18} />
-            <select value={selectedParam} onChange={(e) => setSelectedParam(e.target.value)}>
+
+          <div className="control-group" style={{ background: 'transparent', padding: 0, border: 'none', marginTop: '1rem' }}>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+              <FlaskConical size={14} style={{ marginRight: '4px' }} /> {t.parameter}
+            </label>
+            <select value={selectedParam} onChange={(e) => setSelectedParam(e.target.value)} style={{ width: '100%' }}>
               {meta.parameters.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>
         </div>
-      </header>
+      </aside>
 
-      <nav className="nav-tabs">
-        {[
-          { id: 'lot-overview', label: t.lotOverview },
-          { id: 'wafer-detail', label: t.waferDetail },
-          { id: 'statistical-analysis', label: t.statsAnalysis },
-          { id: 'data-report', label: t.dataReport }
-        ].map(tab => (
-          <div 
-            key={tab.id}
-            className={`nav-tab ${view === tab.id ? 'active' : ''}`}
-            onClick={() => setView(tab.id as any)}
-          >
-            {tab.label}
+      <main className="main-content">
+        <header className="header">
+          <nav className="nav-tabs" style={{ marginBottom: 0 }}>
+            {[
+              { id: 'lot-overview', label: t.lotOverview },
+              { id: 'wafer-detail', label: t.waferDetail },
+              { id: 'statistical-analysis', label: t.statsAnalysis },
+              { id: 'data-report', label: t.dataReport }
+            ].map(tab => (
+              <div 
+                key={tab.id}
+                className={`nav-tab ${view === tab.id ? 'active' : ''}`}
+                onClick={() => setView(tab.id as any)}
+              >
+                {tab.label}
+              </div>
+            ))}
+          </nav>
+          
+          <div className="settings-container" ref={settingsRef}>
+            <button className="btn-icon" onClick={() => setShowSettings(!showSettings)}>
+              <Settings size={20} />
+            </button>
+            {showSettings && (
+              <div className="settings-menu">
+                <div className="settings-item">
+                  <span><Languages size={16} style={{ verticalAlign: 'middle', marginRight: '8px' }}/>{t.language}</span>
+                  <select value={lang} onChange={(e) => setLang(e.target.value as any)} style={{ padding: '2px 8px', fontSize: '0.8rem' }}>
+                    <option value="zh">繁體中文</option>
+                    <option value="en">English</option>
+                  </select>
+                </div>
+                <div className="settings-item">
+                  <span>{theme === 'dark' ? <Moon size={16} style={{ verticalAlign: 'middle', marginRight: '8px' }}/> : <Sun size={16} style={{ verticalAlign: 'middle', marginRight: '8px' }}/>}{t.theme}</span>
+                  <button className="btn-icon" style={{ width: '32px', height: '32px' }} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+                    {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        ))}
-      </nav>
+        </header>
 
-      {view === 'lot-overview' && (
-        <div className="lot-view">
-          <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: '2rem' }}>
-            <div className="wafer-grid">
-              {lotData && Object.keys(lotData).sort().map(wId => (
-                <div 
-                  key={wId} 
-                  className="glass-card wafer-thumbnail"
-                  onClick={() => {
-                    setSelectedWafer(wId);
-                    setView('wafer-detail');
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.5rem' }}>
-                    <span style={{ fontWeight: 600 }}>{wId}</span>
-                    <ChevronRight size={14} />
+        {view === 'lot-overview' && (
+          <div className="lot-view">
+            <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: '2rem' }}>
+              <div className="wafer-grid">
+                {lotData && Object.keys(lotData).sort().map(wId => (
+                  <div key={wId} className="glass-card wafer-thumbnail" onClick={() => { setSelectedWafer(wId); setView('wafer-detail'); }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.5rem' }}>
+                      <span style={{ fontWeight: 600 }}>{wId}</span>
+                      <ChevronRight size={14} />
+                    </div>
+                    <div style={{ flex: 1, minHeight: 0 }}>
+                      <ReactECharts option={getHeatmapOption(lotData[wId], true)} style={{ height: '100%', width: '100%' }} />
+                    </div>
                   </div>
-                  <div style={{ flex: 1, minHeight: 0 }}>
-                    <ReactECharts 
-                      option={getHeatmapOption(lotData[wId], true)} 
-                      style={{ height: '100%', width: '100%' }} 
-                    />
+                ))}
+              </div>
+              <div>
+                <div className="glass-card" style={{ position: 'sticky', top: '2rem' }}>
+                  <h3 style={{ marginTop: 0 }}>{t.lotStats} ({selectedParam})</h3>
+                  <div style={{ height: '300px' }}>
+                    <ReactECharts option={getCDFOption()} style={{ height: '100%' }} />
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
-            <div>
-              <div className="glass-card" style={{ position: 'sticky', top: '2rem' }}>
-                <h3 style={{ marginTop: 0 }}>{t.lotStats} ({selectedParam})</h3>
-                <div style={{ height: '300px' }}>
+          </div>
+        )}
+
+        {view === 'wafer-detail' && (
+          <div className="detail-view">
+            <div className="grid">
+              <div className="glass-card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <LayoutGrid size={20} /> {t.waferDetail} ({selectedWafer})
+                  </h3>
+                  <select value={selectedWafer} onChange={(e) => setSelectedWafer(e.target.value)}>
+                    {meta.wafers.map(w => <option key={w} value={w}>{w}</option>)}
+                  </select>
+                </div>
+                <div className="chart-container" style={{ height: '500px' }}>
+                  <ReactECharts option={getHeatmapOption(waferData)} style={{ height: '100%' }} />
+                </div>
+              </div>
+              <div className="glass-card">
+                <h3 style={{ marginTop: 0 }}>CDF Distribution</h3>
+                <div className="chart-container" style={{ height: '500px' }}>
                   <ReactECharts option={getCDFOption()} style={{ height: '100%' }} />
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {view === 'wafer-detail' && (
-        <div className="detail-view">
-          <div className="grid">
-            <div className="glass-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <LayoutGrid size={20} /> {t.waferDetail} ({selectedWafer})
-                </h3>
-                <select value={selectedWafer} onChange={(e) => setSelectedWafer(e.target.value)}>
-                  {meta.wafers.map(w => <option key={w} value={w}>{w}</option>)}
-                </select>
-              </div>
-              <div className="chart-container">
-                <ReactECharts option={getHeatmapOption(waferData)} style={{ height: '100%' }} />
-              </div>
-            </div>
-            <div className="glass-card">
-              <h3 style={{ marginTop: 0 }}>CDF Distribution</h3>
-              <div className="chart-container">
-                <ReactECharts option={getCDFOption()} style={{ height: '100%' }} />
-              </div>
+        {view === 'statistical-analysis' && (
+          <div className="stats-view">
+            <div className="grid" style={{ gridTemplateColumns: '1fr', gap: '2rem' }}>
+              <div className="glass-card"><div style={{ height: '400px' }}><ReactECharts option={getBoxplotOption()} style={{ height: '100%' }} /></div></div>
+              <div className="glass-card"><div style={{ height: '400px' }}><ReactECharts option={getTrendOption()} style={{ height: '100%' }} /></div></div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {view === 'statistical-analysis' && (
-        <div className="stats-view">
-          <div className="grid" style={{ gridTemplateColumns: '1fr', gap: '2rem' }}>
+        {view === 'data-report' && (
+          <div className="report-view">
             <div className="glass-card">
-              <div style={{ height: '400px' }}>
-                <ReactECharts option={getBoxplotOption()} style={{ height: '100%' }} />
-              </div>
-            </div>
-            <div className="glass-card">
-              <div style={{ height: '400px' }}>
-                <ReactECharts option={getTrendOption()} style={{ height: '100%' }} />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {view === 'data-report' && (
-        <div className="report-view">
-          <div className="glass-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-              <h3 style={{ margin: 0 }}>{t.dataReport} (Lot: {selectedLot})</h3>
-              <div className="controls">
-                <div className="control-group">
-                  <span>{t.searchWafer}:</span>
-                  <input 
-                    type="text" 
-                    value={filterWafer}
-                    onChange={(e) => setFilterWafer(e.target.value.toUpperCase())}
-                    style={{ width: '80px' }}
-                  />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <h3 style={{ margin: 0 }}>{t.dataReport} (Lot: {selectedLot})</h3>
+                <div className="controls">
+                  <div className="control-group">
+                    <Search size={16} />
+                    <input type="text" value={filterWafer} placeholder={t.searchWafer} onChange={(e) => setFilterWafer(e.target.value.toUpperCase())} style={{ width: '120px' }} />
+                  </div>
+                  <span>{t.total}: {reportTotal}</span>
                 </div>
-                <span>{t.total}: {reportTotal}</span>
+              </div>
+              <div className="table-container" style={{ overflowX: 'auto', maxHeight: '600px' }}>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th onClick={() => handleSort('lot_id')}>Lot ID</th>
+                      <th onClick={() => handleSort('wafer_id')}>Wafer ID</th>
+                      <th>Parameter</th>
+                      <th>X</th>
+                      <th>Y</th>
+                      <th>Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loadingReport ? (
+                      <tr><td colSpan={7} style={{ textAlign: 'center' }}>{t.loading}</td></tr>
+                    ) : reportData.length === 0 ? (
+                      <tr><td colSpan={7} style={{ textAlign: 'center' }}>{t.noRecords}</td></tr>
+                    ) : reportData.map((row, idx) => (
+                      <tr key={idx}>
+                        <td style={{ fontSize: '0.85rem' }}>{row.product_id}</td>
+                        <td>{row.lot_id}</td>
+                        <td>{row.wafer_id}</td>
+                        <td>{row.parameter}</td>
+                        <td>{row.x}</td>
+                        <td>{row.y}</td>
+                        <td style={{ color: 'var(--accent-color)', fontWeight: 600 }}>{row.value.toFixed(4)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="pagination" style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem' }}>
+                <button className="btn-page" disabled={reportPage <= 1} onClick={() => fetchReport(reportPage - 1)}>{t.previous}</button>
+                <span>{reportPage}</span>
+                <button className="btn-page" disabled={reportData.length < 100} onClick={() => fetchReport(reportPage + 1)}>{t.next}</button>
               </div>
             </div>
-
-            <div className="table-container" style={{ overflowX: 'auto', maxHeight: '600px' }}>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th onClick={() => handleSort('lot_id')}>Lot ID</th>
-                    <th onClick={() => handleSort('wafer_id')}>Wafer ID</th>
-                    <th>Parameter</th>
-                    <th>X</th>
-                    <th>Y</th>
-                    <th>Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loadingReport ? (
-                    <tr><td colSpan={6} style={{ textAlign: 'center' }}>{t.loading}</td></tr>
-                  ) : reportData.length === 0 ? (
-                    <tr><td colSpan={6} style={{ textAlign: 'center' }}>{t.noRecords}</td></tr>
-                  ) : reportData.map((row, idx) => (
-                    <tr key={idx}>
-                      <td>{row.lot_id}</td>
-                      <td>{row.wafer_id}</td>
-                      <td>{row.parameter}</td>
-                      <td>{row.x}</td>
-                      <td>{row.y}</td>
-                      <td style={{ color: 'var(--accent-color)', fontWeight: 600 }}>{row.value.toFixed(4)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="pagination" style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem' }}>
-              <button className="btn-page" disabled={reportPage <= 1} onClick={() => fetchReport(reportPage - 1)}>{t.previous}</button>
-              <span>{reportPage}</span>
-              <button className="btn-page" disabled={reportData.length < 100} onClick={() => fetchReport(reportPage + 1)}>{t.next}</button>
-            </div>
           </div>
-        </div>
-      )}
+        )}
+      </main>
     </div>
   );
 }

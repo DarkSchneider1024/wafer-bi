@@ -1,5 +1,5 @@
 # ---- Build Stage ----
-FROM maven:3.9-eclipse-temurin-21-alpine AS builder
+FROM maven:3.9-eclipse-temurin-21 AS builder
 WORKDIR /app
 
 # Cache dependencies first (Docker layer caching optimization)
@@ -11,12 +11,12 @@ COPY src/ ./src/
 RUN mvn package -DskipTests -B
 
 # ---- Production Stage ----
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 
 # Security: run as non-root user
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -S appuser -u 1001 -G appgroup
+RUN groupadd --gid 1001 appgroup && \
+    useradd --uid 1001 --gid appgroup --shell /bin/sh appuser
 
 COPY --from=builder /app/target/*.jar app.jar
 

@@ -74,12 +74,12 @@ spec:
       containers:
       - name: frontend
         image: ap-tokyo-1.ocir.io/nrf3s0wa8lv5/wafer-bi-frontend:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         ports:
-        - containerPort: 5173
+        - containerPort: 80
         env:
         - name: VITE_API_URL
-          value: "http://wafer-backend-svc:8000"
+          value: "https://wafer.carrot-atelier.online/api"
         resources:
           requests:
             memory: "128Mi"
@@ -101,5 +101,5 @@ spec:
   ports:
   - protocol: TCP
     port: 80
-    targetPort: 5173
-  type: NodePort
+    targetPort: 80
+  type: ClusterIP

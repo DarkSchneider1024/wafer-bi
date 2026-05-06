@@ -87,7 +87,13 @@ function App() {
           return `Die (${x}, ${y})<br/>${selectedParam}: ${val.toFixed(2)}`;
         }
       },
-      grid: { height: '80%', top: '10%', bottom: isThumbnail ? '10%' : '15%', left: '10%', right: '10%' },
+      grid: { 
+        top: isThumbnail ? '0%' : '10%', 
+        bottom: isThumbnail ? '0%' : '15%', 
+        left: isThumbnail ? '0%' : '10%', 
+        right: isThumbnail ? '0%' : '10%',
+        containLabel: false
+      },
       xAxis: { 
         type: 'category', 
         data: Array.from({length: 31}, (_, i) => i).filter(i => i > 0),

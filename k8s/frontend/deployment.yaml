@@ -36,11 +36,11 @@ spec:
             httpGet:
               path: /
               port: 5173
-            initialDelaySeconds: 5
+            initialDelaySeconds: 60
             periodSeconds: 15
           readinessProbe:
             httpGet:
               path: /
               port: 5173
-            initialDelaySeconds: 15
+            initialDelaySeconds: 60
             periodSeconds: 10

@@ -104,7 +104,9 @@ h1 {
 .wafer-thumbnail {
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
-  height: 250px;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  height: auto;
 }
 
 .wafer-thumbnail:hover {

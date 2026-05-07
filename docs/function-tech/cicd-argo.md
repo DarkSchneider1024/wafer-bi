@@ -17,13 +17,16 @@ kubectl create namespace argocd
 kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 ```
 
-### 2.2 曝露 UI 面板
-我們將服務類型改為 `LoadBalancer` 以獲得公網 IP：
-```bash
-kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
-```
+### 2.2 曝露 UI 面板 (HTTPS Ingress)
+我們使用 Nginx Ingress 將 Argo CD 面板曝露於特定域名下：
+*   **網址**：`https://argo.carrot-atelier.online`
+*   **憑證同步**：由於 K8S 的 Secret 不能跨命名空間，我們需將 TLS 憑證從 `k8sdemo` 拷貝至 `argocd`：
+    ```bash
+    kubectl get secret wafer-bi-tls -n k8sdemo -o yaml | sed 's/namespace: k8sdemo/namespace: argocd/' | kubectl apply -f -
+    ```
 
 ### 2.3 獲取管理員密碼
+登入帳號為 `admin`，初始密碼獲取指令：
 ```bash
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
 ```

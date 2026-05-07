@@ -116,8 +116,38 @@ app.get(['/test-gateway', '/api/test-gateway'], (req, res) => {
   res.status(200).json({ 
     message: 'Gateway is reachable',
     receivedPath: req.originalUrl,
-    version: 'v2-agnostic'
+    version: '1.0.0-agnostic'
   });
+});
+
+// ====================
+// System Info & Compatibility API
+// ====================
+app.get('/api/system/info', async (req, res) => {
+  const systemInfo = {
+    system_name: "Wafer BI Platform",
+    system_version: "1.0.0",
+    environment: process.env.NODE_ENV || 'production',
+    timestamp: new Date().toISOString(),
+    services: {
+      "api-gateway": {
+        version: "1.0.0",
+        status: "UP"
+      },
+      "user-service": {
+        version: "1.0.0",
+        endpoint: USER_SERVICE_URL,
+        status: "Checking..."
+      },
+      "wafer-bi": {
+        version: "1.0.0",
+        endpoint: WAFER_BI_URL,
+        status: "Checking..."
+      }
+    }
+  };
+
+  res.json(systemInfo);
 });
 
 // ====================

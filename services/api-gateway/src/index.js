@@ -142,11 +142,13 @@ app.use(
     changeOrigin: true,
     pathRewrite: { '^/api/auth': '/auth' },
     onProxyReq: (proxyReq, req) => {
-      console.log(`[Proxy Auth] ${req.method} ${req.originalUrl} -> ${USER_SERVICE_URL}${proxyReq.path}`);
+      // Safely log
+      const url = req.url || '';
+      console.log(`[Proxy Auth] -> ${USER_SERVICE_URL}${proxyReq.path}`);
     },
     onError: (err, req, res) => {
       console.error('[Proxy Auth Error]', err);
-      res.status(502).json({ error: 'User Service unreachable', details: err.message });
+      res.status(502).json({ error: 'User Service unreachable' });
     }
   })
 );
@@ -159,8 +161,8 @@ app.use(
     target: USER_SERVICE_URL,
     changeOrigin: true,
     pathRewrite: { '^/api/users': '/users' },
-    onProxyReq: (proxyReq, req) => {
-      console.log(`[Proxy Users] ${req.method} ${req.originalUrl} -> ${USER_SERVICE_URL}${proxyReq.path}`);
+    onProxyReq: (proxyReq) => {
+      console.log(`[Proxy Users] -> ${USER_SERVICE_URL}${proxyReq.path}`);
     }
   })
 );
@@ -171,8 +173,8 @@ app.use(
   createProxyMiddleware({
     target: WAFER_BI_URL,
     changeOrigin: true,
-    onProxyReq: (proxyReq, req) => {
-      console.log(`[Proxy BI] ${req.method} ${req.originalUrl} -> ${WAFER_BI_URL}${proxyReq.path}`);
+    onProxyReq: (proxyReq) => {
+      console.log(`[Proxy BI] -> ${WAFER_BI_URL}${proxyReq.path}`);
     }
   })
 );

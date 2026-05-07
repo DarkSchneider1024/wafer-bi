@@ -9,8 +9,8 @@ def generate_wafer_data(product_id, lot_id, wafer_id, param_name, grid_size=30):
     y = np.arange(grid_size)
     xx, yy = np.meshgrid(x, y)
     
-    center = grid_size / 2
-    dist = np.sqrt((xx - center)**2 + (yy - center)**2)
+    center = (grid_size + 1) / 2
+    dist = np.sqrt((xx + 1 - center)**2 + (yy + 1 - center)**2)
     radius = grid_size * 0.45
     mask = dist <= radius
     

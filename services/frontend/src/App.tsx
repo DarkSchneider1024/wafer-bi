@@ -66,7 +66,11 @@ const translations = {
     logout: "登出",
     welcome: "歡迎回來",
     demoAccount: "演示帳號",
-    adminAccount: "管理員帳號"
+    adminAccount: "管理員帳號",
+    userManagement: "用戶管理",
+    addUser: "新增用戶",
+    name: "姓名",
+    group: "群組"
   },
   en: {
     title: "Wafer BI",
@@ -98,7 +102,11 @@ const translations = {
     logout: "Logout",
     welcome: "Welcome back",
     demoAccount: "Demo Account",
-    adminAccount: "Admin Account"
+    adminAccount: "Admin Account",
+    userManagement: "User Management",
+    addUser: "Add User",
+    name: "Name",
+    group: "Group"
   }
 };
 
@@ -137,7 +145,37 @@ function App() {
   const [filterWafer, setFilterWafer] = useState('');
   const [loadingReport, setLoadingReport] = useState(false);
 
+  // --- User Management States ---
+  const [users, setUsers] = useState<any[]>([]);
+  const [newUserForm, setNewUserForm] = useState({ email: '', password: '', name: '', userGroup: 'demo01' });
+  const [userActionLoading, setUserActionLoading] = useState(false);
+
   const t = translations[lang];
+
+  // ... (auth functions)
+
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/users`);
+      setUsers(res.data);
+    } catch (err) {
+      console.error("Failed to fetch users", err);
+    }
+  };
+
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUserActionLoading(true);
+    try {
+      await axios.post(`${API_BASE}/auth/register`, newUserForm);
+      setNewUserForm({ email: '', password: '', name: '', userGroup: 'demo01' });
+      fetchUsers();
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Failed to add user");
+    } finally {
+      setUserActionLoading(false);
+    }
+  };
 
   // --- Auth Interceptor ---
   useEffect(() => {
@@ -215,6 +253,9 @@ function App() {
   useEffect(() => {
     if (view === 'data-report') {
       fetchReport(1, sortField, sortOrder, filterWafer);
+    }
+    if (view === 'user-management' && user?.user_group === 'admin') {
+      fetchUsers();
     }
   }, [view, selectedProduct, selectedLot, sortField, sortOrder, filterWafer]);
 
@@ -502,7 +543,8 @@ function App() {
     { id: 'lot-overview', label: t.lotOverview, roles: ['admin', 'demo01'] },
     { id: 'wafer-detail', label: t.waferDetail, roles: ['admin', 'demo01'] },
     { id: 'statistical-analysis', label: t.statsAnalysis, roles: ['admin', 'demo01'] },
-    { id: 'data-report', label: t.dataReport, roles: ['admin'] } // Only admin for demo purpose
+    { id: 'data-report', label: t.dataReport, roles: ['admin'] },
+    { id: 'user-management', label: t.userManagement, roles: ['admin'] }
   ].filter(item => item.roles.includes(user?.user_group || 'user'));
 
   return (
@@ -713,6 +755,66 @@ function App() {
                 <button className="btn-page" disabled={reportPage <= 1} onClick={() => fetchReport(reportPage - 1)}>{t.previous}</button>
                 <span>{reportPage}</span>
                 <button className="btn-page" disabled={reportData.length < 100} onClick={() => fetchReport(reportPage + 1)}>{t.next}</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {view === 'user-management' && (
+          <div className="user-management-view">
+            <div className="grid" style={{ gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
+              <div className="glass-card">
+                <h3 style={{ marginTop: 0 }}>{t.userManagement}</h3>
+                <div className="table-container">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>{t.name}</th>
+                        <th>{t.email}</th>
+                        <th>{t.group}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.map(u => (
+                        <tr key={u.id}>
+                          <td>{u.id}</td>
+                          <td style={{ fontWeight: 600 }}>{u.name}</td>
+                          <td>{u.email}</td>
+                          <td><span className="badge" style={{ background: u.user_group === 'admin' ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)' }}>{u.user_group}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="glass-card">
+                <h3 style={{ marginTop: 0 }}>{t.addUser}</h3>
+                <form onSubmit={handleAddUser}>
+                  <div className="control-group">
+                    <label>{t.name}</label>
+                    <input type="text" value={newUserForm.name} onChange={e => setNewUserForm({...newUserForm, name: e.target.value})} required />
+                  </div>
+                  <div className="control-group" style={{ marginTop: '1rem' }}>
+                    <label>{t.email}</label>
+                    <input type="email" value={newUserForm.email} onChange={e => setNewUserForm({...newUserForm, email: e.target.value})} required />
+                  </div>
+                  <div className="control-group" style={{ marginTop: '1rem' }}>
+                    <label>{t.password}</label>
+                    <input type="password" value={newUserForm.password} onChange={e => setNewUserForm({...newUserForm, password: e.target.value})} required />
+                  </div>
+                  <div className="control-group" style={{ marginTop: '1rem' }}>
+                    <label>{t.group}</label>
+                    <select value={newUserForm.userGroup} onChange={e => setNewUserForm({...newUserForm, userGroup: e.target.value})}>
+                      <option value="demo01">demo01</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  </div>
+                  <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1.5rem' }} disabled={userActionLoading}>
+                    {userActionLoading ? t.loading : t.addUser}
+                  </button>
+                </form>
               </div>
             </div>
           </div>

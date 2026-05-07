@@ -53,6 +53,9 @@ public class UserService {
         user.setEmail(request.email());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setName(request.name());
+        if (request.userGroup() != null && !request.userGroup().isBlank()) {
+            user.setUserGroup(request.userGroup());
+        }
 
         User saved = userRepository.save(user);
         log.info("User registered: id={}, email={}", saved.getId(), saved.getEmail());

@@ -31,6 +31,8 @@ Thumbs.db
 docker-compose.override.yml
 
 # Secrets
+system-config.properties
+system-config-raw.yaml
 secrets_backup.txt
 *.pem
 *.key

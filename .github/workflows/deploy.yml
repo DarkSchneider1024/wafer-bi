@@ -92,6 +92,13 @@ jobs:
             --docker-password="${{ secrets.OCI_AUTH_TOKEN }}" \
             --namespace wafer-bi --dry-run=client -o yaml | kubectl apply -f -
 
+          # Create System Config Secret from GitHub Secrets
+          kubectl create secret generic app-secrets \
+            --from-literal=POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
+            --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            --from-literal=POSTGRES_USER="${{ secrets.POSTGRES_USER }}" \
+            --namespace k8sdemo --dry-run=client -o yaml | kubectl apply -f -
+
           kubectl apply -f k8s/ --recursive
           
           # Force rollout restart for all services to pull latest images

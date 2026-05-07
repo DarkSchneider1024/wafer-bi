@@ -5,7 +5,7 @@ services:
     container_name: k8sdemo-postgres
     environment:
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: postgres_password_123
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_local_properties}
       POSTGRES_DB: k8sdemo
     ports:
       - "5432:5432"
@@ -40,7 +40,7 @@ services:
       POSTGRES_PORT: "5432"
       POSTGRES_DB: k8sdemo
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: postgres_password_123
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_local_properties}
       PRODUCT_SERVICE_PORT: "5000"
     depends_on:
       postgres:
@@ -56,7 +56,7 @@ services:
       POSTGRES_PORT: "5432"
       POSTGRES_DB: k8sdemo
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: postgres_password_123
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_local_properties}
       REDIS_HOST: redis
       REDIS_PORT: "6379"
       ORDER_SERVICE_PORT: "3001"
@@ -76,8 +76,8 @@ services:
       POSTGRES_PORT: "5432"
       POSTGRES_DB: k8sdemo
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: postgres_password_123
-      JWT_SECRET: super_secret_jwt_key_2024
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_local_properties}
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_local_properties}
       USER_SERVICE_PORT: "3002"
     depends_on:
       postgres:
@@ -97,7 +97,7 @@ services:
       ORDER_SERVICE_PORT: "3001"
       USER_SERVICE_HOST: user-service
       USER_SERVICE_PORT: "3002"
-      JWT_SECRET: super_secret_jwt_key_2024
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_local_properties}
     depends_on:
       - product-service
       - order-service

@@ -1,0 +1,23 @@
+# ====================================================================
+# Wafer BI - System Configuration Template (EXAMPLE)
+# ====================================================================
+# ⚠️ DO NOT PUT REAL PASSWORDS IN THIS FILE.
+# ⚠️ Rename this to 'system-config.properties' for local development.
+# ⚠️ In Production, these values are managed via GitHub Secrets.
+
+# --- Database ---
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=your_secure_password_here
+POSTGRES_DB=k8sdemo
+
+# --- Security ---
+# Use a long random string for JWT_SECRET
+JWT_SECRET=your_long_random_jwt_secret_here
+
+# --- Network ---
+# Production API URL
+VITE_API_URL=https://wafer.carrot-atelier.online/api
+
+# --- Infrastructure ---
+OCI_REGION=ap-tokyo-1
+OCI_TENANCY_NAMESPACE=your_namespace

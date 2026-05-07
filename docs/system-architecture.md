@@ -41,6 +41,12 @@
 | `POSTGRES_PASSWORD` | 資料庫管理員密碼 | `postgres_password_123` |
 | `JWT_SECRET` | JWT 簽名金鑰 | `super_secret_jwt_key_2024` |
 
+### 4.3 演示用帳號 (Default Demo Accounts)
+| Email | 密碼 | 初始群組 | 說明 |
+|-------|------|----------|------|
+| `admin@carrot.com` | `admin_password_123` | `admin` | 系統管理員 |
+| `demo01@carrot.com` | `demo01_password_123` | `admin` | 演示專用帳號 (具備 Sudo/管理員權限) |
+
 ---
 
 ## 5. 相關文件索引

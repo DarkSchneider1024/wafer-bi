@@ -197,12 +197,16 @@ app.use(
   })
 );
 
-// Wafer BI API (Catch-all for all other /api routes)
+// Wafer BI API (Preserve /api prefix by re-adding it)
 app.use(
   '/api',
   createProxyMiddleware({
     target: WAFER_BI_URL,
     changeOrigin: true,
+    pathRewrite: (path) => {
+      // Re-add /api because Express strips it when using app.use('/api', ...)
+      return '/api' + path;
+    },
     onProxyReq: (proxyReq) => {
       console.log(`[Proxy BI] -> ${WAFER_BI_URL}${proxyReq.path}`);
     }

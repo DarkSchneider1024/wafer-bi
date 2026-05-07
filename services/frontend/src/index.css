@@ -288,3 +288,36 @@ h1 {
   font-weight: 600;
   text-transform: uppercase;
 }
+/* --- System Status View --- */
+.system-status-view .service-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.system-status-view .service-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  display: inline-block;
+}
+
+@media (max-width: 768px) {
+  .system-status-view .grid {
+    grid-template_columns: 1fr !important;
+  }
+}

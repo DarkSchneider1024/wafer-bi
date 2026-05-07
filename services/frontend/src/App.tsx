@@ -538,7 +538,7 @@ function App() {
 
           <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>{t.demoAccount} Quick Access:</p>
-            <button className="btn-page" onClick={() => { setLoginForm({ email: 'demo01', password: 'demo01_password_123' }); }}>
+            <button className="btn-page" onClick={() => { setLoginForm({ email: 'admin', password: 'admin@carrot' }); }}>
               {t.demoAccount}
             </button>
           </div>

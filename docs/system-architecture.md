@@ -20,7 +20,30 @@
 
 ---
 
-## 相關文件索引
+## 4. GitHub Secrets 配置
+
+為了支持自動化部署與安全管理，必須在 GitHub 倉庫中設定以下 Secrets：
+
+### 4.1 OCI 基礎設施相關
+| Secret Name | 說明 |
+|-------------|------|
+| `OCI_REGION` | OCI 區域 (如 `ap-tokyo-1`) |
+| `OCI_TENANCY_NAMESPACE` | OCIR 命名空間 |
+| `OCI_USER_NAME` | OCI 用戶名 |
+| `OCI_AUTH_TOKEN` | OCI 驗證權杖 (用於 Login OCIR) |
+| `OCI_PRIVATE_KEY` | OCI API 私鑰 |
+| `OKE_CLUSTER_ID` | OKE 叢集 OCID |
+
+### 4.2 應用程式機密 (由 CICD 注入 K8S Secret)
+| Secret Name | 說明 |
+|-------------|------|
+| `POSTGRES_USER` | 資料庫管理員帳號 |
+| `POSTGRES_PASSWORD` | 資料庫管理員密碼 |
+| `JWT_SECRET` | JWT 簽名金鑰 (建議使用長隨機字串) |
+
+---
+
+## 5. 相關文件索引
 - [🎡 K8S 核心名詞與架構詳解](./k8s-arch-guide.md) (推薦新手閱讀)
 - [🤖 GitOps 與 Argo CD 實作](./cicd-argo.md)
 - [🔐 安全性與 Sealed Secrets](./security-secrets.md)

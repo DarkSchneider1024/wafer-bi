@@ -15,6 +15,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --- OpenTelemetry Instrumentation ---
+import os
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.sdk.resources import RESOURCE_ATTRIBUTES, Resource
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
+# Set service name
+resource = Resource(attributes={
+    "service.name": "wafer-bi-service"
+})
+
+provider = TracerProvider(resource=resource)
+processor = BatchSpanProcessor(OTLPSpanExporter(
+    endpoint=os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel-collector-service.k8sdemo.svc.cluster.local:4317"),
+    insecure=True
+))
+provider.add_span_processor(processor)
+trace.set_tracer_provider(provider)
+
+FastAPIInstrumentor.instrument_app(app)
+# -------------------------------------
+
 DELTA_PATH = "/app/wafer_delta_table"
 
 def ensure_data():

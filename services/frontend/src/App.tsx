@@ -12,30 +12,6 @@ const API_BASE = '/api';
 
 // --- i18n Translations ---
 const translations = {
-  en: {
-    title: "Wafer BI",
-    lotOverview: "Lot Overview",
-    waferDetail: "Wafer Detail",
-    statsAnalysis: "Statistical Analysis",
-    dataReport: "Data Report",
-    searchWafer: "Search Wafer",
-    total: "Total",
-    loading: "Loading data...",
-    noRecords: "No records found.",
-    previous: "Previous",
-    next: "Next",
-    lotStats: "Lot Statistics",
-    paramVariation: "Variation (Boxplot)",
-    lotTrend: "Lot Trend (Mean)",
-    recordsPerPage: "Records per page: 100",
-    settings: "Settings",
-    language: "Language",
-    theme: "Theme",
-    product: "Product",
-    lot: "Lot",
-    parameter: "Parameter",
-    filters: "Filters"
-  },
   zh: {
     title: "晶圓 BI 分析",
     lotOverview: "批次概覽",
@@ -131,7 +107,7 @@ function App() {
   const [selectedLot, setSelectedLot] = useState('Lot1');
   const [selectedWafer, setSelectedWafer] = useState('W01');
   const [selectedParam, setSelectedParam] = useState('Thickness');
-  const [view, setView] = useState<'lot-overview' | 'wafer-detail' | 'statistical-analysis' | 'data-report'>('lot-overview');
+  const [view, setView] = useState<'lot-overview' | 'wafer-detail' | 'statistical-analysis' | 'data-report' | 'user-management'>('lot-overview');
   
   const [lotData, setLotData] = useState<any>(null);
   const [waferData, setWaferData] = useState<any>(null);

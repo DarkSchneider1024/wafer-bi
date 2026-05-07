@@ -8,7 +8,7 @@
     <changeSet id="20260507-002" author="wafer-bi">
         <!-- Insert Admin User with MD5 password: admin@carrot -->
         <insert tableName="users">
-            <column name="email" value="admin@carrot.com"/>
+            <column name="email" value="admin"/>
             <column name="name" value="System Admin"/>
             <column name="password_hash" value="068305c93df5300f898a1a3617e476e3"/>
             <column name="user_group" value="admin"/>

@@ -121,6 +121,25 @@ graph TD
     *   **Node.js**：透過 `tracing.js` 整合 `sdk-node` 實現全自動追蹤。
     *   **Python**：透過 `FastAPIInstrumentor` 攔截分析請求。
 
+### 7.3 使用指南 (Usage Guide)
+
+#### 1. 部署追蹤組件
+若您是首次使用，請確保已在 K8S 叢集執行以下指令：
+```bash
+kubectl apply -f k8s/observability/
+kubectl apply -f k8s/ingress.yaml
+```
+
+#### 2. 存取視覺化介面
+打開瀏覽器訪問：`https://wafer.carrot-atelier.online/jaeger`
+*   **Service** 下拉選單中可以選擇 `api-gateway`, `user-service` 或 `wafer-bi-service`。
+*   點擊 **Find Traces** 即可看到所有流經系統的請求鏈結。
+
+#### 3. 如何進行問題排查？
+1.  **獲取 Trace ID**：在瀏覽器開發者工具 (F12) 的 **Network** 標籤中，點擊任何一個 `/api` 請求，查看 **Response Headers**，您會看到一個 `X-Trace-Id`。
+2.  **精確搜尋**：將該 ID 複製，貼到 Jaeger 左側選單的 **"Lookup by TraceID"** 方塊中。
+3.  **分析效能瓶頸**：您可以清楚看到請求在各個微服務停留的時間（例如：是 Java 資料庫查詢太慢，還是 Python 運算太久）。
+
 ---
 *最後更新：2026-05-07*
 

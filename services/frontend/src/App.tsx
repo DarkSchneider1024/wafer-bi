@@ -36,7 +36,7 @@ const translations = {
     parameter: "測試參數",
     filters: "篩選條件",
     login: "登入系統",
-    email: "電子郵件",
+    email: "帳號",
     password: "密碼",
     signIn: "登入",
     logout: "登出",
@@ -72,7 +72,7 @@ const translations = {
     parameter: "Parameter",
     filters: "Filters",
     login: "Sign In",
-    email: "Email",
+    email: "Account",
     password: "Password",
     signIn: "Sign In",
     logout: "Logout",
@@ -482,7 +482,7 @@ function App() {
             <div className="control-group">
               <label>{t.email}</label>
               <input 
-                type="email" 
+                type="text" 
                 value={loginForm.email} 
                 onChange={(e) => setLoginForm({...loginForm, email: e.target.value})} 
                 required 

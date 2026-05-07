@@ -502,6 +502,17 @@ function App() {
               {t.signIn}
             </button>
           </form>
+
+          <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>{t.demoAccount} Quick Access:</p>
+            <button className="btn-page" onClick={() => { setLoginForm({ email: 'demo01', password: 'demo01_password_123' }); }}>
+              Log in as {t.demoAccount} (Sudo)
+            </button>
+          </div>
+
+          <div style={{ marginTop: '2rem', fontSize: '0.7rem', color: 'var(--text-secondary)', textAlign: 'center', opacity: 0.7 }}>
+            <p>© 2026 Carrot Design Atelier.<br/>All rights reserved.</p>
+          </div>
         </div>
       </div>
     );

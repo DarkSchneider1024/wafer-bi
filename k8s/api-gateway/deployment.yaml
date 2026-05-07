@@ -18,6 +18,8 @@ spec:
       maxUnavailable: 0
   template:
     metadata:
+      annotations:
+        restartedAt: "2026-05-07T06:30:00Z"
       labels:
         app: api-gateway
     spec:
@@ -26,7 +28,7 @@ spec:
       containers:
         - name: api-gateway
           image: ap-tokyo-1.ocir.io/nrf3s0wa8lv5/api-gateway:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
               name: http

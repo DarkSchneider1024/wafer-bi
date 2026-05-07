@@ -79,7 +79,10 @@ spec:
         - containerPort: 80
         env:
         - name: VITE_API_URL
-          value: "https://wafer.carrot-atelier.online/api"
+          valueFrom:
+            configMapKeyRef:
+              name: wafer-config
+              key: VITE_API_URL
         resources:
           requests:
             memory: "128Mi"

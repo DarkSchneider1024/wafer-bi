@@ -69,5 +69,46 @@ services/frontend/src/
 └── assets/          # 靜態資源與圖片
 ```
 
+## 🚀 快速開始 (Quick Start)
+
+進入前端目錄並啟動開發伺服器：
+
+```bash
+cd services/frontend
+npm install
+npm run dev
+```
+
+## 🔧 開發配置 (Development Setup)
+
+### 1. ESLint 配置擴充
+對於生產環境應用，建議更新 ESLint 配置以啟用類型感知 (Type-aware) 的 Lint 規則。您可以修改 `eslint.config.js` 以包含 `eslint-plugin-react-x` 與 `eslint-plugin-react-dom`：
+
+```js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default defineConfig([
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      reactX.configs['recommended-typescript'],
+      reactDom.configs.recommended,
+    ],
+  },
+])
+```
+
+### 2. React Compiler
+本專案預設未啟用 React Compiler 以維持開發與構建的最佳性能。如需啟用，請參考 [React 官方文件](https://react.dev/learn/react-compiler/installation)。
+
+## 📦 構建與部署 (Build)
+
+產生生產環境用的靜態檔案：
+
+```bash
+npm run build
+```
+
 ---
 *本文件旨在為開發者提供 Wafer BI 前端架構的快速導覽。*

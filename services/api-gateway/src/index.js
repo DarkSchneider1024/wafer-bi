@@ -177,7 +177,12 @@ app.use(
 // 404 Handler
 // ====================
 app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+  console.log(`[404] No route found for: ${req.method} ${req.originalUrl}`);
+  res.status(404).json({ 
+    error: 'Route not found', 
+    receivedPath: req.originalUrl,
+    method: req.method 
+  });
 });
 
 // ====================

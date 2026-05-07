@@ -12,10 +12,24 @@
 *   **BCrypt 標準模式**：對於透過系統介面註冊的新用戶，一律採用現代化的 `BCrypt` 加密。
 *   **邏輯位置**：`UserService.java` -> `login()`。
 
-### 1.2 權限群組 (RBAC)
+### 1.2 JWT 認證機制：飯店房卡比喻 (The Hotel Metaphor)
+本系統採用 **JWT (JSON Web Token)** 作為認證載體，其運作邏輯可比喻為「飯店入住」：
+
+| 階段 | 動作 | 技術細節 |
+| :--- | :--- | :--- |
+| **1. 櫃檯登記** | 用戶輸入帳號密碼。 | **Authentication**：後端驗證身份並核發 Token。 |
+| **2. 核發房卡** | 伺服器回傳 JWT 字符串。 | **Token Issuance**：Token 內含加密的 User ID 與 Group。 |
+| **3. 攜帶卡片** | 瀏覽器將 Token 存入 LocalStorage。 | **Client-side Storage**：後續請求自動帶入 Header。 |
+| **4. 刷卡進入** | 網關檢查 Token 簽名與有效期。 | **Authorization**：API Gateway 驗證房卡，不需查詢 DB。 |
+
+### 1.3 權限群組 (RBAC)
 *   **admin**：具備完整權限，包含「用戶管理」與「敏感數據報表」。
 *   **demo01 (Sudo)**：預設為 `admin` 群組，專為快速功能展示設計。
-*   **權限傳遞**：登入成功後，`group` 資訊會被編碼進 **JWT Token** 中，前端依此過濾選單，後端 Gateway 進行校驗。
+*   **權限傳遞**：登入成功後，`group` 資訊會被編碼進 **JWT Token** 的 Payload 中：
+    ```json
+    { "sub": "admin", "group": "admin", "exp": 1715050000 }
+    ```
+    前端依此 `group` 值動態過濾導覽選單，後端 Gateway 則進行路徑級別的防護。
 
 ---
 

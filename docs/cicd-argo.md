@@ -1,0 +1,51 @@
+# 🤖 GitOps 實作指南 — Argo CD
+
+本專案採用 **GitOps** 模式進行持續部署 (CD)，使用 Argo CD 作為 Kubernetes 內部的控制器，確保 OKE 叢集的狀態始終與 GitHub 倉庫中的 `k8s/` 配置保持一致。
+
+## 1. 架構概述
+
+我們將 CI 與 CD 職責分離：
+- **CI (GitHub Actions)**：負責測試、構建 Multi-arch (amd64/arm64) Docker 映像檔，並推送到 OCI OCIR。
+- **CD (Argo CD)**：偵測到 Git 上的 `k8s/` 目錄變更後，自動同步並更新 OKE 叢集中的資源。
+
+## 2. Argo CD 安裝與配置 (OCI OKE)
+
+### 2.1 安裝指令
+由於 Argo CD 的資源較大，在 OKE 上需使用 Server-Side Apply：
+```bash
+kubectl create namespace argocd
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
+
+### 2.2 曝露 UI 面板
+我們將服務類型改為 `LoadBalancer` 以獲得公網 IP：
+```bash
+kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+```
+
+### 2.3 獲取管理員密碼
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+```
+
+## 3. Application 配置
+
+我們在 Argo CD 中建立了一個名為 `wafer-bi` 的應用程式，其核心配置如下：
+
+- **Repository**: `https://github.com/DarkSchneider1024/wafer-bi.git`
+- **Path**: `k8s`
+- **Cluster**: `https://kubernetes.default.svc`
+- **Namespace**: `wafer-bi`
+- **Sync Policy**: `Automated`
+  - 勾選 `Prune Resources`：自動刪除 Git 中已移除的資源。
+  - 勾選 `Self Heal`：防止手動在叢集中修改資源（確保 Git 為唯一真理）。
+
+## 4. 為什麼選擇 GitOps？
+
+1.  **版本控制一切**：每一次部署都有 Git Commit 紀錄。
+2.  **安全性**：GitHub Actions 不再需要擁有叢集的 `admin` 權限，僅需更新 Git 代碼。
+3.  **災難復原**：如果叢集崩潰，只需在新叢集安裝 Argo CD 並指向同一個 Git 倉庫，幾分鐘內即可恢復所有服務。
+4.  **解決「漂移」問題**：Argo CD 會不斷對比 Git 與實體叢集的差異，確保環境不被手動修改。
+
+---
+*Last updated: 2026-05-07*

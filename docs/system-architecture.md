@@ -15,12 +15,15 @@
 | **User Service** | Java (Spring Boot 3) | 企業級架構，使用 **Liquibase** 管理資料庫版本 |
 | **Wafer BI** | Python (FastAPI) | 適合數據處理，自動生成測試數據並讀取 Delta Lake |
 | **Traffic** | **Ingress + TLS** | 支援 HTTPS 加密，整合 **Cert-Manager** 管理憑證 |
-| **CI/CD** | GitHub Actions | 支援 **Multi-arch (amd64/arm64)** 跨平台編譯與自動部署 |
+| **CI/CD** | GitHub Actions + **Argo CD** | GitHub 處理建置 (CI)，Argo CD 負責 GitOps 部署 (CD) |
+| **Storage** | Delta Lake (Parquet) | 存儲工業大數據，支持版本回溯與高效查詢 |
 
 ---
 
 ## 相關文件索引
 - [🎡 K8S 核心名詞與架構詳解](./k8s-arch-guide.md) (推薦新手閱讀)
+- [🤖 GitOps 與 Argo CD 實作](./cicd-argo.md)
+- [🔐 安全性與 Sealed Secrets](./security-secrets.md)
 - [🗄️ 資料庫 Schema 與 Liquibase 指南](./database-architecture.md)
 - [🚀 Oracle Cloud (OCI) 部署指南](./oci-deployment.md)
 - [📝 面試應對指南](./interview-guide.md)

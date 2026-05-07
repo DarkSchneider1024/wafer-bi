@@ -101,4 +101,25 @@ graph TD
 - [📝 面試應對指南](./interview-guide.md)
 
 ---
+
+## 7. 分佈式追蹤 (Distributed Tracing)
+
+為了監控微服務之間的請求鏈結，系統預留了追蹤接口，並計畫導入 **OpenTelemetry (OTel)** 標準。
+
+### 7.1 現有實現：Trace ID 傳播
+目前 API Gateway 已實作基礎的 Trace ID 生成與傳播機制：
+*   **生成器**：API Gateway (Node.js) 會為每個進入系統的請求生成一個唯一的 `X-Trace-Id`。
+*   **傳播方式**：透過 HTTP Header 將 ID 傳遞給下游的 `User Service` 與 `Wafer BI Service`。
+*   **目的**：當日誌出現錯誤時，可透過同一個 Trace ID 串聯起 Gateway、Java 與 Python 的所有相關日誌。
+
+### 7.2 未來擴展：OpenTelemetry + Jaeger
+計畫將現有的 Trace ID 升級為標準的 OpenTelemetry 追蹤：
+1.  **Collector**：在 K8S 部署 OpenTelemetry Collector 接收數據。
+2.  **Visualization**：使用 **Jaeger** 介面進行視覺化分析。
+3.  **SDK 整合**：
+    *   **Java**：使用 `-javaagent:opentelemetry-javaagent.jar`。
+    *   **Node.js**：整合 `@opentelemetry/sdk-node`。
+    *   **Python**：使用 `opentelemetry-instrumentation-fastapi`。
+
+---
 *最後更新：2026-05-07*

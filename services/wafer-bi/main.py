@@ -58,6 +58,7 @@ def get_df():
         raise HTTPException(status_code=500, detail=f"Failed to read Delta table: {str(e)}")
 
 @app.get("/meta")
+@app.get("/api/meta")
 async def get_meta():
     df = get_df()
     return {
@@ -68,6 +69,7 @@ async def get_meta():
     }
 
 @app.get("/wafer-map/{lot_id}/{wafer_id}")
+@app.get("/api/wafer-map/{lot_id}/{wafer_id}")
 async def get_wafer_map(lot_id: str, wafer_id: str, parameter: str = "Thickness"):
     df = get_df()
     wafer_df = df[(df["lot_id"] == lot_id) & (df["wafer_id"] == wafer_id) & (df["parameter"] == parameter)]
@@ -87,6 +89,7 @@ async def get_wafer_map(lot_id: str, wafer_id: str, parameter: str = "Thickness"
     }
 
 @app.get("/cdf/{lot_id}")
+@app.get("/api/cdf/{lot_id}")
 async def get_cdf(lot_id: str, parameter: str = "Thickness"):
     df = get_df()
     lot_df = df[(df["lot_id"] == lot_id) & (df["parameter"] == parameter)]
@@ -112,6 +115,7 @@ async def get_cdf(lot_id: str, parameter: str = "Thickness"):
     }
 
 @app.get("/lot-wafers/{lot_id}")
+@app.get("/api/lot-wafers/{lot_id}")
 async def get_lot_wafers(lot_id: str, parameter: str = "Thickness"):
     df = get_df()
     lot_df = df[(df["lot_id"] == lot_id) & (df["parameter"] == parameter)]
@@ -137,6 +141,7 @@ async def get_lot_wafers(lot_id: str, parameter: str = "Thickness"):
     return result
 
 @app.get("/stats/{lot_id}")
+@app.get("/api/stats/{lot_id}")
 async def get_lot_stats(lot_id: str, parameter: str = "Thickness"):
     df = get_df()
     lot_df = df[(df["lot_id"] == lot_id) & (df["parameter"] == parameter)]
@@ -165,6 +170,7 @@ async def get_lot_stats(lot_id: str, parameter: str = "Thickness"):
     }
 
 @app.get("/report")
+@app.get("/api/report")
 async def get_report(
     page: int = 1, 
     limit: int = 100, 

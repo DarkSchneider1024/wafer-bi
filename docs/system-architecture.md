@@ -112,14 +112,15 @@ graph TD
 *   **傳播方式**：透過 HTTP Header 將 ID 傳遞給下游的 `User Service` 與 `Wafer BI Service`。
 *   **目的**：當日誌出現錯誤時，可透過同一個 Trace ID 串聯起 Gateway、Java 與 Python 的所有相關日誌。
 
-### 7.2 未來擴展：OpenTelemetry + Jaeger
-計畫將現有的 Trace ID 升級為標準的 OpenTelemetry 追蹤：
-1.  **Collector**：在 K8S 部署 OpenTelemetry Collector 接收數據。
-2.  **Visualization**：使用 **Jaeger** 介面進行視覺化分析。
-3.  **SDK 整合**：
-    *   **Java**：使用 `-javaagent:opentelemetry-javaagent.jar`。
-    *   **Node.js**：整合 `@opentelemetry/sdk-node`。
-    *   **Python**：使用 `opentelemetry-instrumentation-fastapi`。
+### 7.2 全面實作：OpenTelemetry + Jaeger
+系統已全面升級至標準的 OpenTelemetry 追蹤體系：
+1.  **Collector**：已在 K8S 部署 OTel Collector (`otel-collector-service`)。
+2.  **Visualization**：使用 **Jaeger** 進行視覺化分析，入口位址：`/jaeger`。
+3.  **各端實作細節**：
+    *   **Java**：透過 `opentelemetry-javaagent.jar` 實現零侵入追蹤。
+    *   **Node.js**：透過 `tracing.js` 整合 `sdk-node` 實現全自動追蹤。
+    *   **Python**：透過 `FastAPIInstrumentor` 攔截分析請求。
 
 ---
 *最後更新：2026-05-07*
+

@@ -149,14 +149,19 @@ kubectl apply -f k8s/ingress.yaml
 
 當系統發生異常（如 404 或連線失敗）時，請依照以下順序檢查各組件狀態：
 
-### 8.1 核心入口 (Production IP: 141.147.162.214)
-*   **前端介面**：`https://wafer.carrot-atelier.online/`
-*   **分佈式追蹤 (Jaeger)**：`https://wafer.carrot-atelier.online/jaeger`
-*   **Argo CD 控制面板**：`https://argo.carrot-atelier.online`
+### 8.1 公網服務入口對照表 (Production IPs)
+
+| 服務名稱 | 存取網址 | 公網 IP (External IP) | 備註 |
+| :--- | :--- | :--- | :--- |
+| **全站入口 (Ingress)** | `wafer.carrot-atelier.online` | **`141.147.162.214`** | 承載所有業務流量與 HTTPS 憑證 |
+| **Argo CD 控制面板** | `argo.carrot-atelier.online` | **`141.147.162.214`** | (推薦) 經由 Ingress 轉發 |
+| **Argo CD (備用)** | `https://151.145.77.41` | **`151.145.77.41`** | 直接透過 LoadBalancer 存取 |
+| **前端服務 (備用)** | `http://161.33.136.81` | **`161.33.136.81`** | Frontend 直接入口 |
 
 > [!TIP]
 > **DNS 設定參考**：
-> 若要新增子網域（如 `argo`），請在 DNS 面板新增 `A 紀錄` 指向 `141.147.162.214`，或新增 `CNAME` 指向 `wafer.carrot-atelier.online`。
+> 若要新增子網域（如 `argo`），請在 DNS 面板新增 `A 紀錄` 指向 **`141.147.162.214`**。
+
 
 *   **基礎健康檢查**：`https://wafer.carrot-atelier.online/api/healthz`
 *   **準備就緒檢查**：`https://wafer.carrot-atelier.online/api/readyz`

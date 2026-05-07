@@ -58,12 +58,58 @@ const translations = {
     product: "產品名稱",
     lot: "批次編號",
     parameter: "測試參數",
-    filters: "篩選條件"
+    filters: "篩選條件",
+    login: "登入系統",
+    email: "電子郵件",
+    password: "密碼",
+    signIn: "登入",
+    logout: "登出",
+    welcome: "歡迎回來",
+    demoAccount: "演示帳號",
+    adminAccount: "管理員帳號"
+  },
+  en: {
+    title: "Wafer BI",
+    lotOverview: "Lot Overview",
+    waferDetail: "Wafer Detail",
+    statsAnalysis: "Statistical Analysis",
+    dataReport: "Data Report",
+    searchWafer: "Search Wafer",
+    total: "Total",
+    loading: "Loading data...",
+    noRecords: "No records found.",
+    previous: "Previous",
+    next: "Next",
+    lotStats: "Lot Statistics",
+    paramVariation: "Variation (Boxplot)",
+    lotTrend: "Lot Trend (Mean)",
+    recordsPerPage: "Records per page: 100",
+    settings: "Settings",
+    language: "Language",
+    theme: "Theme",
+    product: "Product",
+    lot: "Lot",
+    parameter: "Parameter",
+    filters: "Filters",
+    login: "Sign In",
+    email: "Email",
+    password: "Password",
+    signIn: "Sign In",
+    logout: "Logout",
+    welcome: "Welcome back",
+    demoAccount: "Demo Account",
+    adminAccount: "Admin Account"
   }
 };
 
 function App() {
-  // --- States ---
+  // --- Auth States ---
+  const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem('user') || 'null'));
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
+  const [authError, setAuthError] = useState('');
+
+  // --- UI States ---
   const [lang, setLang] = useState<'en' | 'zh'>('zh');
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [showSettings, setShowSettings] = useState(false);
@@ -92,6 +138,38 @@ function App() {
   const [loadingReport, setLoadingReport] = useState(false);
 
   const t = translations[lang];
+
+  // --- Auth Interceptor ---
+  useEffect(() => {
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+      delete axios.defaults.headers.common['Authorization'];
+    }
+  }, [token]);
+
+  const handleLogin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setAuthError('');
+    try {
+      const res = await axios.post(`${API_BASE}/auth/login`, loginForm);
+      const { token: newToken, user: newUser } = res.data;
+      localStorage.setItem('token', newToken);
+      localStorage.setItem('user', JSON.stringify(newUser));
+      setToken(newToken);
+      setUser(newUser);
+    } catch (err: any) {
+      setAuthError(err.response?.data?.error || 'Login failed');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setToken(null);
+    setUser(null);
+    setView('lot-overview');
+  };
 
   // --- Effects ---
   useEffect(() => {
@@ -371,12 +449,74 @@ function App() {
     };
   };
 
+  // --- Render ---
+
+  if (!token) {
+    return (
+      <div className="login-page">
+        <div className="glass-card login-card">
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <BarChart3 size={48} color="var(--accent-color)" style={{ marginBottom: '1rem' }} />
+            <h1 style={{ fontSize: '2rem', margin: 0 }}>{t.login}</h1>
+            <p style={{ color: 'var(--text-secondary)' }}>Wafer BI Analysis Platform</p>
+          </div>
+          
+          <form onSubmit={handleLogin}>
+            <div className="control-group">
+              <label>{t.email}</label>
+              <input 
+                type="email" 
+                value={loginForm.email} 
+                onChange={(e) => setLoginForm({...loginForm, email: e.target.value})} 
+                required 
+              />
+            </div>
+            <div className="control-group" style={{ marginTop: '1rem' }}>
+              <label>{t.password}</label>
+              <input 
+                type="password" 
+                value={loginForm.password} 
+                onChange={(e) => setLoginForm({...loginForm, password: e.target.value})} 
+                required 
+              />
+            </div>
+            {authError && <p style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.5rem' }}>{authError}</p>}
+            <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1.5rem', padding: '0.75rem' }}>
+              {t.signIn}
+            </button>
+          </form>
+
+          <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Quick Login:</p>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button className="btn-page" onClick={() => { setLoginForm({ email: 'admin@carrot.com', password: 'admin_password_123' }); }}>{t.adminAccount}</button>
+              <button className="btn-page" onClick={() => { setLoginForm({ email: 'demo01@carrot.com', password: 'demo01_password_123' }); }}>{t.demoAccount}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const NAV_ITEMS = [
+    { id: 'lot-overview', label: t.lotOverview, roles: ['admin', 'demo01'] },
+    { id: 'wafer-detail', label: t.waferDetail, roles: ['admin', 'demo01'] },
+    { id: 'statistical-analysis', label: t.statsAnalysis, roles: ['admin', 'demo01'] },
+    { id: 'data-report', label: t.dataReport, roles: ['admin'] } // Only admin for demo purpose
+  ].filter(item => item.roles.includes(user?.user_group || 'user'));
+
   return (
     <div className="dashboard">
       <aside className="sidebar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
           <BarChart3 size={28} color="var(--accent-color)" />
           <h2 style={{ margin: 0, fontSize: '1.25rem' }}>{t.title}</h2>
+        </div>
+
+        <div className="glass-card" style={{ padding: '0.75rem', marginBottom: '1.5rem', background: 'rgba(255,255,255,0.05)' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t.welcome}</div>
+          <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{user?.name}</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--accent-color)', opacity: 0.8 }}>Group: {user?.user_group}</div>
         </div>
 
         <div className="sidebar-group">
@@ -410,6 +550,14 @@ function App() {
           </div>
         </div>
 
+        <button 
+          className="btn-page" 
+          onClick={handleLogout}
+          style={{ marginTop: '1rem', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: '#ef4444' }}
+        >
+          {t.logout}
+        </button>
+
         <div className="sidebar-footer" style={{ marginTop: 'auto', paddingTop: '2rem', fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
           <p>© 2026 Carrot Design Atelier.<br/>All rights reserved.</p>
         </div>
@@ -418,12 +566,7 @@ function App() {
       <main className="main-content">
         <header className="header">
           <nav className="nav-tabs" style={{ marginBottom: 0 }}>
-            {[
-              { id: 'lot-overview', label: t.lotOverview },
-              { id: 'wafer-detail', label: t.waferDetail },
-              { id: 'statistical-analysis', label: t.statsAnalysis },
-              { id: 'data-report', label: t.dataReport }
-            ].map(tab => (
+            {NAV_ITEMS.map(tab => (
               <div 
                 key={tab.id}
                 className={`nav-tab ${view === tab.id ? 'active' : ''}`}

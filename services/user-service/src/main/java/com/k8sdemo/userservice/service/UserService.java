@@ -89,6 +89,7 @@ public class UserService {
         return Jwts.builder()
                 .claim("user_id", user.getId())
                 .claim("email", user.getEmail())
+                .claim("group", user.getUserGroup())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .signWith(key)

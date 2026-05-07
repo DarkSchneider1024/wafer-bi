@@ -145,41 +145,45 @@ kubectl apply -f k8s/ingress.yaml
 
 ---
 
-## 8. 系統監控與故障排除連結 (Observability & Troubleshooting URLs)
+## 8. 系統全網址導航地圖 (System URL Master List)
 
-當系統發生異常（如 404 或連線失敗）時，請依照以下順序檢查各組件狀態：
+當系統發生異常時，請依照此地圖檢查各組件。所有子網址皆掛載於 `wafer.carrot-atelier.online` 之下。
 
-### 8.1 公網服務入口對照表 (Production IPs)
+### 8.1 應用程式與管理面板 (UI)
+| 名稱 | 存取網址 | 說明 |
+| :--- | :--- | :--- |
+| **Wafer BI 前端** | `https://wafer.carrot-atelier.online/` | 主分析介面 |
+| **系統狀態面板** | [UI 內部切換] | 登入管理員後於側邊欄點擊「系統狀態」 |
+| **Argo CD 控制台** | `https://argo.carrot-atelier.online` | GitOps 自動化部署管理 (TLS 加密) |
+| **Jaeger UI** | `https://wafer.carrot-atelier.online/jaeger` | 分佈式追蹤與效能分析 |
 
-| 服務名稱 | 存取網址 | 公網 IP (External IP) | 備註 |
-| :--- | :--- | :--- | :--- |
-| **全站入口 (Ingress)** | `wafer.carrot-atelier.online` | **`141.147.162.214`** | 承載所有業務流量與 HTTPS 憑證 |
-| **Argo CD 控制面板** | `argo.carrot-atelier.online` | **`141.147.162.214`** | (推薦) 經由 Ingress 轉發 |
-| **Argo CD (備用)** | `https://151.145.77.41` | **`151.145.77.41`** | 直接透過 LoadBalancer 存取 |
-| **前端服務 (備用)** | `http://161.33.136.81` | **`161.33.136.81`** | Frontend 直接入口 |
+### 8.2 API 與開發者工具 (Backend & Debug)
+| 類別 | 端點路徑 (URL) | 功能描述 |
+| :--- | :--- | :--- |
+| **系統資訊** | `https://wafer.carrot-atelier.online/api/system/info` | 查看全系統版本與相容性 JSON |
+| **連通性測試** | `https://wafer.carrot-atelier.online/api/test-gateway` | 驗證網關路由與轉發路徑 |
+| **Prometheus** | `https://wafer.carrot-atelier.online/api/metrics` | 網關層級的流量監控指標 |
+| **數據 Meta** | `https://wafer.carrot-atelier.online/api/meta` | 測試 Python 後端連通性 (應回傳產品與批次列表) |
 
-> [!TIP]
-> **DNS 設定參考**：
-> 若要新增子網域（如 `argo`），請在 DNS 面板新增 `A 紀錄` 指向 **`141.147.162.214`**。
+### 8.3 基礎設施健康檢查 (Health Checks)
+| 服務組件 | 健康檢查網址 | 預期結果 |
+| :--- | :--- | :--- |
+| **API Gateway** | `https://wafer.carrot-atelier.online/api/healthz` | `{"status": "UP"}` |
+| **User Service** | `https://wafer.carrot-atelier.online/api/auth/readyz` | 驗證 Java 後端就緒狀態 |
+| **BI Backend** | `https://wafer.carrot-atelier.online/api/readyz` | 驗證 Python FastAPI 就緒狀態 |
 
+### 8.4 底層基礎設施 IP (Emergency Access)
+> [!CAUTION]
+> 僅在 DNS 故障或 Ingress 失效時使用。
 
-*   **基礎健康檢查**：`https://wafer.carrot-atelier.online/api/healthz`
-*   **準備就緒檢查**：`https://wafer.carrot-atelier.online/api/readyz`
-*   **連通性測試 (Debug)**：`https://wafer.carrot-atelier.online/api/test-gateway` (會回傳網關收到的原始路徑與版本)
-*   **指標數據 (Prometheus)**：`https://wafer.carrot-atelier.online/api/metrics`
+- **Argo CD 直接入口**: `https://151.145.77.41`
+- **Frontend 直接入口**: `http://161.33.136.81`
+- **Nginx Ingress IP**: `141.147.162.214`
 
-### 8.3 後端微服務狀態 (透過網關轉發)
-*   **User Service Readiness**：`https://wafer.carrot-atelier.online/api/auth/readyz` (暫定，需視網關轉發規則)
-*   **Wafer BI Meta API**：`https://wafer.carrot-atelier.online/api/meta` (若此網址 404，代表 Python 後端或網關轉發有誤)
+---
 
-### 8.4 HTTP 錯誤代碼與故障場景對照表
+## 9. HTTP 錯誤代碼與故障場景對照表
 
-| HTTP 代碼 | 常見錯誤訊息 | 可能的故障場景 | 建議排查行動 |
-| :--- | :--- | :--- | :--- |
-| **404** | Route not found | 1. Ingress 路由規則未命中。<br>2. 網關 (Gateway) 的 Path Rewrite 規則有誤。<br>3. 後端微服務確實沒有該 Endpoint。 | 檢查 Ingress 配置與網關 `index.js` 的轉發路徑。 |
-| **503** | Service Unavailable | 1. Pod 正在啟動中或處於 `CrashLoopBackOff`。<br>2. K8S Service 的 Selector 找不到對應的 Pod。<br>3. 叢集資源不足（如 CPU/Memory 爆滿）。 | 執行 `kubectl get pods` 檢查狀態。如果是新部署，請稍候 1 分鐘。 |
-| **502** | Bad Gateway / Proxy Error | 1. 網關連不上後端 Service (DNS 錯誤或 Port 不對)。<br>2. 後端微服務進程崩潰，但 Pod 尚未重啟。 | 檢查網關日誌，確認 `USER_SERVICE_URL` 等環境變數是否正確。 |
-| **500** | Internal Server Error | 1. 後端程式碼邏輯噴錯（Unhandled Exception）。<br>2. 資料庫連線失敗。 | 查看後端 (Java/Python) 的 Pod 日誌以獲取 Stack Trace。 |
 | **401** | Unauthorized | 1. Token 缺失或無效。<br>2. Token 已過期。 | 清除瀏覽器緩存，重新登入獲取新 Token。 |
 | **403** | Forbidden | 1. 用戶群組 (Group) 權限不足。<br>2. 跨站請求被安全策略攔截。 | 檢查 JWT Payload 中的 `group` 欄位是否符合權限要求。 |
 

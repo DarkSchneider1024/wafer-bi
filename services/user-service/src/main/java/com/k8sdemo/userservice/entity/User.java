@@ -27,6 +27,9 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "user_group", nullable = false, length = 50)
+    private String userGroup = "user";
+
     // ---- Getters & Setters ----
 
     public Integer getId() { return id; }
@@ -43,4 +46,7 @@ public class User {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getUserGroup() { return userGroup; }
+    public void setUserGroup(String userGroup) { this.userGroup = userGroup; }
 }

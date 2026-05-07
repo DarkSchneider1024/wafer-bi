@@ -130,16 +130,6 @@ app.use(
   })
 );
 
-// Wafer BI API (Demo usually keep public or gated by frontend)
-app.use(
-  '/api/wafer',
-  createProxyMiddleware({
-    target: WAFER_BI_URL,
-    changeOrigin: true,
-    pathRewrite: { '^/api/wafer': '/api' },
-  })
-);
-
 // Protected User Management routes
 app.use(
   '/api/users',
@@ -148,6 +138,16 @@ app.use(
     target: USER_SERVICE_URL,
     changeOrigin: true,
     pathRewrite: { '^/api': '' },
+  })
+);
+
+// Wafer BI API (Catch-all for all other /api routes like /api/lot-wafers, /api/stats, etc.)
+app.use(
+  '/api',
+  createProxyMiddleware({
+    target: WAFER_BI_URL,
+    changeOrigin: true,
+    // No pathRewrite needed because Python backend already uses /api prefix
   })
 );
 

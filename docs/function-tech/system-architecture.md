@@ -144,5 +144,25 @@ kubectl apply -f k8s/ingress.yaml
 3.  **分析效能瓶頸**：您可以清楚看到請求在各個微服務停留的時間（例如：是 Java 資料庫查詢太慢，還是 Python 運算太久）。
 
 ---
+
+## 8. 系統監控與故障排除連結 (Observability & Troubleshooting URLs)
+
+當系統發生異常（如 404 或連線失敗）時，請依照以下順序檢查各組件狀態：
+
+### 8.1 核心入口
+*   **前端介面**：`https://wafer.carrot-atelier.online/`
+*   **分佈式追蹤 (Jaeger)**：`https://wafer.carrot-atelier.online/jaeger` (用於分析請求鏈結與延遲)
+
+### 8.2 API 網關 (Gateway) 狀態檢查
+*   **基礎健康檢查**：`https://wafer.carrot-atelier.online/api/healthz`
+*   **準備就緒檢查**：`https://wafer.carrot-atelier.online/api/readyz`
+*   **連通性測試 (Debug)**：`https://wafer.carrot-atelier.online/api/test-gateway` (會回傳網關收到的原始路徑與版本)
+*   **指標數據 (Prometheus)**：`https://wafer.carrot-atelier.online/api/metrics`
+
+### 8.3 後端微服務狀態 (透過網關轉發)
+*   **User Service Readiness**：`https://wafer.carrot-atelier.online/api/auth/readyz` (暫定，需視網關轉發規則)
+*   **Wafer BI Meta API**：`https://wafer.carrot-atelier.online/api/meta` (若此網址 404，代表 Python 後端或網關轉發有誤)
+
+---
 *最後更新：2026-05-07*
 

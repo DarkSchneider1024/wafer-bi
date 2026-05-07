@@ -120,13 +120,23 @@ app.get('/metrics', async (req, res) => {
 const USER_SERVICE_URL = `http://${process.env.USER_SERVICE_HOST || 'user-service'}:${process.env.USER_SERVICE_PORT || 3002}`;
 const WAFER_BI_URL = `http://${process.env.WAFER_BI_HOST || 'wafer-backend-svc.wafer-bi.svc.cluster.local'}:${process.env.WAFER_BI_PORT || 8000}`;
 
-// Public routes
+// Public routes (Auth)
 app.use(
   '/api/auth',
   createProxyMiddleware({
     target: USER_SERVICE_URL,
     changeOrigin: true,
-    pathRewrite: { '^/api/auth': '/auth' },
+    pathRewrite: { 
+      '^/api/auth': '/auth'  // This converts /api/auth/login to /auth/login
+    },
+    onProxyReq: (proxyReq, req, res) => {
+      // Log the outgoing request for debugging
+      console.log(`[Proxy Auth] ${req.method} ${req.originalUrl} -> ${USER_SERVICE_URL}${proxyReq.path}`);
+    },
+    onError: (err, req, res) => {
+      console.error('[Proxy Auth Error]', err);
+      res.status(502).json({ error: 'User Service unreachable', details: err.message });
+    }
   })
 );
 

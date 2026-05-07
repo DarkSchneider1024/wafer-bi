@@ -104,16 +104,20 @@ const authenticateToken = (req, res, next) => {
 // ====================
 // Health Check Endpoints
 // ====================
-app.get('/healthz', (req, res) => {
+app.get(['/healthz', '/api/healthz'], (req, res) => {
   res.status(200).json({ status: 'healthy', service: 'api-gateway' });
 });
 
-app.get('/readyz', (req, res) => {
+app.get(['/readyz', '/api/readyz'], (req, res) => {
   res.status(200).json({ status: 'ready', service: 'api-gateway' });
 });
 
-app.get('/api/test-gateway', (req, res) => {
-  res.status(200).json({ message: 'Gateway is reachable at /api/test-gateway' });
+app.get(['/test-gateway', '/api/test-gateway'], (req, res) => {
+  res.status(200).json({ 
+    message: 'Gateway is reachable',
+    receivedPath: req.originalUrl,
+    version: 'v2-agnostic'
+  });
 });
 
 // ====================

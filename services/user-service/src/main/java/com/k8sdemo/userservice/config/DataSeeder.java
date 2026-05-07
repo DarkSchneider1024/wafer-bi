@@ -29,15 +29,15 @@ public class DataSeeder {
                 log.info("Seeded admin user with group 'admin'");
             }
 
-            // Create Demo01
+            // Create Demo01 (Sudo/Admin access for demonstration)
             if (repository.findByEmail("demo01@carrot.com").isEmpty()) {
                 User demo = new User();
-                demo.setName("Demo Viewer 01");
+                demo.setName("Demo Sudo User");
                 demo.setEmail("demo01@carrot.com");
                 demo.setPasswordHash(encoder.encode("demo01_password_123"));
-                demo.setUserGroup("demo01");
+                demo.setUserGroup("admin");
                 repository.save(demo);
-                log.info("Seeded demo01 user with group 'demo01'");
+                log.info("Seeded demo01 user with 'admin' (sudo) group");
             }
         };
     }

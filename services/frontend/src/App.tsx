@@ -502,14 +502,6 @@ function App() {
               {t.signIn}
             </button>
           </form>
-
-          <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Quick Login:</p>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button className="btn-page" onClick={() => { setLoginForm({ email: 'admin@carrot.com', password: 'admin_password_123' }); }}>{t.adminAccount}</button>
-              <button className="btn-page" onClick={() => { setLoginForm({ email: 'demo01@carrot.com', password: 'demo01_password_123' }); }}>{t.demoAccount}</button>
-            </div>
-          </div>
         </div>
       </div>
     );

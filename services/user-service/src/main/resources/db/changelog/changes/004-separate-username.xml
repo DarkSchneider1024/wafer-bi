@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="20260507-004" author="wafer-bi">
+        <comment>Optimize user table: separate username from email</comment>
+        
+        <!-- 1. Add username column -->
+        <addColumn tableName="users">
+            <column name="username" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- 2. Copy current email values to username -->
+        <update tableName="users">
+            <column name="username" valueComputed="email"/>
+        </update>
+
+        <!-- 3. Make username unique and NOT NULL -->
+        <addUniqueConstraint tableName="users" columnNames="username" constraintName="uq_user_username"/>
+        <addNotNullConstraint tableName="users" columnName="username" columnDataType="VARCHAR(255)"/>
+        
+        <!-- 4. (Optional) Clear current email values to be filled with real emails later -->
+        <update tableName="users">
+            <column name="email" value=""/>
+        </update>
+    </changeSet>
+
+</databaseChangeLog>

@@ -104,7 +104,7 @@ function App() {
   // --- Auth States ---
   const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem('user') || 'null'));
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [authError, setAuthError] = useState('');
 
   // --- UI States ---
@@ -513,11 +513,11 @@ function App() {
           
           <form onSubmit={handleLogin}>
             <div className="control-group">
-              <label>{t.email}</label>
+              <label>Username</label>
               <input 
                 type="text" 
-                value={loginForm.email} 
-                onChange={(e) => setLoginForm({...loginForm, email: e.target.value})} 
+                value={loginForm.username} 
+                onChange={(e) => setLoginForm({...loginForm, username: e.target.value})} 
                 required 
               />
             </div>
@@ -538,7 +538,7 @@ function App() {
 
           <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>{t.demoAccount} Quick Access:</p>
-            <button className="btn-page" onClick={() => { setLoginForm({ email: 'admin', password: 'admin@carrot' }); }}>
+            <button className="btn-page" onClick={() => { setLoginForm({ username: 'admin', password: 'admin@carrot' }); }}>
               {t.demoAccount}
             </button>
           </div>

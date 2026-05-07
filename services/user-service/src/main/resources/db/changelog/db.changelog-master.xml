@@ -8,5 +8,6 @@
     <include file="db/changelog/changes/001-initial-schema.xml"/>
     <include file="db/changelog/changes/002-add-user-group.xml"/>
     <include file="db/changelog/changes/003-seed-admin-md5.xml"/>
+    <include file="db/changelog/changes/004-separate-username.xml"/>
 
 </databaseChangeLog>

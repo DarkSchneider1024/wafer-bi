@@ -39,17 +39,18 @@ public class UserService {
      * Equivalent to Go's registerHandler.
      */
     public User register(RegisterRequest request) {
-        if (request.email() == null || request.email().isBlank()
+        if (request.username() == null || request.username().isBlank()
                 || request.password() == null || request.password().isBlank()
                 || request.name() == null || request.name().isBlank()) {
-            throw new IllegalArgumentException("Email, password and name are required");
+            throw new IllegalArgumentException("Username, password and name are required");
         }
 
-        if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalStateException("Email already exists");
+        if (userRepository.existsByUsername(request.username())) {
+            throw new IllegalStateException("Username already exists");
         }
 
         User user = new User();
+        user.setUsername(request.username());
         user.setEmail(request.email());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setName(request.name());
@@ -58,7 +59,7 @@ public class UserService {
         }
 
         User saved = userRepository.save(user);
-        log.info("User registered: id={}, email={}", saved.getId(), saved.getEmail());
+        log.info("User registered: id={}, username={}, email={}", saved.getId(), saved.getUsername(), saved.getEmail());
         return saved;
     }
 
@@ -67,7 +68,7 @@ public class UserService {
      * Equivalent to Go's loginHandler.
      */
     public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.email())
+        User user = userRepository.findByUsername(request.username())
                 .orElseThrow(() -> new SecurityException("Invalid credentials"));
 
         boolean matches = false;

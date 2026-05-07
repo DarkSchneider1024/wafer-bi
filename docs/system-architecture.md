@@ -92,13 +92,16 @@ graph TD
 ---
 
 ## 6. 相關文件索引
-- [🗺️ 業務邏輯與功能圖譜](./function-map.md) (核心必讀)
-- [🎡 K8S 核心名詞與架構詳解](./k8s-arch-guide.md)
-- [🤖 GitOps 與 Argo CD 實作](./cicd-argo.md)
-- [🔐 安全性與 Sealed Secrets](./security-secrets.md)
-- [🗄️ 資料庫 Schema 與 Liquibase 指南](./database-architecture.md)
-- [🚀 Oracle Cloud (OCI) 部署指南](./oci-deployment.md)
-- [📝 面試應對指南](./interview-guide.md)
+*   **📘 業務功能手冊 (Function Book)**
+    *   [🗺️ 用戶角色與權限](./function-book/auth-roles.md)
+    *   [🔬 Wafer BI 分析功能](./function-book/wafer-bi-analysis.md)
+*   **⚙️ 技術架構規範 (Function Tech)**
+    *   [🔐 認證與安全性技術](./function-tech/jwt-security.md)
+    *   [🏗️ 數據流與追蹤架構](./function-tech/data-flow-arch.md)
+*   **🎡 其他參考**
+    *   [K8S 核心名詞與架構詳解](./k8s-arch-guide.md)
+    *   [🤖 GitOps 與 Argo CD 實作](./cicd-argo.md)
+    *   [🚀 Oracle Cloud (OCI) 部署指南](./oci-deployment.md)
 
 ---
 

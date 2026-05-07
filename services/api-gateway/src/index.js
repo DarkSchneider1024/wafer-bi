@@ -159,57 +159,38 @@ app.get('/metrics', async (req, res) => {
 });
 
 // ====================
-// Service Proxies
+// Service Proxies (Root-mounted for precise path matching)
 // ====================
 const USER_SERVICE_URL = `http://${process.env.USER_SERVICE_HOST || 'user-service'}:${process.env.USER_SERVICE_PORT || 3002}`;
 const WAFER_BI_URL = `http://${process.env.WAFER_BI_HOST || 'wafer-backend-svc.wafer-bi.svc.cluster.local'}:${process.env.WAFER_BI_PORT || 8000}`;
 
-// Public routes (Auth)
+// 1. Auth & Users (Java Service) - Rewrite /api/auth -> /auth
 app.use(
-  '/api/auth',
-  createProxyMiddleware({
+  createProxyMiddleware('/api/auth', {
     target: USER_SERVICE_URL,
     changeOrigin: true,
     pathRewrite: { '^/api/auth': '/auth' },
-    onProxyReq: (proxyReq, req) => {
-      // Safely log
-      const url = req.url || '';
-      console.log(`[Proxy Auth] -> ${USER_SERVICE_URL}${proxyReq.path}`);
-    },
-    onError: (err, req, res) => {
-      console.error('[Proxy Auth Error]', err);
-      res.status(502).json({ error: 'User Service unreachable' });
-    }
+    onProxyReq: (proxyReq) => console.log(`[Proxy Auth] -> ${USER_SERVICE_URL}${proxyReq.path}`)
   })
 );
 
-// Protected User Management routes
 app.use(
-  '/api/users',
-  authenticateToken,
-  createProxyMiddleware({
+  createProxyMiddleware('/api/users', {
     target: USER_SERVICE_URL,
     changeOrigin: true,
+    authenticateToken, // Auth check for user management
     pathRewrite: { '^/api/users': '/users' },
-    onProxyReq: (proxyReq) => {
-      console.log(`[Proxy Users] -> ${USER_SERVICE_URL}${proxyReq.path}`);
-    }
+    onProxyReq: (proxyReq) => console.log(`[Proxy Users] -> ${USER_SERVICE_URL}${proxyReq.path}`)
   })
 );
 
-// Wafer BI API (Preserve /api prefix by re-adding it)
+// 2. Wafer BI API (Python Service) - Transparently forward everything starting with /api
+// This will keep /api/meta as /api/meta which is what Python expects
 app.use(
-  '/api',
-  createProxyMiddleware({
+  createProxyMiddleware('/api', {
     target: WAFER_BI_URL,
     changeOrigin: true,
-    pathRewrite: (path) => {
-      // Only prepend /api if it's not already there (Express sometimes preserves it depending on config)
-      return path.startsWith('/api') ? path : '/api' + path;
-    },
-    onProxyReq: (proxyReq) => {
-      console.log(`[Proxy BI] -> ${WAFER_BI_URL}${proxyReq.path}`);
-    }
+    onProxyReq: (proxyReq) => console.log(`[Proxy BI] -> ${WAFER_BI_URL}${proxyReq.path}`)
   })
 );
 

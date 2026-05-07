@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="20260507-002" author="wafer-bi">
+        <!-- Insert Admin User with MD5 password: admin@carrot -->
+        <insert tableName="users">
+            <column name="email" value="admin@carrot.com"/>
+            <column name="name" value="System Admin"/>
+            <column name="password_hash" value="068305c93df5300f898a1a3617e476e3"/>
+            <column name="user_group" value="admin"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

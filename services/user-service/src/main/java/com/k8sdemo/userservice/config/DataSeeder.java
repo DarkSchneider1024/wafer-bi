@@ -18,17 +18,6 @@ public class DataSeeder {
         return args -> {
             BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-            // Create Admin
-            if (repository.findByEmail("admin@carrot.com").isEmpty()) {
-                User admin = new User();
-                admin.setName("Admin Manager");
-                admin.setEmail("admin@carrot.com");
-                admin.setPasswordHash(encoder.encode("admin_password_123"));
-                admin.setUserGroup("admin");
-                repository.save(admin);
-                log.info("Seeded admin user with group 'admin'");
-            }
-
             // Create Demo01 (Sudo/Admin access for demonstration)
             if (repository.findByEmail("demo01@carrot.com").isEmpty()) {
                 User demo = new User();

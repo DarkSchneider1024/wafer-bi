@@ -44,7 +44,7 @@
 ### 4.3 演示用帳號 (Default Demo Accounts)
 | Email | 密碼 | 初始群組 | 說明 |
 |-------|------|----------|------|
-| `admin@carrot.com` | `admin_password_123` | `admin` | 系統管理員 |
+| `admin@carrot.com` | `admin@carrot` | `admin` | 系統管理員 (DB 內以 MD5 加密存儲) |
 | `demo01@carrot.com` | `demo01_password_123` | `admin` | 演示專用帳號 (具備 Sudo/管理員權限) |
 
 ---

@@ -37,7 +37,7 @@ const httpRequestTotal = new promClient.Counter({
 app.use(helmet());
 app.use(cors());
 app.use(morgan('combined'));
-app.use(express.json());
+// Removed express.json() from here because it breaks http-proxy-middleware
 
 // Simple Trace ID Propagation
 app.use((req, res, next) => {
@@ -56,6 +56,12 @@ const limiter = rateLimit({
   message: { error: 'Too many requests, please try again later.' },
 });
 app.use('/api/', limiter);
+
+// Debug Logging for all requests
+app.use((req, res, next) => {
+  console.log(`[Gateway Incoming] ${req.method} ${req.originalUrl}`);
+  next();
+});
 
 // Metrics middleware
 app.use((req, res, next) => {
@@ -106,6 +112,10 @@ app.get('/readyz', (req, res) => {
   res.status(200).json({ status: 'ready', service: 'api-gateway' });
 });
 
+app.get('/api/test-gateway', (req, res) => {
+  res.status(200).json({ message: 'Gateway is reachable at /api/test-gateway' });
+});
+
 // ====================
 // Prometheus Metrics Endpoint
 // ====================
@@ -126,11 +136,8 @@ app.use(
   createProxyMiddleware({
     target: USER_SERVICE_URL,
     changeOrigin: true,
-    pathRewrite: { 
-      '^/api/auth': '/auth'  // This converts /api/auth/login to /auth/login
-    },
-    onProxyReq: (proxyReq, req, res) => {
-      // Log the outgoing request for debugging
+    pathRewrite: { '^/api/auth': '/auth' },
+    onProxyReq: (proxyReq, req) => {
       console.log(`[Proxy Auth] ${req.method} ${req.originalUrl} -> ${USER_SERVICE_URL}${proxyReq.path}`);
     },
     onError: (err, req, res) => {
@@ -147,17 +154,22 @@ app.use(
   createProxyMiddleware({
     target: USER_SERVICE_URL,
     changeOrigin: true,
-    pathRewrite: { '^/api': '' },
+    pathRewrite: { '^/api/users': '/users' },
+    onProxyReq: (proxyReq, req) => {
+      console.log(`[Proxy Users] ${req.method} ${req.originalUrl} -> ${USER_SERVICE_URL}${proxyReq.path}`);
+    }
   })
 );
 
-// Wafer BI API (Catch-all for all other /api routes like /api/lot-wafers, /api/stats, etc.)
+// Wafer BI API (Catch-all for all other /api routes)
 app.use(
   '/api',
   createProxyMiddleware({
     target: WAFER_BI_URL,
     changeOrigin: true,
-    // No pathRewrite needed because Python backend already uses /api prefix
+    onProxyReq: (proxyReq, req) => {
+      console.log(`[Proxy BI] ${req.method} ${req.originalUrl} -> ${WAFER_BI_URL}${proxyReq.path}`);
+    }
   })
 );
 

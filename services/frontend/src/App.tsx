@@ -4,7 +4,7 @@ import axios from 'axios';
 import { 
   LayoutGrid, ChevronRight, 
   BarChart3, FlaskConical, Sun, Moon, Languages,
-  Settings, Package, Database, Search
+  Settings, Package, Database, Search, Activity, ShieldCheck, Cpu, ExternalLink, RefreshCw
 } from 'lucide-react';
 import './index.css';
 
@@ -46,7 +46,14 @@ const translations = {
     userManagement: "用戶管理",
     addUser: "新增用戶",
     name: "姓名",
-    group: "群組"
+    group: "群組",
+    systemStatus: "系統狀態",
+    service: "服務名稱",
+    status: "運行狀態",
+    version: "版本號",
+    healthChecks: "健康檢查連結",
+    debugTools: "偵錯工具",
+    lastUpdated: "最後更新"
   },
   en: {
     title: "Wafer BI",
@@ -82,7 +89,14 @@ const translations = {
     userManagement: "User Management",
     addUser: "Add User",
     name: "Name",
-    group: "Group"
+    group: "Group",
+    systemStatus: "System Status",
+    service: "Service",
+    status: "Status",
+    version: "Version",
+    healthChecks: "Health Checks",
+    debugTools: "Debug Tools",
+    lastUpdated: "Last Updated"
   }
 };
 
@@ -107,7 +121,10 @@ function App() {
   const [selectedLot, setSelectedLot] = useState('Lot1');
   const [selectedWafer, setSelectedWafer] = useState('W01');
   const [selectedParam, setSelectedParam] = useState('Thickness');
-  const [view, setView] = useState<'lot-overview' | 'wafer-detail' | 'statistical-analysis' | 'data-report' | 'user-management'>('lot-overview');
+  const [view, setView] = useState<'lot-overview' | 'wafer-detail' | 'statistical-analysis' | 'data-report' | 'user-management' | 'system-status'>('lot-overview');
+  
+  const [systemInfo, setSystemInfo] = useState<any>(null);
+  const [loadingSystem, setLoadingSystem] = useState(false);
   
   const [lotData, setLotData] = useState<any>(null);
   const [waferData, setWaferData] = useState<any>(null);
@@ -136,6 +153,18 @@ function App() {
       setUsers(res.data);
     } catch (err) {
       console.error("Failed to fetch users", err);
+    }
+  };
+
+  const fetchSystemInfo = async () => {
+    setLoadingSystem(true);
+    try {
+      const res = await axios.get(`${API_BASE}/system/info`);
+      setSystemInfo(res.data);
+    } catch (err) {
+      console.error("Failed to fetch system info", err);
+    } finally {
+      setLoadingSystem(false);
     }
   };
 
@@ -189,6 +218,10 @@ function App() {
   useEffect(() => {
     document.body.className = theme === 'light' ? 'light-theme' : '';
   }, [theme]);
+
+  useEffect(() => {
+    if (view === 'system-status') fetchSystemInfo();
+  }, [view]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -523,7 +556,8 @@ function App() {
     { id: 'wafer-detail', label: t.waferDetail, roles: ['admin', 'demo01'] },
     { id: 'statistical-analysis', label: t.statsAnalysis, roles: ['admin', 'demo01'] },
     { id: 'data-report', label: t.dataReport, roles: ['admin'] },
-    { id: 'user-management', label: t.userManagement, roles: ['admin'] }
+    { id: 'user-management', label: t.userManagement, roles: ['admin'] },
+    { id: 'system-status', label: t.systemStatus, roles: ['admin'] }
   ].filter(item => item.roles.includes(user?.user_group || 'user'));
 
   return (
@@ -795,6 +829,87 @@ function App() {
                   </button>
                 </form>
               </div>
+            </div>
+          </div>
+        )}
+
+        {view === 'system-status' && (
+          <div className="system-status-view">
+            <div className="glass-card" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <Activity color="var(--accent-color)" /> {t.systemStatus}
+                </h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.5rem' }}>
+                  {systemInfo?.system_name} - Version {systemInfo?.system_version}
+                </p>
+              </div>
+              <button className="btn-icon" onClick={fetchSystemInfo} disabled={loadingSystem}>
+                <RefreshCw className={loadingSystem ? 'spin' : ''} size={20} />
+              </button>
+            </div>
+
+            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+              {/* Service Cards */}
+              {systemInfo && Object.entries(systemInfo.services).map(([name, info]: [string, any]) => (
+                <div key={name} className="glass-card service-card" style={{ borderLeft: '4px solid var(--accent-color)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Cpu size={20} />
+                      <h3 style={{ margin: 0, textTransform: 'capitalize' }}>{name}</h3>
+                    </div>
+                    <span className="badge" style={{ background: info.status.includes('UP') || info.status === 'Running' ? '#22c55e' : '#ef4444' }}>
+                      {info.status}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    <div style={{ marginBottom: '0.5rem' }}>{t.version}: <span style={{ color: 'var(--text-primary)' }}>{info.version}</span></div>
+                    {info.endpoint && <div style={{ wordBreak: 'break-all' }}>Endpoint: {info.endpoint}</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid" style={{ marginTop: '2rem', gridTemplateColumns: '1.5fr 1fr' }}>
+              <div className="glass-card">
+                <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <ShieldCheck size={20} color="#22c55e" /> {t.healthChecks}
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                  {[
+                    { label: "Gateway Health", url: "/api/healthz" },
+                    { label: "Gateway Ready", url: "/api/readyz" },
+                    { label: "Connectivity Test", url: "/api/test-gateway" },
+                    { label: "User Service Ready", url: "/api/auth/readyz" },
+                    { label: "Wafer BI Meta", url: "/api/meta" },
+                    { label: "Metrics (Prometheus)", url: "/api/metrics" }
+                  ].map(link => (
+                    <a key={link.label} href={link.url} target="_blank" className="btn-page" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', textDecoration: 'none' }}>
+                      <span style={{ fontSize: '0.85rem' }}>{link.label}</span>
+                      <ExternalLink size={14} />
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              <div className="glass-card">
+                <h3 style={{ marginTop: 0 }}>{t.debugTools}</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  Use these links to access observability and cluster management UIs.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+                  <a href="/jaeger" target="_blank" className="btn-primary" style={{ textAlign: 'center', textDecoration: 'none' }}>
+                    Open Jaeger UI
+                  </a>
+                  <a href="https://argo.carrot-atelier.online" target="_blank" className="btn-page" style={{ textAlign: 'center', textDecoration: 'none', background: 'rgba(255,255,255,0.05)' }}>
+                    Open Argo CD
+                  </a>
+                </div>
+              </div>
+            </div>
+            
+            <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              {t.lastUpdated}: {new Date(systemInfo?.timestamp).toLocaleString()}
             </div>
           </div>
         )}

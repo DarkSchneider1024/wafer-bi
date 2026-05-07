@@ -16,9 +16,12 @@ const otelSdk = new sdk.NodeSDK({
   instrumentations: [getNodeAutoInstrumentations()],
 });
 
-otelSdk.start()
-  .then(() => console.log('Tracing initialized'))
-  .catch((error) => console.log('Error initializing tracing', error));
+try {
+  otelSdk.start();
+  console.log('Tracing initialized');
+} catch (error) {
+  console.log('Error initializing tracing', error);
+}
 
 process.on('SIGTERM', () => {
   otelSdk.shutdown()

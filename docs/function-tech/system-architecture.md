@@ -149,11 +149,15 @@ kubectl apply -f k8s/ingress.yaml
 
 當系統發生異常（如 404 或連線失敗）時，請依照以下順序檢查各組件狀態：
 
-### 8.1 核心入口
+### 8.1 核心入口 (Production IP: 141.147.162.214)
 *   **前端介面**：`https://wafer.carrot-atelier.online/`
-*   **分佈式追蹤 (Jaeger)**：`https://wafer.carrot-atelier.online/jaeger` (用於分析請求鏈結與延遲)
+*   **分佈式追蹤 (Jaeger)**：`https://wafer.carrot-atelier.online/jaeger`
+*   **Argo CD 控制面板**：`https://argo.carrot-atelier.online`
 
-### 8.2 API 網關 (Gateway) 狀態檢查
+> [!TIP]
+> **DNS 設定參考**：
+> 若要新增子網域（如 `argo`），請在 DNS 面板新增 `A 紀錄` 指向 `141.147.162.214`，或新增 `CNAME` 指向 `wafer.carrot-atelier.online`。
+
 *   **基礎健康檢查**：`https://wafer.carrot-atelier.online/api/healthz`
 *   **準備就緒檢查**：`https://wafer.carrot-atelier.online/api/readyz`
 *   **連通性測試 (Debug)**：`https://wafer.carrot-atelier.online/api/test-gateway` (會回傳網關收到的原始路徑與版本)

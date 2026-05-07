@@ -20,6 +20,7 @@ kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argop
 ### 2.2 曝露 UI 面板 (HTTPS Ingress)
 我們使用 Nginx Ingress 將 Argo CD 面板曝露於特定域名下：
 *   **網址**：`https://argo.carrot-atelier.online`
+*   **DNS 配置**：請新增 `A 紀錄` 指向 **`141.147.162.214`**。
 *   **憑證同步**：由於 K8S 的 Secret 不能跨命名空間，我們需將 TLS 憑證從 `k8sdemo` 拷貝至 `argocd`：
     ```bash
     kubectl get secret wafer-bi-tls -n k8sdemo -o yaml | sed 's/namespace: k8sdemo/namespace: argocd/' | kubectl apply -f -

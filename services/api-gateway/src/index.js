@@ -39,6 +39,14 @@ app.use(cors());
 app.use(morgan('combined'));
 app.use(express.json());
 
+// Simple Trace ID Propagation
+app.use((req, res, next) => {
+  const traceId = req.headers['x-trace-id'] || require('crypto').randomBytes(8).toString('hex');
+  req.headers['x-trace-id'] = traceId;
+  res.setHeader('X-Trace-Id', traceId);
+  next();
+});
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute

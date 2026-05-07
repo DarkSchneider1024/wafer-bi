@@ -204,8 +204,8 @@ app.use(
     target: WAFER_BI_URL,
     changeOrigin: true,
     pathRewrite: (path) => {
-      // Re-add /api because Express strips it when using app.use('/api', ...)
-      return '/api' + path;
+      // Only prepend /api if it's not already there (Express sometimes preserves it depending on config)
+      return path.startsWith('/api') ? path : '/api' + path;
     },
     onProxyReq: (proxyReq) => {
       console.log(`[Proxy BI] -> ${WAFER_BI_URL}${proxyReq.path}`);

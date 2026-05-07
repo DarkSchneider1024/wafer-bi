@@ -184,12 +184,13 @@ app.use(
   })
 );
 
-// 2. Wafer BI API (Python Service) - Transparently forward everything starting with /api
-// This will keep /api/meta as /api/meta which is what Python expects
+// 2. Wafer BI API (Python Service) - Rewrite /api -> /
+// This will change /api/meta to /meta which is what Python now expects
 app.use(
   createProxyMiddleware('/api', {
     target: WAFER_BI_URL,
     changeOrigin: true,
+    pathRewrite: { '^/api': '' },
     onProxyReq: (proxyReq) => console.log(`[Proxy BI] -> ${WAFER_BI_URL}${proxyReq.path}`)
   })
 );

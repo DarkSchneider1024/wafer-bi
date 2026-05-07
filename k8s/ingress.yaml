@@ -19,14 +19,14 @@ spec:
     - host: wafer.carrot-atelier.online
       http:
         paths:
-          # Wafer BI Backend API
+          # API Gateway (Auth & Wafer BI Routing)
           - path: /api
             pathType: Prefix
             backend:
               service:
-                name: wafer-backend-svc
+                name: api-gateway-service
                 port:
-                  number: 8000
+                  number: 8080
           # Wafer BI Frontend
           - path: /
             pathType: Prefix

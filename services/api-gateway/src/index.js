@@ -110,7 +110,7 @@ app.get('/metrics', async (req, res) => {
 // Service Proxies
 // ====================
 const USER_SERVICE_URL = `http://${process.env.USER_SERVICE_HOST || 'user-service'}:${process.env.USER_SERVICE_PORT || 3002}`;
-const WAFER_BI_URL = `http://${process.env.WAFER_BI_HOST || 'wafer-backend-svc'}:${process.env.WAFER_BI_PORT || 8000}`;
+const WAFER_BI_URL = `http://${process.env.WAFER_BI_HOST || 'wafer-backend-svc.wafer-bi.svc.cluster.local'}:${process.env.WAFER_BI_PORT || 8000}`;
 
 // Public routes
 app.use(

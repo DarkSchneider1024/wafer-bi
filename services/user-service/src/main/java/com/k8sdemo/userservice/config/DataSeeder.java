@@ -19,10 +19,11 @@ public class DataSeeder {
             BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
             // Create Demo01 (Sudo/Admin access for demonstration)
-            if (repository.findByEmail("demo01").isEmpty()) {
+            if (repository.findByUsername("demo01").isEmpty()) {
                 User demo = new User();
                 demo.setName("Demo Sudo User");
-                demo.setEmail("demo01");
+                demo.setUsername("demo01");
+                demo.setEmail("demo01@carrot-atelier.online");
                 demo.setPasswordHash(encoder.encode("demo01_password_123"));
                 demo.setUserGroup("admin");
                 repository.save(demo);

@@ -163,6 +163,17 @@ kubectl apply -f k8s/ingress.yaml
 *   **User Service Readiness**：`https://wafer.carrot-atelier.online/api/auth/readyz` (暫定，需視網關轉發規則)
 *   **Wafer BI Meta API**：`https://wafer.carrot-atelier.online/api/meta` (若此網址 404，代表 Python 後端或網關轉發有誤)
 
+### 8.4 HTTP 錯誤代碼與故障場景對照表
+
+| HTTP 代碼 | 常見錯誤訊息 | 可能的故障場景 | 建議排查行動 |
+| :--- | :--- | :--- | :--- |
+| **404** | Route not found | 1. Ingress 路由規則未命中。<br>2. 網關 (Gateway) 的 Path Rewrite 規則有誤。<br>3. 後端微服務確實沒有該 Endpoint。 | 檢查 Ingress 配置與網關 `index.js` 的轉發路徑。 |
+| **503** | Service Unavailable | 1. Pod 正在啟動中或處於 `CrashLoopBackOff`。<br>2. K8S Service 的 Selector 找不到對應的 Pod。<br>3. 叢集資源不足（如 CPU/Memory 爆滿）。 | 執行 `kubectl get pods` 檢查狀態。如果是新部署，請稍候 1 分鐘。 |
+| **502** | Bad Gateway / Proxy Error | 1. 網關連不上後端 Service (DNS 錯誤或 Port 不對)。<br>2. 後端微服務進程崩潰，但 Pod 尚未重啟。 | 檢查網關日誌，確認 `USER_SERVICE_URL` 等環境變數是否正確。 |
+| **500** | Internal Server Error | 1. 後端程式碼邏輯噴錯（Unhandled Exception）。<br>2. 資料庫連線失敗。 | 查看後端 (Java/Python) 的 Pod 日誌以獲取 Stack Trace。 |
+| **401** | Unauthorized | 1. Token 缺失或無效。<br>2. Token 已過期。 | 清除瀏覽器緩存，重新登入獲取新 Token。 |
+| **403** | Forbidden | 1. 用戶群組 (Group) 權限不足。<br>2. 跨站請求被安全策略攔截。 | 檢查 JWT Payload 中的 `group` 欄位是否符合權限要求。 |
+
 ---
 *最後更新：2026-05-07*
 

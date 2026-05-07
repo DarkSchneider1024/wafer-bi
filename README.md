@@ -1,6 +1,6 @@
 # 🚀 Wafer BI 企業級數據分析平台 (OKE 部署)
 
-🚀 **Live Demo (雲端演示網址)**: [http://161.33.136.81/](http://161.33.136.81/)
+🚀 **Live Demo (雲端演示網址)**: [https://wafer.carrot-atelier.online/](https://wafer.carrot-atelier.online/)
 
 ---
 

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import ReactECharts from 'echarts-for-react';
 import axios from 'axios';
 import { 
-  LayoutGrid, Filter, ChevronRight, 
+  LayoutGrid, ChevronRight, 
   BarChart3, FlaskConical, Sun, Moon, Languages,
   Settings, Package, Database, Search
 } from 'lucide-react';
@@ -110,10 +110,12 @@ function App() {
 
   useEffect(() => {
     axios.get(`${API_BASE}/meta`).then(res => {
-      setMeta(res.data);
-      if (res.data.products?.length > 0) setSelectedProduct(res.data.products[0]);
-      if (res.data.parameters?.length > 0) setSelectedParam(res.data.parameters[0]);
-    });
+      if (res.data) {
+        setMeta(res.data);
+        if (res.data.products?.length > 0) setSelectedProduct(res.data.products[0]);
+        if (res.data.parameters?.length > 0) setSelectedParam(res.data.parameters[0]);
+      }
+    }).catch(err => console.error("Failed to fetch meta:", err));
   }, []);
 
   useEffect(() => {
@@ -182,6 +184,9 @@ function App() {
         right: '2%',
         top: '2%',
         feature: {
+          dataZoom: { yAxisIndex: 'none', title: { zoom: 'Zoom', back: 'Back' } },
+          dataView: { readOnly: false, title: 'Data View', lang: ['Data View', 'Close', 'Refresh'] },
+          restore: { title: 'Restore' },
           saveAsImage: { title: 'Save' }
         }
       },
@@ -193,7 +198,7 @@ function App() {
         containLabel: false
       },
       xAxis: { type: 'category', data: categories, show: false },
-      yAxis: { type: 'category', data: categories, show: false },
+      yAxis: { type: 'category', data: categories, show: false, inverse: true },
       visualMap: {
         min: data.min,
         max: data.max,
@@ -209,16 +214,26 @@ function App() {
       graphic: [{
         type: 'circle',
         shape: { cx: '50%', cy: '50%', r: isThumbnail ? '40%' : '42%' },
-        style: { fill: 'transparent', stroke: 'rgba(150, 150, 150, 0.3)', lineWidth: 2 },
+        style: { 
+          fill: 'transparent', 
+          stroke: 'rgba(150, 150, 150, 0.5)', 
+          lineWidth: 2,
+          shadowBlur: 10,
+          shadowColor: 'rgba(0,0,0,0.3)'
+        },
         silent: true,
         left: 'center',
-        top: 'center'
+        top: 'center',
+        z: 10
       }],
       series: [{
         name: 'Wafer Map',
         type: 'heatmap',
-        data: data.data.map((item: any) => [categories.indexOf(item[0]), categories.indexOf(item[1]), item[2]]),
+        data: data.data.map((item: any) => [item[0] - 1, item[1] - 1, item[2]]),
         label: { show: false },
+        itemStyle: {
+          borderWidth: 0
+        },
         emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
       }]
     };
@@ -228,7 +243,8 @@ function App() {
     if (!cdfData) return {};
     return {
       title: { 
-        text: `[${selectedProduct}] ${selectedLot} : ${selectedParam} CDF Distribution`, 
+        text: `${selectedLot} : ${selectedParam} CDF Distribution`, 
+        subtext: `Product: ${selectedProduct}`,
         left: 'center', 
         top: '2%',
         textStyle: { color: 'var(--text-primary)', fontSize: 16 } 
@@ -238,12 +254,25 @@ function App() {
         right: '2%',
         top: '2%',
         feature: {
+          dataZoom: { yAxisIndex: 'none', title: { zoom: 'Zoom', back: 'Back' } },
+          restore: { title: 'Restore' },
           saveAsImage: { title: 'Save' }
         }
       },
-      grid: { top: '15%', bottom: '15%', left: '10%', right: '10%' },
-      xAxis: { type: 'value', axisLine: { lineStyle: { color: 'var(--text-secondary)' } } },
-      yAxis: { type: 'value', axisLine: { lineStyle: { color: 'var(--text-secondary)' } } },
+      dataZoom: [{ type: 'inside' }, { type: 'slider', bottom: '5%' }],
+      grid: { top: '15%', bottom: '20%', left: '10%', right: '10%' },
+      xAxis: { 
+        name: `Parameter: ${selectedParam}`,
+        nameLocation: 'middle',
+        nameGap: 30,
+        type: 'value', 
+        axisLine: { lineStyle: { color: 'var(--text-secondary)' } } 
+      },
+      yAxis: { 
+        name: 'Probability',
+        type: 'value', 
+        axisLine: { lineStyle: { color: 'var(--text-secondary)' } } 
+      },
       series: [{
         data: cdfData.points.map((p: any) => [p.x, p.y]),
         type: 'line',
@@ -258,7 +287,8 @@ function App() {
     if (!statsData) return {};
     return {
       title: { 
-        text: `[${selectedProduct}] ${selectedLot} : ${selectedParam} Variation (Boxplot)`, 
+        text: `${selectedLot} : ${selectedParam} Variation`, 
+        subtext: `Product: ${selectedProduct}`,
         left: 'center', 
         top: '2%',
         textStyle: { color: 'var(--text-primary)', fontSize: 16 } 
@@ -268,12 +298,26 @@ function App() {
         right: '2%',
         top: '2%',
         feature: {
+          dataZoom: { yAxisIndex: 'none', title: { zoom: 'Zoom', back: 'Back' } },
+          restore: { title: 'Restore' },
           saveAsImage: { title: 'Save' }
         }
       },
-      grid: { top: '15%', bottom: '15%', left: '10%', right: '10%' },
-      xAxis: { type: 'category', data: statsData.wafer_ids, axisLine: { lineStyle: { color: 'var(--text-secondary)' } } },
-      yAxis: { type: 'value', splitLine: { lineStyle: { color: 'var(--border-color)' } } },
+      dataZoom: [{ type: 'inside' }, { type: 'slider', bottom: '5%' }],
+      grid: { top: '15%', bottom: '20%', left: '10%', right: '10%' },
+      xAxis: { 
+        name: 'Wafer ID',
+        nameLocation: 'middle',
+        nameGap: 30,
+        type: 'category', 
+        data: statsData.wafer_ids, 
+        axisLine: { lineStyle: { color: 'var(--text-secondary)' } } 
+      },
+      yAxis: { 
+        name: 'Measured Value',
+        type: 'value', 
+        splitLine: { lineStyle: { color: 'var(--border-color)' } } 
+      },
       series: [{
         name: 'Boxplot',
         type: 'boxplot',
@@ -287,7 +331,8 @@ function App() {
     if (!statsData) return {};
     return {
       title: { 
-        text: `[${selectedProduct}] ${selectedLot} : ${selectedParam} Trend (Mean)`, 
+        text: `${selectedLot} : ${selectedParam} Trend (Mean)`, 
+        subtext: `Product: ${selectedProduct}`,
         left: 'center', 
         top: '2%',
         textStyle: { color: 'var(--text-primary)', fontSize: 16 } 
@@ -297,12 +342,26 @@ function App() {
         right: '2%',
         top: '2%',
         feature: {
+          dataZoom: { yAxisIndex: 'none', title: { zoom: 'Zoom', back: 'Back' } },
+          restore: { title: 'Restore' },
           saveAsImage: { title: 'Save' }
         }
       },
-      grid: { top: '15%', bottom: '15%', left: '10%', right: '10%' },
-      xAxis: { type: 'category', data: statsData.wafer_ids, axisLine: { lineStyle: { color: 'var(--text-secondary)' } } },
-      yAxis: { type: 'value', axisLine: { lineStyle: { color: 'var(--text-secondary)' } } },
+      dataZoom: [{ type: 'inside' }, { type: 'slider', bottom: '5%' }],
+      grid: { top: '15%', bottom: '20%', left: '10%', right: '10%' },
+      xAxis: { 
+        name: 'Wafer ID',
+        nameLocation: 'middle',
+        nameGap: 30,
+        type: 'category', 
+        data: statsData.wafer_ids, 
+        axisLine: { lineStyle: { color: 'var(--text-secondary)' } } 
+      },
+      yAxis: { 
+        name: 'Mean Value',
+        type: 'value', 
+        axisLine: { lineStyle: { color: 'var(--text-secondary)' } } 
+      },
       series: [{
         data: statsData.trend,
         type: 'line',
@@ -328,7 +387,7 @@ function App() {
               <Package size={14} style={{ marginRight: '4px' }} /> {t.product}
             </label>
             <select value={selectedProduct} onChange={(e) => setSelectedProduct(e.target.value)} style={{ width: '100%' }}>
-              {meta.products.map(p => <option key={p} value={p}>{p}</option>)}
+              {(meta?.products || []).map(p => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>
 
@@ -337,7 +396,7 @@ function App() {
               <Database size={14} style={{ marginRight: '4px' }} /> {t.lot}
             </label>
             <select value={selectedLot} onChange={(e) => setSelectedLot(e.target.value)} style={{ width: '100%' }}>
-              {meta.lots.map(lot => <option key={lot} value={lot}>{lot}</option>)}
+              {(meta?.lots || []).map(lot => <option key={lot} value={lot}>{lot}</option>)}
             </select>
           </div>
 
@@ -346,9 +405,13 @@ function App() {
               <FlaskConical size={14} style={{ marginRight: '4px' }} /> {t.parameter}
             </label>
             <select value={selectedParam} onChange={(e) => setSelectedParam(e.target.value)} style={{ width: '100%' }}>
-              {meta.parameters.map(p => <option key={p} value={p}>{p}</option>)}
+              {(meta?.parameters || []).map(p => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>
+        </div>
+
+        <div className="sidebar-footer" style={{ marginTop: 'auto', paddingTop: '2rem', fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+          <p>© 2026 Carrot Design Atelier.<br/>All rights reserved.</p>
         </div>
       </aside>
 
@@ -405,8 +468,8 @@ function App() {
                       <span style={{ fontWeight: 600 }}>{wId}</span>
                       <ChevronRight size={14} />
                     </div>
-                    <div style={{ flex: 1, minHeight: 0 }}>
-                      <ReactECharts option={getHeatmapOption(lotData[wId], true)} style={{ height: '100%', width: '100%' }} />
+                    <div style={{ flex: 1, minHeight: 0, aspectRatio: '1/1', margin: '0 auto' }}>
+                      <ReactECharts option={getHeatmapOption(lotData[wId], true)} style={{ height: '100%', width: '100%' }} notMerge={true} />
                     </div>
                   </div>
                 ))}
@@ -435,7 +498,7 @@ function App() {
                     {meta.wafers.map(w => <option key={w} value={w}>{w}</option>)}
                   </select>
                 </div>
-                <div className="chart-container" style={{ height: '500px' }}>
+                <div className="chart-container" style={{ height: '500px', aspectRatio: '1/1', margin: '0 auto' }}>
                   <ReactECharts option={getHeatmapOption(waferData)} style={{ height: '100%' }} />
                 </div>
               </div>

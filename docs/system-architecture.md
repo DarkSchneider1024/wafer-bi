@@ -50,6 +50,7 @@
 ---
 
 ## 5. 相關文件索引
+- [🗺️ 業務邏輯與功能圖譜](./function-map.md) (核心必讀)
 - [🎡 K8S 核心名詞與架構詳解](./k8s-arch-guide.md) (推薦新手閱讀)
 - [🤖 GitOps 與 Argo CD 實作](./cicd-argo.md)
 - [🔐 安全性與 Sealed Secrets](./security-secrets.md)

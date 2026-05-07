@@ -1,11 +1,12 @@
-name: Deploy to OCI OKE
+name: CI - Build and Push Images
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  deploy:
+  build:
+    name: Build and Push to OCIR
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -55,61 +56,3 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/user-service:latest
-
-      - name: Install OCI CLI
-        run: |
-          pip install oci-cli
-          mkdir -p ~/.oci
-          echo "[DEFAULT]" > ~/.oci/config
-          echo "user=${{ secrets.OCI_USER_OCID }}" >> ~/.oci/config
-          echo "fingerprint=${{ secrets.OCI_FINGERPRINT }}" >> ~/.oci/config
-          echo "tenancy=${{ secrets.OCI_TENANCY_OCID }}" >> ~/.oci/config
-          echo "region=${{ secrets.OCI_REGION }}" >> ~/.oci/config
-          echo "key_file=~/.oci/key.pem" >> ~/.oci/config
-          echo "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
-          sed -i 's/user=.*/user=${{ secrets.OCI_USER_OCID }}/' ~/.oci/config
-          echo "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/key.pem
-          chmod 600 ~/.oci/key.pem
-
-      - name: Deploy to Kubernetes
-        run: |
-          oci ce cluster create-kubeconfig --cluster-id "${{ secrets.OKE_CLUSTER_ID }}" --file ~/.kube/config --region "${{ secrets.OCI_REGION }}" --token-version 2.0.0 --kube-endpoint PUBLIC_ENDPOINT
-          
-          # Create Namespaces if not exist
-          kubectl get namespace k8sdemo || kubectl create namespace k8sdemo
-          kubectl get namespace wafer-bi || kubectl create namespace wafer-bi
-          
-          # Create Image Pull Secret with proper quoting to avoid shell errors
-          kubectl create secret docker-registry ocirsecret \
-            --docker-server="${{ secrets.OCI_REGION }}.ocir.io" \
-            --docker-username="${{ secrets.OCI_TENANCY_NAMESPACE }}/${{ secrets.OCI_USER_NAME }}" \
-            --docker-password="${{ secrets.OCI_AUTH_TOKEN }}" \
-            --namespace k8sdemo --dry-run=client -o yaml | kubectl apply -f -
-
-          kubectl create secret docker-registry ocirsecret \
-            --docker-server="${{ secrets.OCI_REGION }}.ocir.io" \
-            --docker-username="${{ secrets.OCI_TENANCY_NAMESPACE }}/${{ secrets.OCI_USER_NAME }}" \
-            --docker-password="${{ secrets.OCI_AUTH_TOKEN }}" \
-            --namespace wafer-bi --dry-run=client -o yaml | kubectl apply -f -
-
-          # Create System Config Secret from GitHub Secrets
-          kubectl create secret generic app-secrets \
-            --from-literal=POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
-            --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-            --from-literal=POSTGRES_USER="${{ secrets.POSTGRES_USER }}" \
-            --namespace k8sdemo --dry-run=client -o yaml | kubectl apply -f -
-
-          kubectl apply -f k8s/ --recursive
-          
-          # Force rollout restart for all services to pull latest images
-          kubectl rollout restart deployment frontend -n k8sdemo || true
-          kubectl rollout restart deployment api-gateway -n k8sdemo || true
-          kubectl rollout restart deployment user-service -n k8sdemo || true
-          kubectl rollout restart deployment wafer-frontend -n wafer-bi || true
-          kubectl rollout restart deployment wafer-backend -n wafer-bi || true
-        env:
-          OCI_CLI_USER: ${{ secrets.OCI_USER_OCID }}
-          OCI_CLI_TENANCY: ${{ secrets.OCI_TENANCY_OCID }}
-          OCI_CLI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
-          OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_PRIVATE_KEY }}
-          OCI_CLI_REGION: ${{ secrets.OCI_REGION }}

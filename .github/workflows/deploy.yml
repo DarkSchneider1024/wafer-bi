@@ -71,10 +71,10 @@ jobs:
       - name: Update Kubernetes Manifests
         run: |
           # 使用 regex 匹配冒號後的任何標籤並替換為當前的 commit sha
-          sed -i "s|wafer-bi-backend:.*|wafer-bi-backend:${{ github.sha }}|g" k8s/wafer-bi-deployment.yaml
-          sed -i "s|wafer-bi-frontend:.*|wafer-bi-frontend:${{ github.sha }}|g" k8s/wafer-bi-deployment.yaml
-          sed -i "s|api-gateway:.*|api-gateway:${{ github.sha }}|g" k8s/api-gateway/deployment.yaml
-          sed -i "s|user-service:.*|user-service:${{ github.sha }}|g" k8s/user-service/deployment.yaml
+          sed -i "s|wafer-bi-backend:.*|wafer-bi-backend:${{ github.sha }}|g" k8s/base/wafer-bi-deployment.yaml
+          sed -i "s|wafer-bi-frontend:.*|wafer-bi-frontend:${{ github.sha }}|g" k8s/base/wafer-bi-deployment.yaml
+          sed -i "s|api-gateway:.*|api-gateway:${{ github.sha }}|g" k8s/base/api-gateway/deployment.yaml
+          sed -i "s|user-service:.*|user-service:${{ github.sha }}|g" k8s/base/user-service/deployment.yaml
           
           # 設定 Git 使用者資訊
           git config --global user.name "github-actions[bot]"
@@ -84,6 +84,7 @@ jobs:
           if [ -n "$(git status --porcelain)" ]; then
             git add k8s/
             git commit -m "chore: update image tags to ${{ github.sha }} [skip ci]"
+            git pull --rebase origin main
             git push
           else
             echo "No changes to commit"

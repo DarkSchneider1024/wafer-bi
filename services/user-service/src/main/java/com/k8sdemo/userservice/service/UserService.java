@@ -68,6 +68,7 @@ public class UserService {
      * Equivalent to Go's loginHandler.
      */
     public LoginResponse login(LoginRequest request) {
+        log.info("Login attempt for username: {}", request.username());
         User user = userRepository.findByUsername(request.username())
                 .orElseThrow(() -> new SecurityException("Invalid credentials"));
 

@@ -71,15 +71,8 @@ public class UserService {
         User user = userRepository.findByUsername(request.username())
                 .orElseThrow(() -> new SecurityException("Invalid credentials"));
 
-        boolean matches = false;
         String storedHash = user.getPasswordHash();
-
-        if (storedHash != null && storedHash.length() == 32) {
-            String inputMd5 = md5(request.password());
-            matches = inputMd5.equalsIgnoreCase(storedHash);
-        } else {
-            matches = passwordEncoder.matches(request.password(), storedHash);
-        }
+        boolean matches = passwordEncoder.matches(request.password(), storedHash);
 
         if (!matches) {
             throw new SecurityException("Invalid credentials");
@@ -88,20 +81,6 @@ public class UserService {
         String token = generateToken(user);
         log.info("User logged in: id={}, email={}", user.getId(), user.getEmail());
         return new LoginResponse(token, user);
-    }
-
-    private String md5(String input) {
-        try {
-            java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
-            byte[] array = md.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder();
-            for (byte b : array) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        } catch (java.security.NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     /**

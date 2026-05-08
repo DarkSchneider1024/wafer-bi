@@ -41,12 +41,26 @@
 
 ## 💻 快速啟動 (Quick Start)
 
-### 1. 地端開發模式
+### 1. 地端開發模式 (Local Development)
+
+由於本專案為微服務架構，地端啟動最簡單的方式是使用 **Docker Compose**。
+
+#### A. 一鍵啟動 (推薦)
 ```bash
-# 啟動後端與前端
-# 詳情請參考各目錄下的 README.md
-cd services/frontend && npm install && npm run dev
+# 確保已安裝 Docker Desktop 並啟動
+docker-compose up -d --build
 ```
+這將會自動啟動 PostgreSQL、Redis、以及所有的微服務。
+
+#### B. 手動開發模式 (各別啟動)
+如果您需要開發特定模組，請按照以下順序啟動：
+1. **基礎設施**：啟動 PostgreSQL 資料庫。
+2. **User Service (Java)**：進入 `services/user-service` 執行 `./mvnw spring-boot:run`。
+3. **Wafer BI Service (Python)**：進入 `services/wafer-bi` 執行 `python main.py`。
+4. **API Gateway (Node.js)**：進入 `services/api-gateway` 執行 `npm start`。
+5. **Frontend (React)**：進入 `services/frontend` 執行 `npm run dev`。
+
+詳情請參閱：**[地端開發與環境配置指南](./docs/function-tech/system-architecture.md#5-網路架構與埠號對照-networking--ports)**
 
 ### 2. 雲端部署與自動化
 本專案已全面自動化，只要推送至 `main` 分支，CI/CD 將自動更新雲端環境。

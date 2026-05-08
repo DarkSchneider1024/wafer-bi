@@ -143,4 +143,55 @@ graph TD
 - **動手修**：嘗試刪掉一個 Pod `kubectl delete pod [pod-name]`，觀察 K8S 是不是真的會自動生出一個新的（Self-healing）。
 
 ---
-*這份文件是由 AI 協助整理，旨在讓複雜的 K8S 架構變得易於理解。*
+## 5. 常用維運指令集 (Troubleshooting Cheat Sheet)
+
+在實際維運 Wafer BI 平台時，以下指令是你最常使用的「急救包」：
+
+### 5.1 狀態觀察 (Observability)
+- **查看所有資源狀態**：
+  ```bash
+  kubectl get all -n k8sdemo
+  ```
+- **監控 Pod 動態 (持續更新)**：
+  ```bash
+  kubectl get pods -n k8sdemo -w
+  ```
+- **查看 Pod 詳細資訊 (排查 ImagePullBackOff 或 Pending)**：
+  ```bash
+  kubectl describe pod [POD_NAME] -n k8sdemo
+  ```
+
+### 5.2 故障排除 (Debugging)
+- **查看即時日誌**：
+  ```bash
+  kubectl logs -f [POD_NAME] -n k8sdemo
+  # e.g. kubectl logs -f user-service-56688dc449-4sxtf -n k8sdemo
+  ```
+- **查看「上一刻」崩潰的日誌 (排查 CrashLoopBackOff)**：
+  ```bash
+  kubectl logs [POD_NAME] -n k8sdemo --previous
+  # e.g. kubectl logs otel-collector-664959bffd-pr2hk -n k8sdemo --previous
+  ```
+- **進入容器內部執行指令**：
+  ```bash
+  kubectl exec -it [POD_NAME] -n k8sdemo -- /bin/sh
+  # e.g. kubectl exec -it api-gateway-7995b54ddd-q56qj -n k8sdemo -- /bin/sh
+  ```
+
+### 5.3 服務變更與重啟 (Management)
+- **強制重啟服務 (讓 Pod 重新拉取設定或重啟)**：
+  ```bash
+  kubectl rollout restart deployment/[DEPLOYMENT_NAME] -n k8sdemo
+  # e.g. kubectl rollout restart deployment/user-service -n k8sdemo
+  ```
+- **手動更新映像檔版本 (解決 ImagePullBackOff)**：
+  ```bash
+  kubectl set image deployment/[DEPLOYMENT_NAME] [CONTAINER_NAME]=[IMAGE_PATH] -n k8sdemo
+  # e.g. kubectl set image deployment/jaeger jaeger=docker.io/jaegertracing/all-in-one:1.60.0 -n k8sdemo
+  ```
+- **手動進入資料庫清理數據 (例如重置 MD5 舊密碼)**：
+  ```bash
+  kubectl exec -it deployment/postgres -n k8sdemo -- psql -U admin -d k8sdemo -c "DELETE FROM users;"
+  ```
+
+---

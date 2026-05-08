@@ -36,3 +36,6 @@ system-config-raw.yaml
 secrets_backup.txt
 *.pem
 *.key
+
+# iThome Ironman
+docs/鐵人賽/

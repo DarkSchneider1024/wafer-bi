@@ -9,6 +9,8 @@ import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -70,13 +72,23 @@ public class UserService {
     public LoginResponse login(LoginRequest request) {
         log.info("Login attempt for username: {}", request.username());
         User user = userRepository.findByUsername(request.username())
-                .orElseThrow(() -> new SecurityException("Invalid credentials"));
+                .orElseGet(() -> {
+                    log.warn("User not found in DB: {}", request.username());
+                    return null;
+                });
+
+        if (user == null) {
+            throw new BadCredentialsException("Invalid credentials");
+        }
 
         String storedHash = user.getPasswordHash();
         boolean matches = passwordEncoder.matches(request.password(), storedHash);
+        
+        log.info("Password match attempt: identifier={}, matches={}", request.username(), matches);
+        log.debug("DEBUG - Input pass: {}, Stored hash: {}", request.password(), storedHash);
 
         if (!matches) {
-            throw new SecurityException("Invalid credentials");
+            throw new BadCredentialsException("Invalid credentials");
         }
 
         String token = generateToken(user);

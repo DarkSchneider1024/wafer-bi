@@ -68,8 +68,35 @@ graph TD
 ### 4.3 演示用帳號 (Default Demo Accounts)
 | 帳號 | 密碼 | 初始群組 | 說明 |
 |-------|------|----------|------|
-| `admin` | `admin@carrot` | `admin` | 系統管理員 (DB 內以 MD5 加密存儲) |
-| `demo01` | `demo01_password_123` | `admin` | 演示專用帳號 (具備 Sudo 權限) |
+| `admin` | `admin` | `admin` | 系統管理員 (使用 **BCrypt** 強雜湊加密) |
+| `demo01` | `demo01_password_123` | `user` | 演示專用帳號 |
+
+---
+
+## 5. 資料庫實體關係圖 (ER Diagram)
+
+本系統使用 **PostgreSQL**，並透過 **Liquibase** 進行 Schema 版本管控。
+
+```mermaid
+erDiagram
+    USERS {
+        Long id PK
+        String username "唯一用戶名"
+        String email "唯一電子郵件"
+        String password_hash "BCrypt 雜湊值"
+        String full_name
+        String user_group "admin / user"
+        Timestamp created_at
+    }
+    
+    WAFER_DATA {
+        String lot_id PK
+        String wafer_id PK
+        Float thickness
+        Float resistance
+        Timestamp inspection_time
+    }
+```
 
 ---
 

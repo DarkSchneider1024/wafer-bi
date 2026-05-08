@@ -92,7 +92,7 @@ const authenticateToken = (req, res, next) => {
     return res.status(401).json({ error: 'Access token required' });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET || 'default_secret', (err, user) => {
+  jwt.verify(token, process.env.JWT_SECRET || 'wafer_bi_platform_default_secret_key_32_bytes_long', (err, user) => {
     if (err) {
       return res.status(403).json({ error: 'Invalid or expired token' });
     }
@@ -171,6 +171,16 @@ app.use(
     changeOrigin: true,
     pathRewrite: { '^/api/auth': '/auth' },
     onProxyReq: (proxyReq) => console.log(`[Proxy Auth] -> ${USER_SERVICE_URL}${proxyReq.path}`)
+  })
+);
+
+// Support direct /auth prefix (as routed by Ingress)
+app.use(
+  createProxyMiddleware('/auth', {
+    target: USER_SERVICE_URL,
+    changeOrigin: true,
+    // No path rewrite needed for /auth -> /auth
+    onProxyReq: (proxyReq) => console.log(`[Proxy Auth Direct] -> ${USER_SERVICE_URL}${proxyReq.path}`)
   })
 );
 

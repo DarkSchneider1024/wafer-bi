@@ -43,6 +43,9 @@ spec:
           ports:
             - containerPort: 3002
               name: http
+          env:
+            - name: SPRING_LIQUIBASE_ENABLED
+              value: "false"
           envFrom:
             - configMapRef:
                 name: app-config

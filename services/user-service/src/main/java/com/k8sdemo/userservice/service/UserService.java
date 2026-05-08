@@ -76,7 +76,7 @@ public class UserService {
                 });
 
         if (user == null) {
-            throw new RuntimeException("Invalid credentials");
+            throw new SecurityException("Invalid credentials");
         }
 
         String storedHash = user.getPasswordHash();
@@ -86,7 +86,7 @@ public class UserService {
         log.debug("DEBUG - Input pass: {}, Stored hash: {}", request.password(), storedHash);
 
         if (!matches) {
-            throw new RuntimeException("Invalid credentials");
+            throw new SecurityException("Invalid credentials");
         }
 
         String token = generateToken(user);

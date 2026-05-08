@@ -29,7 +29,7 @@ spring:
 # JWT
 app:
   jwt:
-    secret: ${JWT_SECRET:default_secret}
+    secret: ${JWT_SECRET:wafer_bi_platform_default_secret_key_32_bytes_long}
     expiration-ms: 86400000  # 24 hours
 
 # Actuator — expose health check endpoints

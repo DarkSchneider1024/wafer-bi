@@ -44,7 +44,33 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
   - 勾選 `Prune Resources`：自動刪除 Git 中已移除的資源。
   - 勾選 `Self Heal`：防止手動在叢集中修改資源（確保 Git 為唯一真理）。
 
-## 4. 為什麼選擇 GitOps？
+## 4. 進階：動態標籤與自動化 GitOps 流程
+
+為了確保 OKE 叢集能 100% 同步到最新代碼，我們實作了「動態標籤 (Dynamic Tagging)」策略：
+
+### 4.1 為什麼需要動態標籤？
+如果 YAML 檔中永遠使用 `:latest`，Argo CD 會因為「檔案內容未變動」而不會觸發滾動更新。這會導致即使 Docker Registry 有新映像檔，Pod 依然跑著舊代碼。
+
+### 4.2 運作邏輯
+1.  **Unique Tag**: GitHub Actions 每次構建時，會產生一個基於 `GITHUB_SHA` 的唯一標籤。
+2.  **Manifest Update**: 構建完成後，GitHub Actions 會自動修改 `k8s/` 目錄下的 Deployment YAML 檔案，將映像檔標籤從 `latest` 改為具體的 `Commit-SHA`。
+3.  **Git Push Back**: GHA 將修改後的 YAML 推回 GitHub 倉庫。
+4.  **Argo CD Sync**: Argo CD 偵測到 Git 內容變動，立即發動滾動更新 (Rolling Update)。
+
+### 4.3 流程示意圖
+```mermaid
+graph LR
+    Dev[開發者 Push] --> GHA[GitHub Actions]
+    GHA --> Build[Build & Push Image]
+    Build --> Update[Update YAML with SHA]
+    Update --> Push[Push YAML to Git]
+    Push --> Argo[Argo CD Detected]
+    Argo --> Deploy[Deploy to OKE]
+```
+
+透過此流程，我們實現了真正的「版本可追溯性」與「自動化部署閉環」。
+
+## 5. 為什麼選擇 GitOps？
 
 1.  **版本控制一切**：每一次部署都有 Git Commit 紀錄。
 2.  **安全性**：GitHub Actions 不再需要擁有叢集的 `admin` 權限，僅需更新 Git 代碼。

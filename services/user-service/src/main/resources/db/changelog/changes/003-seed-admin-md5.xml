@@ -10,7 +10,7 @@
         <insert tableName="users">
             <column name="email" value="admin"/>
             <column name="name" value="System Admin"/>
-            <column name="password_hash" value="068305c93df5300f898a1a3617e476e3"/>
+            <column name="password_hash" value="$2a$12$R9h/cIPz0gi.URQHeNHGaOT.28dmE8L0re1QSR79xUe1fFytN7L0K"/>
             <column name="user_group" value="admin"/>
         </insert>
     </changeSet>

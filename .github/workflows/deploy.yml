@@ -31,7 +31,9 @@ jobs:
           context: ./services/wafer-bi
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-backend:latest
+          tags: |
+            ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-backend:latest
+            ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-backend:${{ github.sha }}
 
       - name: Build and Push Frontend
         uses: docker/build-push-action@v5
@@ -39,7 +41,9 @@ jobs:
           context: ./services/frontend
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-frontend:latest
+          tags: |
+            ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-frontend:latest
+            ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-frontend:${{ github.sha }}
 
       - name: Build and Push API Gateway
         uses: docker/build-push-action@v5
@@ -47,7 +51,9 @@ jobs:
           context: ./services/api-gateway
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/api-gateway:latest
+          tags: |
+            ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/api-gateway:latest
+            ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/api-gateway:${{ github.sha }}
 
       - name: Build and Push User Service
         uses: docker/build-push-action@v5
@@ -55,4 +61,21 @@ jobs:
           context: ./services/user-service
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/user-service:latest
+          tags: |
+            ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/user-service:latest
+            ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/user-service:${{ github.sha }}
+
+      - name: Update Kubernetes Manifests
+        run: |
+          # 使用 sed 修改所有 Deployment 的標籤為當前的 commit sha
+          sed -i "s|wafer-bi-backend:latest|wafer-bi-backend:${{ github.sha }}|g" k8s/wafer-bi-deployment.yaml
+          sed -i "s|wafer-bi-frontend:latest|wafer-bi-frontend:${{ github.sha }}|g" k8s/wafer-bi-deployment.yaml
+          sed -i "s|api-gateway:latest|api-gateway:${{ github.sha }}|g" k8s/api-gateway/deployment.yaml
+          sed -i "s|user-service:latest|user-service:${{ github.sha }}|g" k8s/user-service/deployment.yaml
+          
+          # 設定 Git 使用者資訊並推回倉庫
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add k8s/
+          git commit -m "chore: update image tags to ${{ github.sha }} [skip ci]"
+          git push

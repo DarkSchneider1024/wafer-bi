@@ -27,6 +27,20 @@ spec:
                 name: api-gateway-service
                 port:
                   number: 8080
+          - path: /auth
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway-service
+                port:
+                  number: 8080
+          - path: /api/v1
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway-service
+                port:
+                  number: 8080
           # Wafer BI Frontend
           - path: /
             pathType: Prefix

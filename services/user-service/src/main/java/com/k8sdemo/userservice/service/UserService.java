@@ -9,8 +9,6 @@ import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -78,7 +76,7 @@ public class UserService {
                 });
 
         if (user == null) {
-            throw new BadCredentialsException("Invalid credentials");
+            throw new RuntimeException("Invalid credentials");
         }
 
         String storedHash = user.getPasswordHash();
@@ -88,7 +86,7 @@ public class UserService {
         log.debug("DEBUG - Input pass: {}, Stored hash: {}", request.password(), storedHash);
 
         if (!matches) {
-            throw new BadCredentialsException("Invalid credentials");
+            throw new RuntimeException("Invalid credentials");
         }
 
         String token = generateToken(user);

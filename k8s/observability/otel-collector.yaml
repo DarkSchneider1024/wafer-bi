@@ -13,12 +13,8 @@ data:
     processors:
       batch:
     exporters:
-      logging:
-        loglevel: info
-      jaeger:
-        endpoint: "jaeger-service.k8sdemo.svc.cluster.local:14250"
-        tls:
-          insecure: true
+      debug:
+        verbosity: normal
       otlp:
         endpoint: "jaeger-service.k8sdemo.svc.cluster.local:4317"
         tls:
@@ -28,7 +24,7 @@ data:
         traces:
           receivers: [otlp]
           processors: [batch]
-          exporters: [otlp, logging]
+          exporters: [otlp, debug]
 ---
 apiVersion: apps/v1
 kind: Deployment

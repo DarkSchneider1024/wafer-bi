@@ -178,8 +178,28 @@ graph TD
   # e.g. kubectl exec -it api-gateway-7995b54ddd-q56qj -n k8sdemo -- /bin/sh
   ```
 
-### 5.3 服務變更與重啟 (Management)
-- **強制重啟服務 (讓 Pod 重新拉取設定或重啟)**：
+### 5.4 常見大坑與解決方案 (Day 29 實戰經驗)
+
+| 問題現象 | 原因分析 | 解決方案 |
+| :--- | :--- | :--- |
+| **ImagePullBackOff** | OKE 無法解析簡寫鏡像名 (如 `postgres`) | 必須使用完整 FQDN (如 `docker.io/library/postgres`) |
+| **Invalid credentials** | JWT Secret 長度不足 (HS256 要求 > 32 bytes) | 將 `JWT_SECRET` 加長至 32 字元以上的隨機字串 |
+| **Liquibase 沒反應/報錯** | Master XML 有重複宣告或相對路徑包含錯誤 | 刪除重複 `<?xml?>` 並確保 `relativeToChangelogFile="true"` |
+| **403 Forbidden (GHA)** | GHA Bot 無權推送 Manifest 更新 | 在 `.github/workflows/deploy.yml` 加入 `contents: write` 權限 |
+| **Pod 啟動中途重啟 (60s)** | `startupProbe` 門檻太低 (70s)，低於 Spring/OTel 啟動時間 | 將 `failureThreshold` 調高至 30 (150秒+) |
+| **更新沒反應 (Split-Brain)** | 滾動更新未完成或 Pod 版本不一 | `kubectl scale --replicas=0` 徹底清場後重新擴容 |
+
+---
+
+## 6. GitOps 自動化工作流 (CI/CD Evolution)
+
+為了確保部署 100% 同步，我們實作了「動態標籤回填」機制：
+1. **Build**: GHA 編譯映像檔並附上 `GITHUB_SHA` 標籤。
+2. **Backfill**: GHA 自動使用 `sed` 修改 `k8s/` 下的 YAML 檔標籤。
+3. **Commit**: GHA 將變更後的 YAML 推回 Git 倉庫。
+4. **Sync**: Argo CD 偵測到 YAML 變更，立刻對 OKE 發動滾動更新。
+
+這樣可以保證每一版部署都是唯一的，且完全不需要手動 `rollout restart`。
   ```bash
   kubectl rollout restart deployment/[DEPLOYMENT_NAME] -n k8sdemo
   # e.g. kubectl rollout restart deployment/user-service -n k8sdemo

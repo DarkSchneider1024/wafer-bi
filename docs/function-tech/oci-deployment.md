@@ -53,6 +53,7 @@
 
 - **ERR_CONNECTION_RESET**：通常是 K8S Service 的 `targetPort` 與容器內的埠 (5173/8000) 不匹配。
 - **404 Not Found**：請檢查 `k8s/ingress.yaml` 中的 `host` 設定是否已移除或改為通配符。
+- **ImagePullBackOff (Ambiguous list)**：在 OKE 上部署公有映像檔時，建議加上完整 Registry 前綴（如 `docker.io/`），避免因為短名稱限制導致抓取失敗。
 - **無數據顯示**：檢查前端 `App.tsx` 中的 `API_BASE` 是否已改為動態路徑 `/api`。
 
 ---

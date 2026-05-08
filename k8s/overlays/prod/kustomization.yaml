@@ -4,7 +4,7 @@ kind: Kustomization
 resources:
   - ../../base
 
-# Production specific labels
-commonLabels:
-  env: production
+# Production specific annotations (safe - doesn't modify selectors)
+commonAnnotations:
+  environment: production
   managed-by: argocd

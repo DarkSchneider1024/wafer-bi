@@ -100,8 +100,7 @@ graph TD
     *   [🏗️ 數據流與追蹤架構](./function-tech/data-flow-arch.md)
 *   **🎡 其他參考**
     *   [K8S 核心名詞與架構詳解](./k8s-arch-guide.md)
-    *   [🤖 GitOps 與 Argo CD 實作](./cicd-argo.md)
-    *   [🚀 Oracle Cloud (OCI) 部署指南](./oci-deployment.md)
+    *   [🤖 GitOps 與 部署維運 SOP](./deployment-sop.md)
 
 ---
 

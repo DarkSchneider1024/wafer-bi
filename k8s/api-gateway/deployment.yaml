@@ -27,7 +27,7 @@ spec:
         - name: ocirsecret
       containers:
         - name: api-gateway
-          image: ap-tokyo-1.ocir.io/nrf3s0wa8lv5/api-gateway:7036fcf8a4ad05eab0ad878ffb20660d94637811
+          image: ap-tokyo-1.ocir.io/nrf3s0wa8lv5/api-gateway:a29830361d78f507c4550241f228fdbc7eaa612c
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

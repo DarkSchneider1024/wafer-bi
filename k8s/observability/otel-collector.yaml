@@ -47,7 +47,7 @@ spec:
     spec:
       containers:
       - name: otel-collector
-        image: otel/opentelemetry-collector-contrib:0.90.0
+        image: docker.io/otel/opentelemetry-collector-contrib:0.90.0
         imagePullPolicy: Always
         command:
         - "/otelcol-contrib"

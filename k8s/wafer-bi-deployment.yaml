@@ -24,7 +24,7 @@ spec:
         - name: ocirsecret
       containers:
       - name: backend
-        image: ap-tokyo-1.ocir.io/nrf3s0wa8lv5/wafer-bi-backend:4e208fee79ae2c132bab3a034e37419ddccf53b6
+        image: ap-tokyo-1.ocir.io/nrf3s0wa8lv5/wafer-bi-backend:d332da74696656de7bfce4f2657269d81a728a48
         imagePullPolicy: Always
         ports:
         - containerPort: 8000
@@ -73,7 +73,7 @@ spec:
         - name: ocirsecret
       containers:
       - name: frontend
-        image: ap-tokyo-1.ocir.io/nrf3s0wa8lv5/wafer-bi-frontend:4e208fee79ae2c132bab3a034e37419ddccf53b6
+        image: ap-tokyo-1.ocir.io/nrf3s0wa8lv5/wafer-bi-frontend:d332da74696656de7bfce4f2657269d81a728a48
         imagePullPolicy: Always
         ports:
         - containerPort: 80

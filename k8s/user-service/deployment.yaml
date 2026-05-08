@@ -38,7 +38,7 @@ spec:
         - name: ocirsecret
       containers:
         - name: user-service
-          image: ap-tokyo-1.ocir.io/nrf3s0wa8lv5/user-service:latest
+          image: ap-tokyo-1.ocir.io/nrf3s0wa8lv5/user-service:5498c05342004f4648e26a8b6baf36ef2d461b19
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3002

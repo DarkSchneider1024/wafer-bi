@@ -6,6 +6,7 @@ resources:
   - app-config.yaml
   - configmap.yaml
   - cluster-issuer.yaml
+  - argocd-ingress.yaml
   - ingress.yaml
   - network-policy.yaml
   - service-proxy.yaml

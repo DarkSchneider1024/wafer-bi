@@ -19,6 +19,8 @@ spec:
     metadata:
       labels:
         app: wafer-backend
+        env: production
+        managed-by: argocd
     spec:
       imagePullSecrets:
         - name: ocirsecret
@@ -68,6 +70,8 @@ spec:
     metadata:
       labels:
         app: wafer-frontend
+        env: production
+        managed-by: argocd
     spec:
       imagePullSecrets:
         - name: ocirsecret

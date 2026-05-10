@@ -20,6 +20,8 @@ spec:
     metadata:
       labels:
         app: user-service
+        env: production
+        managed-by: argocd
     spec:
       initContainers:
         - name: wait-for-postgres

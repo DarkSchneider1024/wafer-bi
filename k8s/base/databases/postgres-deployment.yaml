@@ -17,6 +17,8 @@ spec:
     metadata:
       labels:
         app: postgres
+        env: production
+        managed-by: argocd
     spec:
       containers:
         - name: postgres

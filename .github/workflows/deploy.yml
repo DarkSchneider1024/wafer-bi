@@ -21,12 +21,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to OCIR
+      - name: Login to GHCR
         uses: docker/login-action@v3
         with:
-          registry: ${{ secrets.OCI_REGION }}.ocir.io
-          username: ${{ secrets.OCI_TENANCY_NAMESPACE }}/${{ secrets.OCI_USER_NAME }}
-          password: ${{ secrets.OCI_AUTH_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and Push Backend
         uses: docker/build-push-action@v5
@@ -35,8 +35,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-backend:latest
-            ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-backend:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/wafer-bi-backend:latest
+            ghcr.io/${{ github.repository_owner }}/wafer-bi-backend:${{ github.sha }}
 
       - name: Build and Push Frontend
         uses: docker/build-push-action@v5
@@ -45,8 +45,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-frontend:latest
-            ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/wafer-bi-frontend:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/wafer-bi-frontend:latest
+            ghcr.io/${{ github.repository_owner }}/wafer-bi-frontend:${{ github.sha }}
 
       - name: Build and Push API Gateway
         uses: docker/build-push-action@v5
@@ -55,8 +55,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/api-gateway:latest
-            ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/api-gateway:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/api-gateway:latest
+            ghcr.io/${{ github.repository_owner }}/api-gateway:${{ github.sha }}
 
       - name: Build and Push User Service
         uses: docker/build-push-action@v5
@@ -65,8 +65,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/user-service:latest
-            ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_TENANCY_NAMESPACE }}/user-service:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/user-service:latest
+            ghcr.io/${{ github.repository_owner }}/user-service:${{ github.sha }}
 
       - name: Update Kubernetes Manifests
         run: |

@@ -1,3 +1,8 @@
+# CI/CD Workflow for Wafer BI Platform
+# ----------------------------------
+# Migrated from OCI Registry (OCIR) to GitHub Container Registry (GHCR) 
+# to avoid OCI Free Tier service restrictions and credential issues.
+# ----------------------------------
 name: CI - Build and Push Images
 
 on:
@@ -12,9 +17,9 @@ jobs:
     name: Build and Push to OCIR
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      packages: write
-
+      contents: write   # Required for updating k8s manifests in the repo
+      packages: write   # Required for pushing images to ghcr.io
+    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -25,12 +30,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # IMPORTANT: Docker image paths MUST be lowercase. 
+      # This step converts the GitHub Username (which may have uppercase) to lowercase.
       - name: Lowercase repo owner
         run: |
           echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
         env:
           OWNER: '${{ github.repository_owner }}'
 
+      # Log in using the built-in GITHUB_TOKEN. No OCI Secrets required for this part.
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:

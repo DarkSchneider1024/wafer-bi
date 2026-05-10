@@ -22,6 +22,8 @@ spec:
         restartedAt: "2026-05-07T06:30:00Z"
       labels:
         app: api-gateway
+        env: production
+        managed-by: argocd
     spec:
       imagePullSecrets:
         - name: ocirsecret

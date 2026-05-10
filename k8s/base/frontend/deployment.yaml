@@ -22,7 +22,7 @@ spec:
         - name: ocirsecret
       containers:
         - name: frontend
-          image: ap-tokyo-1.ocir.io/nrf3s0wa8lv5/wafer-bi-frontend:latest
+          image: ghcr.io/DarkSchneider1024/wafer-bi-frontend:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80

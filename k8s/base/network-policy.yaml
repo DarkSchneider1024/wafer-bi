@@ -17,7 +17,7 @@ spec:
     - from:
         - podSelector: {}
 ---
-# Restrict direct access to databases â€” only backend services can connect
+# Restrict direct access to databases â€?only backend services can connect
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

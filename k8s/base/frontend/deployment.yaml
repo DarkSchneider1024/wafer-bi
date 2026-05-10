@@ -22,7 +22,7 @@ spec:
         - name: ocirsecret
       containers:
         - name: frontend
-          image: ghcr.io/DarkSchneider1024/wafer-bi-frontend:latest
+          image: ghcr.io/darkschneider1024/wafer-bi-frontend:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80

@@ -9,5 +9,6 @@
     <include file="changes/002-add-user-group.xml" relativeToChangelogFile="true"/>
     <include file="changes/003-seed-admin-md5.xml" relativeToChangelogFile="true"/>
     <include file="changes/004-separate-username.xml" relativeToChangelogFile="true"/>
+    <include file="changes/005-rbac-schema.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

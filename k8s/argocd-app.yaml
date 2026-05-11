@@ -6,15 +6,30 @@ metadata:
 spec:
   project: default
   source:
+    # 這裡指向您的 GitHub 倉庫位址
     repoURL: https://github.com/DarkSchneider1024/wafer-bi.git
-    targetRevision: HEAD
+    # 監控的分支
+    targetRevision: main
+    # K8s 設定檔存放的路徑 (改用 prod overlay)
     path: k8s/overlays/prod
   destination:
+    # 部署到當前的 Kubernetes 叢集
     server: https://kubernetes.default.svc
+    # 部署到的命名空間
     namespace: k8sdemo
   syncPolicy:
     automated:
+      # 自動刪除 Git 裡已經刪掉的舊資源
       prune: true
+      # 如果有人手動改了 K8s（例如 kubectl edit），自動把它改回來，維持與 Git 一致
       selfHeal: true
     syncOptions:
+      # 如果命名空間不存在，自動建立它
       - CreateNamespace=true
+    retry:
+      # 如果同步失敗，自動重試 5 次
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

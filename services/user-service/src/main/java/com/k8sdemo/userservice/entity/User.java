@@ -30,8 +30,9 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(name = "user_group", nullable = false, length = 50)
-    private String userGroup = "user";
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "group_id")
+    private Group group;
 
     // ---- Getters & Setters ----
 
@@ -53,6 +54,11 @@ public class User {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public String getUserGroup() { return userGroup; }
-    public void setUserGroup(String userGroup) { this.userGroup = userGroup; }
+    public Group getGroup() { return group; }
+    public void setGroup(Group group) { this.group = group; }
+
+    @JsonProperty("user_group")
+    public String getUserGroupName() {
+        return group != null ? group.getName() : "user";
+    }
 }

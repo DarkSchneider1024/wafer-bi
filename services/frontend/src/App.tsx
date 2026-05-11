@@ -104,6 +104,7 @@ function App() {
   // --- Auth States ---
   const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem('user') || 'null'));
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [menus, setMenus] = useState<any[]>(JSON.parse(localStorage.getItem('menus') || '[]'));
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [authError, setAuthError] = useState('');
 
@@ -196,13 +197,54 @@ function App() {
     setAuthError('');
     try {
       const res = await axios.post(`${API_BASE}/auth/login`, loginForm);
-      const { token: newToken, user: newUser } = res.data;
+      const { token: newToken, user: newUser, menus: newMenus } = res.data;
       localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(newUser));
+      localStorage.setItem('menus', JSON.stringify(newMenus));
       setToken(newToken);
       setUser(newUser);
+      setMenus(newMenus);
     } catch (err: any) {
       setAuthError(err.response?.data?.error || 'Login failed');
+    }
+  };
+
+  const handleUpdateUser = async (id: number, data: any) => {
+    setUserActionLoading(true);
+    try {
+      await axios.put(`${API_BASE}/users/${id}`, data);
+      fetchUsers();
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Failed to update user");
+    } finally {
+      setUserActionLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (id: number) => {
+    const newPass = prompt("Enter new password:");
+    if (!newPass) return;
+    setUserActionLoading(true);
+    try {
+      await axios.patch(`${API_BASE}/users/${id}/password`, { password: newPass });
+      alert("Password reset successfully");
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Failed to reset password");
+    } finally {
+      setUserActionLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this user?")) return;
+    setUserActionLoading(true);
+    try {
+      await axios.delete(`${API_BASE}/users/${id}`);
+      fetchUsers();
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Failed to delete user");
+    } finally {
+      setUserActionLoading(false);
     }
   };
 
@@ -228,8 +270,10 @@ function App() {
           const { token: newToken, user: newUser } = res.data;
           localStorage.setItem('token', newToken);
           localStorage.setItem('user', JSON.stringify(newUser));
+          localStorage.setItem('menus', JSON.stringify(res.data.menus || []));
           setToken(newToken);
           setUser(newUser);
+          setMenus(res.data.menus || []);
           
           // 登入成功後清除 URL 參數，避免重新整理時重複觸發
           const newUrl = window.location.pathname + window.location.hash;
@@ -580,7 +624,14 @@ function App() {
     );
   }
 
-  const NAV_ITEMS = [
+  const dynamicMenus = menus.map(m => ({
+    id: m.code,
+    label: lang === 'zh' ? m.name : m.code.replace(/-/g, ' ').toUpperCase(),
+    roles: ['*'] // 已經由後端過濾
+  }));
+
+  // 如果是 admin 且沒有獲得 menus (例如資料庫為空)，保留預設管理選單
+  const NAV_ITEMS = dynamicMenus.length > 0 ? dynamicMenus : [
     { id: 'lot-overview', label: t.lotOverview, roles: ['admin', 'demo01'] },
     { id: 'wafer-detail', label: t.waferDetail, roles: ['admin', 'demo01'] },
     { id: 'statistical-analysis', label: t.statsAnalysis, roles: ['admin', 'demo01'] },
@@ -815,6 +866,7 @@ function App() {
                         <th>{t.name}</th>
                         <th>{t.email}</th>
                         <th>{t.group}</th>
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -824,6 +876,16 @@ function App() {
                           <td style={{ fontWeight: 600 }}>{u.name}</td>
                           <td>{u.email}</td>
                           <td><span className="badge" style={{ background: u.user_group === 'admin' ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)' }}>{u.user_group}</span></td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <button className="btn-icon" title="Reset Password" onClick={() => handleResetPassword(u.id)} style={{ padding: '4px' }}>
+                                <RefreshCw size={14} />
+                              </button>
+                              <button className="btn-icon" title="Delete User" onClick={() => handleDeleteUser(u.id)} style={{ padding: '4px', color: '#ef4444' }}>
+                                <Package size={14} />
+                              </button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>

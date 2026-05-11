@@ -22,6 +22,8 @@ public class UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
     private final UserRepository userRepository;
+    private final GroupRepository groupRepository;
+    private final MenuRepository menuRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Value("${app.jwt.secret}")
@@ -30,8 +32,10 @@ public class UserService {
     @Value("${app.jwt.expiration-ms}")
     private long jwtExpirationMs;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, GroupRepository groupRepository, MenuRepository menuRepository) {
         this.userRepository = userRepository;
+        this.groupRepository = groupRepository;
+        this.menuRepository = menuRepository;
     }
 
     /**
@@ -54,12 +58,19 @@ public class UserService {
         user.setEmail(request.email());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setName(request.name());
-        if (request.userGroup() != null && !request.userGroup().isBlank()) {
-            user.setUserGroup(request.userGroup());
-        }
+        
+        // Find group by name
+        String groupName = (request.userGroup() != null && !request.userGroup().isBlank()) ? request.userGroup() : "user";
+        Group group = groupRepository.findByName(groupName)
+                .orElseGet(() -> {
+                    Group newGroup = new Group();
+                    newGroup.setName(groupName);
+                    return groupRepository.save(newGroup);
+                });
+        user.setGroup(group);
 
         User saved = userRepository.save(user);
-        log.info("User registered: id={}, username={}, email={}", saved.getId(), saved.getUsername(), saved.getEmail());
+        log.info("User registered: id={}, username={}, email={}, group={}", saved.getId(), saved.getUsername(), saved.getEmail(), groupName);
         return saved;
     }
 
@@ -91,7 +102,13 @@ public class UserService {
 
         String token = generateToken(user);
         log.info("User logged in: id={}, email={}", user.getId(), user.getEmail());
-        return new LoginResponse(token, user);
+        
+        List<com.k8sdemo.userservice.entity.Menu> menus = List.of();
+        if (user.getGroup() != null && user.getGroup().getMenus() != null) {
+            menus = List.copyOf(user.getGroup().getMenus());
+        }
+        
+        return new LoginResponse(token, user, menus);
     }
 
     /**
@@ -102,12 +119,49 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    /**
+     * Update user details (name, email, userGroup).
+     */
+    public User updateUser(Long id, RegisterRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (request.email() != null) user.setEmail(request.email());
+        if (request.name() != null) user.setName(request.name());
+        if (request.userGroup() != null) user.setUserGroup(request.userGroup());
+
+        return userRepository.save(user);
+    }
+
+    /**
+     * Reset a user's password.
+     */
+    public void resetPassword(Long id, String newPassword) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        log.info("Password reset for user id: {}", id);
+    }
+
+    /**
+     * Delete a user.
+     */
+    public void deleteUser(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new IllegalArgumentException("User not found");
+        }
+        userRepository.deleteById(id);
+        log.info("User deleted: id={}", id);
+    }
+
     private String generateToken(User user) {
         SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
         return Jwts.builder()
                 .claim("user_id", user.getId())
                 .claim("email", user.getEmail())
-                .claim("group", user.getUserGroup())
+                .claim("group", user.getUserGroupName())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .signWith(key)

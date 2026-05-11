@@ -12,63 +12,72 @@
 ### A. 實體關係圖 (ERD)
 ```mermaid
 erDiagram
+    users ||--o| groups : "belongs to"
+    groups ||--o{ menu_groups : "has"
+    menus ||--o{ menu_groups : "associated with"
+
     users {
         int id PK
+        string username UK
         string email UK
         string password_hash
         string name
+        int group_id FK
         datetime created_at
+    }
+    groups {
+        int id PK
+        string name UK
+    }
+    menus {
+        int id PK
+        string name
+        string code UK
+        string path
+        string icon
+    }
+    menu_groups {
+        int group_id FK
+        int menu_id FK
     }
 ```
 
-### B. SQL DDL 腳本 (Liquibase 導入參考)
-如果您需要手動建立或了解結構，以下是標準 SQL 定義：
+### B. SQL DDL 腳本 (RBAC 擴充版)
+以下是實現動態選單與權限控管的結構定義：
 
 ```sql
--- 建立用戶表
-CREATE TABLE IF NOT EXISTS users (
+-- 1. 群組表
+CREATE TABLE groups (
     id SERIAL PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    name VARCHAR(255) UNIQUE NOT NULL
 );
 
--- 建立測試數據
-INSERT INTO users (email, password_hash, name) 
-VALUES ('admin@example.com', '$2a$10$8.UnVuG9HHgffUDAlk8Kn.2ndfJGXU511PrXvDK8XTP0R81uS.Ery', 'Admin User')
-ON CONFLICT DO NOTHING;
-```
+-- 2. 選單表
+CREATE TABLE menus (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    code VARCHAR(100) UNIQUE NOT NULL,
+    path VARCHAR(255),
+    icon VARCHAR(100)
+);
 
-### C. Liquibase ChangeLog 範例
-為了導入 Liquibase，您可以建立 `src/main/resources/db/changelog/db.changelog-master.xml`：
+-- 3. 選單-群組關聯表 (Many-to-Many)
+CREATE TABLE menu_groups (
+    group_id INTEGER REFERENCES groups(id) ON DELETE CASCADE,
+    menu_id INTEGER REFERENCES menus(id) ON DELETE CASCADE,
+    PRIMARY KEY (group_id, menu_id)
+);
 
-```xml
-<databaseChangeLog
-    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
-
-    <changeSet id="20260506-001" author="wafer-bi">
-        <createTable tableName="users">
-            <column name="id" type="SERIAL">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="email" type="VARCHAR(255)">
-                <constraints unique="true" nullable="false"/>
-            </column>
-            <column name="password_hash" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="name" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
-        </createTable>
-    </changeSet>
-
-</databaseChangeLog>
+-- 4. 用戶表 (升級版)
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    group_id INTEGER REFERENCES groups(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
 ---

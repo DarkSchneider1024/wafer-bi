@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.util.Set;
 
 @Entity
-@Table(name = "groups")
+@Table(name = "auth_groups")
 public class Group {
 
     @Id

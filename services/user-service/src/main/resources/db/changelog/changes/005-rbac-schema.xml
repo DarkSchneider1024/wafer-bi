@@ -7,7 +7,7 @@
 
     <!-- 建立群組表 -->
     <changeSet id="20260511-001" author="wafer-bi">
-        <createTable tableName="groups">
+        <createTable tableName="auth_groups">
             <column name="id" type="SERIAL">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -38,7 +38,7 @@
     <changeSet id="20260511-003" author="wafer-bi">
         <createTable tableName="menu_groups">
             <column name="group_id" type="INTEGER">
-                <constraints nullable="false" foreignKeyName="fk_group_menu_group" referencedTableName="groups" referencedColumnNames="id"/>
+                <constraints nullable="false" foreignKeyName="fk_group_menu_group" referencedTableName="auth_groups" referencedColumnNames="id"/>
             </column>
             <column name="menu_id" type="INTEGER">
                 <constraints nullable="false" foreignKeyName="fk_group_menu_menu" referencedTableName="menus" referencedColumnNames="id"/>
@@ -51,7 +51,7 @@
     <changeSet id="20260511-004" author="wafer-bi">
         <addColumn tableName="users">
             <column name="group_id" type="INTEGER">
-                <constraints foreignKeyName="fk_user_group" referencedTableName="groups" referencedColumnNames="id"/>
+                <constraints foreignKeyName="fk_user_group" referencedTableName="auth_groups" referencedColumnNames="id"/>
             </column>
         </addColumn>
     </changeSet>

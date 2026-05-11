@@ -40,7 +40,7 @@ spec:
         - name: ocirsecret
       containers:
         - name: user-service
-          image: ghcr.io/darkschneider1024/user-service:c385f2d11933c0993035f2d80d28766c5d13458c
+          image: ghcr.io/darkschneider1024/user-service:fd00895d44bf49e09f758c4e73800f3a996b8dc2
           imagePullPolicy: Always
           ports:
             - containerPort: 3002

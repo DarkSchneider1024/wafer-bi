@@ -29,7 +29,7 @@ spec:
         - name: ocirsecret
       containers:
         - name: api-gateway
-          image: ghcr.io/darkschneider1024/api-gateway:4d5f993046cd3c956d5264ec61b369833fa243a4
+          image: ghcr.io/darkschneider1024/api-gateway:c385f2d11933c0993035f2d80d28766c5d13458c
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

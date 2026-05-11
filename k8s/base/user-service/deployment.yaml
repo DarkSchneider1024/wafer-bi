@@ -23,7 +23,7 @@ spec:
         env: production
         managed-by: argocd
       annotations:
-        deployed-at: "2026-05-11 08:15:38"
+        deployed-at: "2026-05-11 08:42:59"
     spec:
       initContainers:
         - name: wait-for-postgres

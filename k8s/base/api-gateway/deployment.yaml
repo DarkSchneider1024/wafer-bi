@@ -19,7 +19,7 @@ spec:
   template:
     metadata:
       annotations:
-        deployed-at: "2026-05-11 08:15:38"
+        deployed-at: "2026-05-11 08:42:59"
       labels:
         app: api-gateway
         env: production

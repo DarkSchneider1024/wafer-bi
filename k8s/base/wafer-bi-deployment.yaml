@@ -26,7 +26,7 @@ spec:
         - name: ocirsecret
       containers:
       - name: backend
-        image: ghcr.io/darkschneider1024/wafer-bi-backend:c385f2d11933c0993035f2d80d28766c5d13458c
+        image: ghcr.io/darkschneider1024/wafer-bi-backend:fd00895d44bf49e09f758c4e73800f3a996b8dc2
         imagePullPolicy: Always
         ports:
         - containerPort: 8000
@@ -77,7 +77,7 @@ spec:
         - name: ocirsecret
       containers:
       - name: frontend
-        image: ghcr.io/darkschneider1024/wafer-bi-frontend:c385f2d11933c0993035f2d80d28766c5d13458c
+        image: ghcr.io/darkschneider1024/wafer-bi-frontend:fd00895d44bf49e09f758c4e73800f3a996b8dc2
         imagePullPolicy: Always
         ports:
         - containerPort: 80

@@ -248,6 +248,18 @@ function App() {
     }
   };
 
+  const handleEditUser = (u: any) => {
+    const newEmail = prompt("Enter new email:", u.email);
+    const newGroup = prompt("Enter new group (demo01/admin):", u.user_group);
+    if (newEmail || newGroup) {
+      handleUpdateUser(u.id, { 
+        email: newEmail || u.email, 
+        userGroup: newGroup || u.user_group,
+        name: u.name // Keep original name
+      });
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -878,6 +890,9 @@ function App() {
                           <td><span className="badge" style={{ background: u.user_group === 'admin' ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)' }}>{u.user_group}</span></td>
                           <td>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <button className="btn-icon" title="Edit User" onClick={() => handleEditUser(u)} style={{ padding: '4px' }}>
+                                <Settings size={14} />
+                              </button>
                               <button className="btn-icon" title="Reset Password" onClick={() => handleResetPassword(u.id)} style={{ padding: '4px' }}>
                                 <RefreshCw size={14} />
                               </button>

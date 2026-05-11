@@ -128,7 +128,16 @@ public class UserService {
 
         if (request.email() != null) user.setEmail(request.email());
         if (request.name() != null) user.setName(request.name());
-        if (request.userGroup() != null) user.setUserGroup(request.userGroup());
+        if (request.userGroup() != null) {
+            String groupName = request.userGroup();
+            Group group = groupRepository.findByName(groupName)
+                    .orElseGet(() -> {
+                        Group newGroup = new Group();
+                        newGroup.setName(groupName);
+                        return groupRepository.save(newGroup);
+                    });
+            user.setGroup(group);
+        }
 
         return userRepository.save(user);
     }

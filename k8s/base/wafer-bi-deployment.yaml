@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: wafer-bi
+  name: k8sdemo
 
 ---
 
@@ -9,7 +9,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: wafer-backend
-  namespace: wafer-bi
+  namespace: k8sdemo
 spec:
   replicas: 2
   selector:
@@ -44,7 +44,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: wafer-backend-svc
-  namespace: wafer-bi
+  namespace: k8sdemo
 spec:
   selector:
     app: wafer-backend
@@ -60,7 +60,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: wafer-frontend
-  namespace: wafer-bi
+  namespace: k8sdemo
 spec:
   replicas: 1
   selector:
@@ -101,7 +101,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: wafer-frontend-svc
-  namespace: wafer-bi
+  namespace: k8sdemo
 spec:
   selector:
     app: wafer-frontend

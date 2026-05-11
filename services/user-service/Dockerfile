@@ -38,7 +38,8 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
 CMD ["java", \
      "-javaagent:opentelemetry-javaagent.jar", \
      "-Dotel.service.name=user-service", \
-     "-Dotel.exporter.otlp.endpoint=http://otel-collector-service.k8sdemo.svc.cluster.local:4317", \
+     "-Dotel.exporter.otlp.endpoint=http://otel-collector-service.k8sdemo.svc.cluster.local:4318", \
+     "-Dotel.exporter.otlp.protocol=http/protobuf", \
      "-XX:+UseContainerSupport", \
      "-XX:MaxRAMPercentage=75.0", \
      "-Djava.security.egd=file:/dev/./urandom", \

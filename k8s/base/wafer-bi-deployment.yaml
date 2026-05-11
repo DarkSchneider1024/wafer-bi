@@ -16,7 +16,7 @@ spec:
         env: production
         managed-by: argocd
       annotations:
-        deployed-at: "2026-05-11 15:30:00"
+        deployed-at: "2026-05-11 08:15:38"
     spec:
       imagePullSecrets:
         - name: ocirsecret
@@ -67,7 +67,7 @@ spec:
         env: production
         managed-by: argocd
       annotations:
-        deployed-at: "2026-05-11 15:30:00"
+        deployed-at: "2026-05-11 08:15:38"
     spec:
       imagePullSecrets:
         - name: ocirsecret

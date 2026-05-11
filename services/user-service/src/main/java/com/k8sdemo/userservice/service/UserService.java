@@ -2,7 +2,11 @@ package com.k8sdemo.userservice.service;
 
 import com.k8sdemo.userservice.dto.*;
 import com.k8sdemo.userservice.entity.User;
+import com.k8sdemo.userservice.entity.Group;
+import com.k8sdemo.userservice.entity.Menu;
 import com.k8sdemo.userservice.repository.UserRepository;
+import com.k8sdemo.userservice.repository.GroupRepository;
+import com.k8sdemo.userservice.repository.MenuRepository;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -103,7 +107,7 @@ public class UserService {
         String token = generateToken(user);
         log.info("User logged in: id={}, email={}", user.getId(), user.getEmail());
         
-        List<com.k8sdemo.userservice.entity.Menu> menus = List.of();
+        List<Menu> menus = List.of();
         if (user.getGroup() != null && user.getGroup().getMenus() != null) {
             menus = List.copyOf(user.getGroup().getMenus());
         }

@@ -80,7 +80,7 @@ public class UserController {
     }
 
     @PutMapping("/users/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody RegisterRequest request) {
+    public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody RegisterRequest request) {
         try {
             User user = userService.updateUser(id, request);
             return ResponseEntity.ok(user);
@@ -90,7 +90,7 @@ public class UserController {
     }
 
     @PatchMapping("/users/{id}/password")
-    public ResponseEntity<?> resetPassword(@PathVariable Long id, @RequestBody Map<String, String> body) {
+    public ResponseEntity<?> resetPassword(@PathVariable Integer id, @RequestBody Map<String, String> body) {
         String newPassword = body.get("password");
         if (newPassword == null || newPassword.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Password is required"));
@@ -104,7 +104,7 @@ public class UserController {
     }
 
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
         try {
             userService.deleteUser(id);
             return ResponseEntity.ok(Map.of("message", "User deleted successfully"));

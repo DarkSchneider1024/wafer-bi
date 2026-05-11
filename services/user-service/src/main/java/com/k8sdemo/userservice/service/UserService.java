@@ -122,7 +122,7 @@ public class UserService {
     /**
      * Update user details (name, email, userGroup).
      */
-    public User updateUser(Long id, RegisterRequest request) {
+    public User updateUser(Integer id, RegisterRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
@@ -136,7 +136,7 @@ public class UserService {
     /**
      * Reset a user's password.
      */
-    public void resetPassword(Long id, String newPassword) {
+    public void resetPassword(Integer id, String newPassword) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         
@@ -148,7 +148,7 @@ public class UserService {
     /**
      * Delete a user.
      */
-    public void deleteUser(Long id) {
+    public void deleteUser(Integer id) {
         if (!userRepository.existsById(id)) {
             throw new IllegalArgumentException("User not found");
         }

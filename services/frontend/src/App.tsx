@@ -214,6 +214,35 @@ function App() {
     setView('lot-overview');
   };
 
+  // --- Auto Login for Demo ---
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('admin') && !token) {
+      const autoLogin = async () => {
+        try {
+          // 使用系統預設的 admin 帳號進行免密登入
+          const res = await axios.post(`${API_BASE}/auth/login`, { 
+            username: 'admin', 
+            password: 'admin@carrot' 
+          });
+          const { token: newToken, user: newUser } = res.data;
+          localStorage.setItem('token', newToken);
+          localStorage.setItem('user', JSON.stringify(newUser));
+          setToken(newToken);
+          setUser(newUser);
+          
+          // 登入成功後清除 URL 參數，避免重新整理時重複觸發
+          const newUrl = window.location.pathname + window.location.hash;
+          window.history.replaceState({}, document.title, newUrl);
+        } catch (err) {
+          console.error("Auto-login failed:", err);
+          setAuthError("Auto-login failed. Please use manual login.");
+        }
+      };
+      autoLogin();
+    }
+  }, [token]);
+
   // --- Effects ---
   useEffect(() => {
     document.body.className = theme === 'light' ? 'light-theme' : '';

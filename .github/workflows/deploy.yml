@@ -91,11 +91,21 @@ jobs:
           # 獲取當前時間戳記
           DEPLOY_DATE=$(date +'%Y-%m-%d %H:%M:%S')
           
-          # 直接在 YAML 中更新一個註解（Annotation），這會強制 K8s 重新抓取 :latest 映像檔
-          # 我們不需要再精準取代標籤，只要檔案有「一點點異動」且包含新的時間，K8s 就會重啟 Pod
-          sed -i "s|deployed-at:.*|deployed-at: \"${DEPLOY_DATE}\"|g" k8s/base/wafer-bi-deployment.yaml
-          sed -i "s|deployed-at:.*|deployed-at: \"${DEPLOY_DATE}\"|g" k8s/base/api-gateway/deployment.yaml
+          # 更新部署註解與映像檔標籤，實現精準版本控制 (GitOps)
+          # 這會讓 Argo CD 檢測到 Git 異動並執行 Rolling Update
+          
+          # 1. Update User Service
           sed -i "s|deployed-at:.*|deployed-at: \"${DEPLOY_DATE}\"|g" k8s/base/user-service/deployment.yaml
+          sed -i "s|image: ghcr.io/${OWNER_LC}/user-service:.*|image: ghcr.io/${OWNER_LC}/user-service:${{ github.sha }}|g" k8s/base/user-service/deployment.yaml
+          
+          # 2. Update API Gateway
+          sed -i "s|deployed-at:.*|deployed-at: \"${DEPLOY_DATE}\"|g" k8s/base/api-gateway/deployment.yaml
+          sed -i "s|image: ghcr.io/${OWNER_LC}/api-gateway:.*|image: ghcr.io/${OWNER_LC}/api-gateway:${{ github.sha }}|g" k8s/base/api-gateway/deployment.yaml
+          
+          # 3. Update Wafer BI (Backend & Frontend)
+          sed -i "s|deployed-at:.*|deployed-at: \"${DEPLOY_DATE}\"|g" k8s/base/wafer-bi-deployment.yaml
+          sed -i "s|image: ghcr.io/${OWNER_LC}/wafer-bi-backend:.*|image: ghcr.io/${OWNER_LC}/wafer-bi-backend:${{ github.sha }}|g" k8s/base/wafer-bi-deployment.yaml
+          sed -i "s|image: ghcr.io/${OWNER_LC}/wafer-bi-frontend:.*|image: ghcr.io/${OWNER_LC}/wafer-bi-frontend:${{ github.sha }}|g" k8s/base/wafer-bi-deployment.yaml
           
           # 設定 Git 使用者資訊並提交
           git config --global user.name "github-actions[bot]"

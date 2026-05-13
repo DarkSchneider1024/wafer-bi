@@ -38,4 +38,7 @@ secrets_backup.txt
 *.key
 
 # iThome Ironman
-docs/鐵人賽/
+docs/鐵人賽/
+
+# Private Agent Skills
+.agent/

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="20260513-008" author="wafer-bi">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM menus WHERE code = 'ai-assistant'</sqlCheck>
+        </preConditions>
+        <insert tableName="menus">
+            <column name="name" value="AI 駐守助手"/>
+            <column name="code" value="ai-assistant"/>
+            <column name="sort_order" value="99"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="20260513-009" author="wafer-bi">
+        <sql>
+            INSERT INTO menu_groups (group_id, menu_id)
+            SELECT g.id, m.id FROM auth_groups g, menus m
+            WHERE (g.name = 'admin' OR g.name = 'user')
+            AND m.code = 'ai-assistant'
+            AND NOT EXISTS (SELECT 1 FROM menu_groups mg WHERE mg.group_id = g.id AND mg.menu_id = m.id);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

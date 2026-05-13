@@ -15,5 +15,7 @@ data:
   API_GATEWAY_PORT: "8080"
   NODE_ENV: "production"
   LOG_LEVEL: "info"
+  AI_MCP_SERVICE_HOST: "ai-mcp-service"
+  AI_MCP_SERVICE_PORT: "8001"
   # 強制啟用 Liquibase，確保資料庫結構同步
   SPRING_LIQUIBASE_ENABLED: "true"

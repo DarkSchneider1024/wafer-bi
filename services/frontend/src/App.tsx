@@ -7,6 +7,7 @@ import {
   Settings, Package, Database, Search, Activity, ShieldCheck, Cpu, ExternalLink, RefreshCw
 } from 'lucide-react';
 import './index.css';
+import AIAssistant from './components/AIAssistant';
 
 const API_BASE = '/api';
 
@@ -1038,7 +1039,10 @@ function App() {
             </div>
           </div>
         )}
+      </>
+    )}
       </main>
+      <AIAssistant />
     </div>
   );
 }

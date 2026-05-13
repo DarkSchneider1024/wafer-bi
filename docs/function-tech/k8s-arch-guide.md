@@ -142,6 +142,21 @@ graph TD
 - **看日誌**：`kubectl logs -f [pod-name] -n k8sdemo` (追蹤廚師正在做什麼)
 - **動手修**：嘗試刪掉一個 Pod `kubectl delete pod [pod-name]`，觀察 K8S 是不是真的會自動生出一個新的（Self-healing）。
 
+### 3.5 平台資源命名空間地圖 (Namespace Map)
+
+為了避免混淆，請參考下表進行維運操作。在執行 `kubectl` 時，請務必加上正確的 `-n [Namespace]`。
+
+| 命名空間 (Namespace) | 組件名稱 (Components) | 功能說明 | 常用操作範例 |
+| :--- | :--- | :--- | :--- |
+| **`k8sdemo`** | `api-gateway`, `user-service`, `wafer-backend`, `wafer-frontend`, `postgres`, `jaeger`, `otel-collector` | **業務核心**：所有商業邏輯服務與資料庫。 | `kubectl get pods -n k8sdemo` |
+| **`argocd`** | `argocd-server`, `argocd-repo-server`, `argocd-redis`, `argocd-application-controller` | **維運核心**：GitOps 自動化部署與持續交付工具。 | `kubectl logs -n argocd -l app.kubernetes.io/name=argocd-server` |
+| **`ingress-nginx`** | `ingress-nginx-controller` | **交通門戶**：負責將外部域名 (如 wafer.carrot-atelier.online) 轉導進叢集。 | `kubectl get svc -n ingress-nginx` |
+
+> [!IMPORTANT]
+> 如果您執行指令時漏掉 `-n`，K8S 會預設去 `default` 命名空間找資源，那裡目前是空的，您會看到 `No resources found`。
+
+---
+
 ---
 ## 5. 常用維運指令集 (Troubleshooting Cheat Sheet)
 

@@ -35,7 +35,7 @@ user_history = {} # IP -> list of timestamps
 blocked_until = {} # IP -> block end timestamp
 
 RATE_LIMIT_WINDOW = 60    # 1 minute window
-MAX_REQUESTS = 10         # Max requests per window
+MAX_REQUESTS = 30         # Max requests per window (increased from 10)
 BLOCK_TIME = 600         # 10 minutes block duration
 
 @app.middleware("http")
@@ -135,18 +135,18 @@ async def chat(request: ChatRequest, req: Request):
         # use the provided tools in the generation config.
         
         # Mapping MCP tools to Gemini tools
-        # (Gemini tools are just function declarations)
-        gemini_tools = []
-        for t in tools_list:
-            gemini_tools.append({
+        # Gemini expects a list of Tool objects, where each Tool contains function_declarations
+        gemini_tools = [
+            {
                 "function_declarations": [
                     {
                         "name": t.name,
                         "description": t.description,
                         "parameters": t.inputSchema
-                    }
+                    } for t in tools_list
                 ]
-            })
+            }
+        ]
 
         # 3. Generate content with tools
         response = chat_session.send_message(
@@ -155,14 +155,22 @@ async def chat(request: ChatRequest, req: Request):
         )
 
         # 4. Handle tool calls (Function Calling)
-        if response.candidates[0].content.parts[0].function_call:
+        if response.candidates and response.candidates[0].content.parts and \
+           response.candidates[0].content.parts[0].function_call:
+            
             fn_call = response.candidates[0].content.parts[0].function_call
             function_name = fn_call.name
             function_args = dict(fn_call.args)
             
+            print(f"[{trace_id}] Executing tool: {function_name} with {function_args}")
+            
             # Execute tool using our MCP handler
-            tool_result = await handle_call_tool(function_name, function_args)
-            result_text = tool_result[0].text if tool_result else "No result"
+            try:
+                tool_result = await handle_call_tool(function_name, function_args)
+                result_text = tool_result[0].text if tool_result else "No result"
+            except Exception as tool_err:
+                print(f"[{trace_id}] Tool Execution Error: {tool_err}")
+                result_text = f"Error executing tool: {str(tool_err)}"
             
             # Send tool response back to Gemini
             second_response = chat_session.send_message(
@@ -175,6 +183,9 @@ async def chat(request: ChatRequest, req: Request):
             )
             return {"answer": second_response.text}
         
+        if not response.candidates or not response.candidates[0].content.parts:
+            return {"answer": "抱歉，我無法生成回應。這可能是因為內容觸發了安全過濾器。"}
+
         return {"answer": response.text}
 
     except Exception as e:

@@ -7,6 +7,9 @@
 
     <!-- 建立群組表 -->
     <changeSet id="20260511-001" author="wafer-bi">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="auth_groups"/></not>
+        </preConditions>
         <createTable tableName="auth_groups">
             <column name="id" type="SERIAL">
                 <constraints primaryKey="true" nullable="false"/>
@@ -19,6 +22,9 @@
 
     <!-- 建立選單表 -->
     <changeSet id="20260511-002" author="wafer-bi">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="menus"/></not>
+        </preConditions>
         <createTable tableName="menus">
             <column name="id" type="SERIAL">
                 <constraints primaryKey="true" nullable="false"/>
@@ -36,6 +42,9 @@
 
     <!-- 建立選單群組關聯表 -->
     <changeSet id="20260511-003" author="wafer-bi">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="menu_groups"/></not>
+        </preConditions>
         <createTable tableName="menu_groups">
             <column name="group_id" type="INTEGER">
                 <constraints nullable="false" foreignKeyName="fk_group_menu_group" referencedTableName="auth_groups" referencedColumnNames="id"/>
@@ -49,6 +58,9 @@
 
     <!-- 更新用戶表加入 group_id -->
     <changeSet id="20260511-004" author="wafer-bi">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="users" columnName="group_id"/></not>
+        </preConditions>
         <addColumn tableName="users">
             <column name="group_id" type="INTEGER">
                 <constraints foreignKeyName="fk_user_group" referencedTableName="auth_groups" referencedColumnNames="id"/>

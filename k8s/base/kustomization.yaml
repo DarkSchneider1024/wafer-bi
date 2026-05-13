@@ -14,6 +14,9 @@ resources:
   - api-gateway/hpa.yaml
   - user-service/deployment.yaml
   - user-service/service.yaml
+  - ai-mcp-service/deployment.yaml
+  - ai-mcp-service/service.yaml
+  - ai-mcp-service/pvc.yaml
   - databases/postgres-deployment.yaml
   - databases/postgres-pvc.yaml
   - databases/postgres-service.yaml

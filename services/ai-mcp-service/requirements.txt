@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+mcp
+chromadb
+openai
+google-generativeai
+pandas
+deltalake
+python-dotenv
+pyarrow

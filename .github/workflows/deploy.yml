@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [wafer-bi-backend, wafer-bi-frontend, api-gateway, user-service]
+        service: [wafer-bi-backend, wafer-bi-frontend, api-gateway, user-service, ai-mcp-service]
         include:
           - service: wafer-bi-backend
             context: ./services/wafer-bi
@@ -46,6 +46,8 @@ jobs:
             context: ./services/api-gateway
           - service: user-service
             context: ./services/user-service
+          - service: ai-mcp-service
+            context: ./services/ai-mcp-service
     
     name: Build ${{ matrix.service }}
     steps:
@@ -95,6 +97,7 @@ jobs:
           sed -i "s|image: ghcr.io/${OWNER_LC}/api-gateway:.*|image: ghcr.io/${OWNER_LC}/api-gateway:${{ github.sha }}|g" k8s/base/api-gateway/deployment.yaml
           sed -i "s|image: ghcr.io/${OWNER_LC}/wafer-bi-backend:.*|image: ghcr.io/${OWNER_LC}/wafer-bi-backend:${{ github.sha }}|g" k8s/base/wafer-bi-deployment.yaml
           sed -i "s|image: ghcr.io/${OWNER_LC}/wafer-bi-frontend:.*|image: ghcr.io/${OWNER_LC}/wafer-bi-frontend:${{ github.sha }}|g" k8s/base/wafer-bi-deployment.yaml
+          sed -i "s|image: ghcr.io/${OWNER_LC}/ai-mcp-service:.*|image: ghcr.io/${OWNER_LC}/ai-mcp-service:${{ github.sha }}|g" k8s/base/ai-mcp-service/deployment.yaml
           
           # 設定 Git 使用者資訊並提交
           git config --global user.name "github-actions[bot]"

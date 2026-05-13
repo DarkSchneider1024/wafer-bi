@@ -166,6 +166,7 @@ app.get('/metrics', async (req, res) => {
 // ====================
 const USER_SERVICE_URL = `http://${process.env.USER_SERVICE_HOST || 'user-service'}:${process.env.USER_SERVICE_PORT || 3002}`;
 const WAFER_BI_URL = `http://${process.env.WAFER_BI_HOST || 'wafer-backend-svc.wafer-bi.svc.cluster.local'}:${process.env.WAFER_BI_PORT || 8000}`;
+const AI_MCP_URL = `http://${process.env.AI_MCP_SERVICE_HOST || 'ai-mcp-service'}:${process.env.AI_MCP_SERVICE_PORT || 8001}`;
 
 // 1. Auth & Users (Java Service) - Rewrite /api/auth -> /auth
 app.use(
@@ -194,6 +195,16 @@ app.use(
     authenticateToken, // Auth check for user management
     pathRewrite: { '^/api/users': '/users' },
     onProxyReq: (proxyReq) => console.log(`[Proxy Users] -> ${USER_SERVICE_URL}${proxyReq.path}`)
+  })
+);
+
+// 3. AI MCP Service - Rewrite /api/ai -> /api/ai
+app.use(
+  createProxyMiddleware('/api/ai', {
+    target: AI_MCP_URL,
+    changeOrigin: true,
+    // Keep /api/ai as the service expects it
+    onProxyReq: (proxyReq) => console.log(`[Proxy AI] -> ${AI_MCP_URL}${proxyReq.path}`)
   })
 );
 
@@ -235,4 +246,5 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 API Gateway running on port ${PORT}`);
   console.log(`  → Users:    ${USER_SERVICE_URL}`);
   console.log(`  → Wafer BI: ${WAFER_BI_URL}`);
+  console.log(`  → AI MCP:   ${AI_MCP_URL}`);
 });

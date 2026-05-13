@@ -103,5 +103,20 @@ services:
       - order-service
       - user-service
 
+  ai-mcp-service:
+    build: ./services/ai-mcp-service
+    container_name: k8sdemo-ai-mcp-service
+    ports:
+      - "8001:8001"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      DELTA_PATH: /app/wafer_delta_table
+    volumes:
+      - chroma_data:/app/chroma_db
+      - ./services/wafer-bi/wafer_delta_table:/app/wafer_delta_table
+    depends_on:
+      - api-gateway
+
 volumes:
   postgres_data:
+  chroma_data:

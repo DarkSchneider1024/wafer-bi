@@ -153,9 +153,10 @@ function App() {
   const fetchUsers = async () => {
     try {
       const res = await axios.get(`${API_BASE}/users`);
-      setUsers(res.data);
+      setUsers(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Failed to fetch users", err);
+      setUsers([]);
     }
   };
 
@@ -902,7 +903,7 @@ function App() {
                       </tr>
                     </thead>
                     <tbody>
-                      {users?.map(u => (
+                      {Array.isArray(users) && users.map(u => (
                         <tr key={u.id}>
                           <td>{u.id}</td>
                           <td style={{ fontWeight: 600 }}>{u.name}</td>

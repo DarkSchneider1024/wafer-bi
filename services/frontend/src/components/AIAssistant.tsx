@@ -121,7 +121,7 @@ const AIAssistant: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
             gap: '1rem',
-            background: 'var(--bg-secondary, #f8fafc)'
+            background: 'var(--bg-color, #f8fafc)'
           }}>
             {messages.map((msg, i) => (
               <div key={i} style={{
@@ -163,7 +163,7 @@ const AIAssistant: React.FC = () => {
                   <Bot size={16} color="white" />
                 </div>
                 <div style={{ padding: '0.75rem', borderRadius: '12px', background: 'white', display: 'flex', alignItems: 'center' }}>
-                  <Loader2 size={16} className="animate-spin" style={{ color: 'var(--accent-color)' }} />
+                  <Loader2 size={16} className="spin" style={{ color: 'var(--accent-color)' }} />
                 </div>
               </div>
             )}

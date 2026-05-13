@@ -40,6 +40,8 @@ body {
 .dashboard {
   display: flex;
   min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
 }
 
 .sidebar {
@@ -51,14 +53,34 @@ body {
   flex-direction: column;
   gap: 2rem;
   backdrop-filter: blur(12px);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s ease;
+  z-index: 1000;
+  flex-shrink: 0;
+}
+
+.sidebar-collapsed .sidebar {
+  width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  transform: translateX(-100%);
+  border-right: none;
+}
+
+.sidebar-collapsed .sidebar > * {
+  display: none;
 }
 
 .main-content {
   flex: 1;
   padding: 2rem;
-  max-width: calc(1400px + 4rem);
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   overflow-y: auto;
+  transition: margin-left 0.3s ease;
+}
+
+.sidebar-collapsed .main-content {
+  margin-left: 0;
 }
 
 .sidebar-title {
@@ -113,6 +135,7 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  gap: 1rem;
 }
 
 .glass-card {
@@ -307,17 +330,75 @@ h1 {
   to { transform: rotate(360deg); }
 }
 
-.badge {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: white;
-  display: inline-block;
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .wafer-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
 }
 
 @media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    height: 100vh;
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+    width: 280px;
+  }
+
+  .sidebar-collapsed .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .main-content {
+    padding: 1rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .nav-tabs {
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-only {
+    display: flex;
+  }
+
   .system-status-view .grid {
-    grid-template_columns: 1fr !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .table-container {
+    margin: 0 -1rem;
+    padding: 0 1rem;
+    width: calc(100% + 2rem);
+  }
+
+  .data-table {
+    min-width: 600px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 1.5rem !important;
+    margin: 1rem;
   }
 }

@@ -4,7 +4,7 @@ import axios from 'axios';
 import { 
   LayoutGrid, ChevronRight, 
   BarChart3, FlaskConical, Sun, Moon, Languages,
-  Settings, Package, Database, Search, Activity, ShieldCheck, Cpu, ExternalLink, RefreshCw, Play, Bot
+  Settings, Package, Database, Search, Activity, ShieldCheck, Cpu, ExternalLink, RefreshCw, Play, Bot, Menu, X
 } from 'lucide-react';
 import './index.css';
 import AIAssistant from './components/AIAssistant';
@@ -147,9 +147,10 @@ function App() {
 
   // --- User Management States ---
   const [users, setUsers] = useState<any[]>([]);
-  const [newUserForm, setNewUserForm] = useState({ username: '', email: '', password: '', name: '', userGroup: 'demo01' });
+  const [newUserForm, setNewUserForm] = useState({ username: '', email: '', password: '', userGroup: 'demo01' });
   const [userActionLoading, setUserActionLoading] = useState(false);
   const [showAddUserForm, setShowAddUserForm] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const t = translations[lang];
 
@@ -158,7 +159,9 @@ function App() {
   const fetchUsers = async () => {
     try {
       const res = await axios.get(`${API_BASE}/users`);
-      setUsers(Array.isArray(res.data) ? res.data : []);
+      // Backend returns { users: [...], total: X }
+      const usersData = res.data?.users || res.data;
+      setUsers(Array.isArray(usersData) ? usersData : []);
     } catch (err) {
       console.error("Failed to fetch users", err);
       setUsers([]);
@@ -182,7 +185,7 @@ function App() {
     setUserActionLoading(true);
     try {
       await axios.post(`${API_BASE}/auth/register`, newUserForm);
-      setNewUserForm({ username: '', email: '', password: '', name: '', userGroup: 'demo01' });
+      setNewUserForm({ username: '', email: '', password: '', userGroup: 'demo01' });
       setShowAddUserForm(false);
       fetchUsers();
     } catch (err: any) {
@@ -264,14 +267,12 @@ function App() {
   };
 
   const handleEditUser = (u: any) => {
-    const newName = prompt("Enter new name:", u.name);
     const newUsername = prompt("Enter new username:", u.username);
     const newEmail = prompt("Enter new email:", u.email);
     const newGroup = prompt("Enter new group (demo01/admin):", u.user_group);
     
-    if (newName || newUsername || newEmail || newGroup) {
+    if (newUsername || newEmail || newGroup) {
       handleUpdateUser(u.id, { 
-        name: newName || u.name,
         username: newUsername || u.username, 
         email: newEmail || u.email,
         userGroup: newGroup || u.user_group
@@ -672,11 +673,16 @@ function App() {
   ].filter(item => item.roles.includes(user?.user_group || 'user'));
 
   return (
-    <div className="dashboard">
-      <aside className="sidebar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-          <BarChart3 size={28} color="var(--accent-color)" />
-          <h2 style={{ margin: 0, fontSize: '1.25rem' }}>{t.title}</h2>
+    <div className={`dashboard ${!isSidebarOpen ? 'sidebar-collapsed' : ''}`}>
+      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <BarChart3 size={28} color="var(--accent-color)" />
+            <h2 style={{ margin: 0, fontSize: '1.25rem' }}>{t.title}</h2>
+          </div>
+          <button className="btn-icon mobile-only" onClick={() => setIsSidebarOpen(false)}>
+            <X size={20} />
+          </button>
         </div>
 
         <div className="glass-card" style={{ padding: '0.75rem', marginBottom: '1.5rem', background: 'rgba(255,255,255,0.05)' }}>
@@ -742,7 +748,11 @@ function App() {
 
       <main className="main-content">
         <header className="header">
-          <nav className="nav-tabs" style={{ marginBottom: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button className="btn-icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+              <Menu size={20} />
+            </button>
+            <nav className="nav-tabs" style={{ marginBottom: 0 }}>
             {NAV_ITEMS.map(tab => (
               <div 
                 key={tab.id}
@@ -919,7 +929,7 @@ function App() {
                     <thead>
                       <tr>
                         <th>ID</th>
-                        <th>{t.name}</th>
+
                         <th>{t.username}</th>
                         <th>{t.group}</th>
                         {user?.user_group === 'admin' && <th>Actions</th>}
@@ -929,7 +939,7 @@ function App() {
                       {Array.isArray(users) && users.map(u => (
                         <tr key={u.id}>
                           <td>{u.id}</td>
-                          <td style={{ fontWeight: 600 }}>{u.name}</td>
+
                           <td>{u.username}</td>
                           <td><span className="badge" style={{ background: u.user_group === 'admin' ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)' }}>{u.user_group}</span></td>
                           {user?.user_group === 'admin' && (
@@ -958,10 +968,7 @@ function App() {
                 <div className="glass-card" style={{ height: 'fit-content' }}>
                   <h3 style={{ marginTop: 0 }}>{t.addUser}</h3>
                   <form onSubmit={handleAddUser}>
-                    <div className="control-group">
-                      <label>{t.name}</label>
-                      <input type="text" value={newUserForm.name} onChange={e => setNewUserForm({...newUserForm, name: e.target.value})} required />
-                    </div>
+
                     <div className="control-group" style={{ marginTop: '1rem' }}>
                       <label>{t.username}</label>
                       <input type="text" value={newUserForm.username} onChange={e => setNewUserForm({...newUserForm, username: e.target.value, email: e.target.value})} required />

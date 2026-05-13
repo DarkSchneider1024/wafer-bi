@@ -46,7 +46,7 @@ const translations = {
     demoAccount: "演示帳號",
     adminAccount: "管理員帳號",
     userManagement: "用戶管理",
-    aiAssistant: "AI 駐守助手",
+    aiAssistant: "AI 駐守",
     addUser: "新增用戶",
     name: "姓名",
     group: "群組",

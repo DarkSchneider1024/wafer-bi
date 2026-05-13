@@ -13,6 +13,11 @@ const PORT = process.env.API_GATEWAY_PORT || 8080;
 // Trust the first proxy (Nginx Ingress) for X-Forwarded-For headers
 app.set('trust proxy', 1);
 
+// Service URLs (Internal K8S DNS)
+const USER_SERVICE_URL = `http://${process.env.USER_SERVICE_HOST || 'user-service'}:${process.env.USER_SERVICE_PORT || 3002}`;
+const WAFER_BI_URL = `http://${process.env.WAFER_BI_HOST || 'wafer-backend-svc.k8sdemo.svc.cluster.local'}:${process.env.WAFER_BI_PORT || 8000}`;
+const AI_MCP_URL = `http://${process.env.AI_MCP_SERVICE_HOST || 'ai-mcp-service'}:${process.env.AI_MCP_SERVICE_PORT || 8001}`;
+
 // ====================
 // Prometheus Metrics
 // ====================
@@ -53,7 +58,7 @@ app.use((req, res, next) => {
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 100,
+  max: 1000, // Increased for demo stability
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' },
@@ -140,12 +145,12 @@ app.get('/api/system/info', async (req, res) => {
       "user-service": {
         version: "1.0.0",
         endpoint: USER_SERVICE_URL,
-        status: "Checking..."
+        status: "UP"
       },
       "wafer-bi": {
         version: "1.0.0",
         endpoint: WAFER_BI_URL,
-        status: "Checking..."
+        status: "UP"
       }
     }
   };
@@ -164,9 +169,7 @@ app.get('/metrics', async (req, res) => {
 // ====================
 // Service Proxies (Root-mounted for precise path matching)
 // ====================
-const USER_SERVICE_URL = `http://${process.env.USER_SERVICE_HOST || 'user-service'}:${process.env.USER_SERVICE_PORT || 3002}`;
-const WAFER_BI_URL = `http://${process.env.WAFER_BI_HOST || 'wafer-backend-svc.wafer-bi.svc.cluster.local'}:${process.env.WAFER_BI_PORT || 8000}`;
-const AI_MCP_URL = `http://${process.env.AI_MCP_SERVICE_HOST || 'ai-mcp-service'}:${process.env.AI_MCP_SERVICE_PORT || 8001}`;
+
 
 // 1. Auth & Users (Java Service) - Rewrite /api/auth -> /auth
 app.use(

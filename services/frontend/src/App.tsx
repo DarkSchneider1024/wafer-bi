@@ -107,6 +107,7 @@ function App() {
   const [menus, setMenus] = useState<any[]>(JSON.parse(localStorage.getItem('menus') || '[]'));
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [authError, setAuthError] = useState('');
+  const [hasSearched, setHasSearched] = useState(false);
 
   // --- UI States ---
   const [lang, setLang] = useState<'en' | 'zh'>('zh');
@@ -695,6 +696,17 @@ function App() {
               {(meta?.parameters || []).map(p => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>
+
+          <button 
+            className="btn-primary" 
+            onClick={() => {
+              setHasSearched(true);
+              fetchReport(1);
+            }}
+            style={{ width: '100%', marginTop: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: 'var(--accent-color)' }}
+          >
+            <Play size={16} /> GO
+          </button>
         </div>
 
         <button 
@@ -748,7 +760,14 @@ function App() {
           </div>
         </header>
 
-        {view === 'lot-overview' && (
+        {!hasSearched && view === 'lot-overview' ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 150px)', opacity: 0.5 }}>
+            <BarChart3 size={64} style={{ marginBottom: '1rem' }} />
+            <h3>請選擇過濾條件並點擊 GO 開始查詢</h3>
+          </div>
+        ) : (
+          <>
+            {view === 'lot-overview' && (
           <div className="lot-view">
             <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: '2rem' }}>
               <div className="wafer-grid">

@@ -7,7 +7,10 @@
 
     <changeSet id="20260507-001" author="wafer-bi">
         <preConditions onFail="MARK_RAN">
-            <not><columnExists tableName="users" columnName="user_group"/></not>
+            <sqlCheck expectedResult="0">
+                SELECT count(*) FROM information_schema.columns 
+                WHERE table_name='users' AND column_name='user_group'
+            </sqlCheck>
         </preConditions>
         <addColumn tableName="users">
             <column name="user_group" type="VARCHAR(50)" defaultValue="user">

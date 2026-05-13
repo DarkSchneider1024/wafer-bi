@@ -7,7 +7,10 @@
 
     <changeSet id="20260507-004" author="wafer-bi">
         <preConditions onFail="MARK_RAN">
-            <not><columnExists tableName="users" columnName="username"/></not>
+            <sqlCheck expectedResult="0">
+                SELECT count(*) FROM information_schema.columns 
+                WHERE table_name='users' AND column_name='username'
+            </sqlCheck>
         </preConditions>
         <comment>Optimize user table: separate username from email</comment>
         

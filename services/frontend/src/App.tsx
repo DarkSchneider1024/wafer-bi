@@ -762,7 +762,8 @@ function App() {
                 {tab.label}
               </div>
             ))}
-          </nav>
+            </nav>
+          </div>
           
           <div className="settings-container" ref={settingsRef}>
             <button className="btn-icon" onClick={() => setShowSettings(!showSettings)}>

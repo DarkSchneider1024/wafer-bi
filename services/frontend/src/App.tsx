@@ -37,7 +37,8 @@ const translations = {
     parameter: "測試參數",
     filters: "篩選條件",
     login: "登入系統",
-    email: "帳號",
+    email: "電子郵件",
+    username: "帳號",
     password: "密碼",
     signIn: "登入",
     logout: "登出",
@@ -81,7 +82,8 @@ const translations = {
     parameter: "Parameter",
     filters: "Filters",
     login: "Sign In",
-    email: "Account",
+    email: "Email",
+    username: "Username",
     password: "Password",
     signIn: "Sign In",
     logout: "Logout",
@@ -145,7 +147,7 @@ function App() {
 
   // --- User Management States ---
   const [users, setUsers] = useState<any[]>([]);
-  const [newUserForm, setNewUserForm] = useState({ email: '', password: '', name: '', userGroup: 'demo01' });
+  const [newUserForm, setNewUserForm] = useState({ username: '', email: '', password: '', name: '', userGroup: 'demo01' });
   const [userActionLoading, setUserActionLoading] = useState(false);
 
   const t = translations[lang];
@@ -179,7 +181,7 @@ function App() {
     setUserActionLoading(true);
     try {
       await axios.post(`${API_BASE}/auth/register`, newUserForm);
-      setNewUserForm({ email: '', password: '', name: '', userGroup: 'demo01' });
+      setNewUserForm({ username: '', email: '', password: '', name: '', userGroup: 'demo01' });
       fetchUsers();
     } catch (err: any) {
       alert(err.response?.data?.error || "Failed to add user");
@@ -260,11 +262,11 @@ function App() {
   };
 
   const handleEditUser = (u: any) => {
-    const newEmail = prompt("Enter new email:", u.email);
+    const newUsername = prompt("Enter new username:", u.username);
     const newGroup = prompt("Enter new group (demo01/admin):", u.user_group);
-    if (newEmail || newGroup) {
+    if (newUsername || newGroup) {
       handleUpdateUser(u.id, { 
-        email: newEmail || u.email, 
+        username: newUsername || u.username, 
         userGroup: newGroup || u.user_group,
         name: u.name // Keep original name
       });
@@ -609,7 +611,7 @@ function App() {
           
           <form onSubmit={handleLogin}>
             <div className="control-group">
-              <label>Username</label>
+              <label>{t.username}</label>
               <input 
                 type="text" 
                 value={loginForm.username} 
@@ -945,8 +947,8 @@ function App() {
                     <input type="text" value={newUserForm.name} onChange={e => setNewUserForm({...newUserForm, name: e.target.value})} required />
                   </div>
                   <div className="control-group" style={{ marginTop: '1rem' }}>
-                    <label>{t.email}</label>
-                    <input type="email" value={newUserForm.email} onChange={e => setNewUserForm({...newUserForm, email: e.target.value})} required />
+                    <label>{t.username}</label>
+                    <input type="text" value={newUserForm.username} onChange={e => setNewUserForm({...newUserForm, username: e.target.value, email: e.target.value})} required />
                   </div>
                   <div className="control-group" style={{ marginTop: '1rem' }}>
                     <label>{t.password}</label>

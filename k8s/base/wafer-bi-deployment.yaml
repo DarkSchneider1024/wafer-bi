@@ -17,13 +17,13 @@ spec:
         env: production
         managed-by: argocd
       annotations:
-        deployed-at: "2026-05-11 22:18:46"
+        deployed-at: "2026-05-13 01:44:21"
     spec:
       imagePullSecrets:
         - name: ocirsecret
       containers:
       - name: backend
-        image: ghcr.io/darkschneider1024/wafer-bi-backend:latest
+        image: ghcr.io/darkschneider1024/wafer-bi-backend:10f64b0db45fac75df751f182a4675d677fae05c
         imagePullPolicy: Always
         ports:
         - containerPort: 8000
@@ -70,13 +70,13 @@ spec:
         env: production
         managed-by: argocd
       annotations:
-        deployed-at: "2026-05-11 22:18:46"
+        deployed-at: "2026-05-13 01:44:21"
     spec:
       imagePullSecrets:
         - name: ocirsecret
       containers:
       - name: frontend
-        image: ghcr.io/darkschneider1024/wafer-bi-frontend:latest
+        image: ghcr.io/darkschneider1024/wafer-bi-frontend:10f64b0db45fac75df751f182a4675d677fae05c
         imagePullPolicy: Always
         ports:
         - containerPort: 80

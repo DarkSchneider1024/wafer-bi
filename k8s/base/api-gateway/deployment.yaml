@@ -19,7 +19,7 @@ spec:
   template:
     metadata:
       annotations:
-        deployed-at: "2026-05-13 05:05:09"
+        deployed-at: "2026-05-13 05:20:26"
       labels:
         app: api-gateway
         env: production
@@ -29,7 +29,7 @@ spec:
         - name: ocirsecret
       containers:
         - name: api-gateway
-          image: ghcr.io/darkschneider1024/api-gateway:240d4964f6ee5e71b5fb2edda31aa93febefc429
+          image: ghcr.io/darkschneider1024/api-gateway:391483da93a146dbef6b34acde070da5de88f577
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

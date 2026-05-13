@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <!-- 1. 新增 sort_order 欄位 -->
+    <changeSet id="20260513-sort-001" author="wafer-bi">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="menus" columnName="sort_order"/></not>
+        </preConditions>
+        <addColumn tableName="menus">
+            <column name="sort_order" type="INTEGER" defaultValue="99"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- 2. 設定預設排序權重 (越小越前面) -->
+    <changeSet id="20260513-sort-002" author="wafer-bi">
+        <update tableName="menus">
+            <column name="sort_order" value="10"/>
+            <where>code = 'lot-overview'</where>
+        </update>
+        <update tableName="menus">
+            <column name="sort_order" value="20"/>
+            <where>code = 'wafer-detail'</where>
+        </update>
+        <update tableName="menus">
+            <column name="sort_order" value="30"/>
+            <where>code = 'statistical-analysis'</where>
+        </update>
+        <update tableName="menus">
+            <column name="sort_order" value="40"/>
+            <where>code = 'user-management'</where>
+        </update>
+        <update tableName="menus">
+            <column name="sort_order" value="100"/>
+            <where>code = 'system-status'</where>
+        </update>
+    </changeSet>
+
+</databaseChangeLog>

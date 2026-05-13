@@ -21,6 +21,8 @@ public class Menu {
 
     @Column
     private String icon;    // 圖標代碼
+    @Column(name = "sort_order")
+    private Integer sortOrder;
 
     // Getters & Setters
     public Integer getId() { return id; }
@@ -33,4 +35,6 @@ public class Menu {
     public void setPath(String path) { this.path = path; }
     public String getIcon() { return icon; }
     public void setIcon(String icon) { this.icon = icon; }
+    public Integer getSortOrder() { return sortOrder; }
+    public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
 }

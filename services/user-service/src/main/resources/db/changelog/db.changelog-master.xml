@@ -11,5 +11,6 @@
     <include file="changes/004-separate-username.xml" relativeToChangelogFile="true"/>
     <include file="changes/005-rbac-schema.xml" relativeToChangelogFile="true"/>
     <include file="changes/006-seed-rbac-data.xml" relativeToChangelogFile="true"/>
+    <include file="changes/007-menu-sorting.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

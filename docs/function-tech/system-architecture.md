@@ -26,21 +26,23 @@
 graph TD
     Client((User Browser)) -->|HTTPS| Ingress[Nginx Ingress Controller]
     
-    subgraph "k8sdemo Namespace (Business Logic)"
+    subgraph "k8sdemo Namespace (Platform Core)"
         Ingress -->|/| FE[Frontend - Nginx]
         Ingress -->|/api| GW[API Gateway]
         GW --> US[User Service]
-        US --> DB[(PostgreSQL)]
-    end
-    
-    subgraph "wafer-bi Namespace (Data Analysis)"
         GW --> WB[Wafer BI Backend]
-        WB --> DL((Delta Lake))
+        US --> DB[(PostgreSQL)]
+        WB --> DL[(Delta Lake / Storage)]
+    end
+
+    subgraph "argocd Namespace (GitOps)"
+        Argo[Argo CD] -.->|Sync| Ingress
+        Argo -.->|Sync| FE
     end
 ```
 
 ### 3.2 Kubernetes 資源說明
-- **命名空間 (Namespace)**: 區分業務邏輯 (`k8sdemo`) 與數據分析 (`wafer-bi`)，實現資源隔離。
+- **命名空間 (Namespace)**: 所有業務邏輯與數據分析服務皆統一集中在 `k8sdemo`，實現統一管理。
 - **HTTPS 安全性**: 透過 `cert-manager` 實現全站傳輸加密。
 - **跨平台相容**: 所有映像檔均支援 `amd64` 與 `arm64` 架構。
 

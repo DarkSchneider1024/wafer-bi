@@ -11,7 +11,7 @@ const AIAssistant: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: '您好！我是晶圓 BI 駐守助手。有什麼我可以幫您的嗎？' }
+    { role: 'assistant', content: '您好！我是晶圓 BI 駐守。有什麼我可以幫您的嗎？' }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);

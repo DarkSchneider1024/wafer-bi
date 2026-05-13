@@ -8,37 +8,53 @@ name: CI - Build and Push Images
 on:
   push:
     branches: [ main ]
+    # 只有當這些路徑下的檔案變動時，才觸發整個流水線（或特定 Job）
+    paths:
+      - 'services/**'
+      - 'k8s/**'
+      - '.github/workflows/**'
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
-  build:
-    name: Build and Push to OCIR
+  # 定義一個共用的準備步驟，例如處理名稱小寫
+  setup:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write   # Required for updating k8s manifests in the repo
-      packages: write   # Required for pushing images to ghcr.io
+    outputs:
+      owner_lc: ${{ steps.owner_lc.outputs.owner_lc }}
+    steps:
+      - id: owner_lc
+        run: echo "owner_lc=${OWNER,,}" >> $GITHUB_OUTPUT
+        env:
+          OWNER: '${{ github.repository_owner }}'
+
+  # 這裡將四個服務拆成平行執行的 Job
+  build-services:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [wafer-bi-backend, wafer-bi-frontend, api-gateway, user-service]
+        include:
+          - service: wafer-bi-backend
+            context: ./services/wafer-bi
+          - service: wafer-bi-frontend
+            context: ./services/frontend
+          - service: api-gateway
+            context: ./services/api-gateway
+          - service: user-service
+            context: ./services/user-service
     
+    name: Build ${{ matrix.service }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # IMPORTANT: Docker image paths MUST be lowercase. 
-      # This step converts the GitHub Username (which may have uppercase) to lowercase.
-      - name: Lowercase repo owner
-        run: |
-          echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
-        env:
-          OWNER: '${{ github.repository_owner }}'
-
-      # Log in using the built-in GITHUB_TOKEN. No OCI Secrets required for this part.
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
@@ -46,64 +62,37 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push Backend
+      - name: Build and Push
         uses: docker/build-push-action@v5
         with:
-          context: ./services/wafer-bi
-          platforms: linux/amd64,linux/arm64
+          context: ${{ matrix.context }}
           push: true
           tags: |
-            ghcr.io/${{ env.OWNER_LC }}/wafer-bi-backend:latest
-            ghcr.io/${{ env.OWNER_LC }}/wafer-bi-backend:${{ github.sha }}
+            ghcr.io/${{ needs.setup.outputs.owner_lc }}/${{ matrix.service }}:latest
+            ghcr.io/${{ needs.setup.outputs.owner_lc }}/${{ matrix.service }}:${{ github.sha }}
+          # 關鍵：啟用 GitHub Action 專用快取，沒改動的地方會直接跳過
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Build and Push Frontend
-        uses: docker/build-push-action@v5
-        with:
-          context: ./services/frontend
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ghcr.io/${{ env.OWNER_LC }}/wafer-bi-frontend:latest
-            ghcr.io/${{ env.OWNER_LC }}/wafer-bi-frontend:${{ github.sha }}
-
-      - name: Build and Push API Gateway
-        uses: docker/build-push-action@v5
-        with:
-          context: ./services/api-gateway
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ghcr.io/${{ env.OWNER_LC }}/api-gateway:latest
-            ghcr.io/${{ env.OWNER_LC }}/api-gateway:${{ github.sha }}
-
-      - name: Build and Push User Service
-        uses: docker/build-push-action@v5
-        with:
-          context: ./services/user-service
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ghcr.io/${{ env.OWNER_LC }}/user-service:latest
-            ghcr.io/${{ env.OWNER_LC }}/user-service:${{ github.sha }}
+  # 所有 Build 完成後，統一更新 K8s 部署時間戳記觸發 Rollout
+  deploy-trigger:
+    needs: [setup, build-services]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       - name: Trigger Kubernetes Rollout
         run: |
-          # 獲取當前時間戳記
           DEPLOY_DATE=$(date +'%Y-%m-%d %H:%M:%S')
+          OWNER_LC=${{ needs.setup.outputs.owner_lc }}
           
-          # 更新部署註解與映像檔標籤，實現精準版本控制 (GitOps)
-          # 這會讓 Argo CD 檢測到 Git 異動並執行 Rolling Update
+          # 更新所有部署檔的時間戳記
+          find k8s/ -name "*.yaml" -exec sed -i "s|deployed-at:.*|deployed-at: \"${DEPLOY_DATE}\"|g" {} +
           
-          # 1. Update User Service
-          sed -i "s|deployed-at:.*|deployed-at: \"${DEPLOY_DATE}\"|g" k8s/base/user-service/deployment.yaml
+          # 更新映像檔標籤
           sed -i "s|image: ghcr.io/${OWNER_LC}/user-service:.*|image: ghcr.io/${OWNER_LC}/user-service:${{ github.sha }}|g" k8s/base/user-service/deployment.yaml
-          
-          # 2. Update API Gateway
-          sed -i "s|deployed-at:.*|deployed-at: \"${DEPLOY_DATE}\"|g" k8s/base/api-gateway/deployment.yaml
           sed -i "s|image: ghcr.io/${OWNER_LC}/api-gateway:.*|image: ghcr.io/${OWNER_LC}/api-gateway:${{ github.sha }}|g" k8s/base/api-gateway/deployment.yaml
-          
-          # 3. Update Wafer BI (Backend & Frontend)
-          sed -i "s|deployed-at:.*|deployed-at: \"${DEPLOY_DATE}\"|g" k8s/base/wafer-bi-deployment.yaml
           sed -i "s|image: ghcr.io/${OWNER_LC}/wafer-bi-backend:.*|image: ghcr.io/${OWNER_LC}/wafer-bi-backend:${{ github.sha }}|g" k8s/base/wafer-bi-deployment.yaml
           sed -i "s|image: ghcr.io/${OWNER_LC}/wafer-bi-frontend:.*|image: ghcr.io/${OWNER_LC}/wafer-bi-frontend:${{ github.sha }}|g" k8s/base/wafer-bi-deployment.yaml
           

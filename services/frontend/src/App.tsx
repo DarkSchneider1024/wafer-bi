@@ -4,7 +4,7 @@ import axios from 'axios';
 import { 
   LayoutGrid, ChevronRight, 
   BarChart3, FlaskConical, Sun, Moon, Languages,
-  Settings, Package, Database, Search, Activity, ShieldCheck, Cpu, ExternalLink, RefreshCw
+  Settings, Package, Database, Search, Activity, ShieldCheck, Cpu, ExternalLink, RefreshCw, Play
 } from 'lucide-react';
 import './index.css';
 import AIAssistant from './components/AIAssistant';

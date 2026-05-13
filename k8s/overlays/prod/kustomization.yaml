@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - ../../base
+  - ../../argocd-ingress.yaml
 
 # Production specific annotations (safe - doesn't modify selectors)
 commonAnnotations:

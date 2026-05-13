@@ -4,6 +4,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: wafer-backend
+  namespace: k8sdemo
 spec:
   replicas: 2
   selector:
@@ -22,7 +23,7 @@ spec:
         - name: ocirsecret
       containers:
       - name: backend
-        image: ghcr.io/darkschneider1024/wafer-bi-backend:284ff023ffbf90f72a9279561b2e12ca05eb2094
+        image: ghcr.io/darkschneider1024/wafer-bi-backend:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8000
@@ -40,6 +41,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: wafer-backend-svc
+  namespace: k8sdemo
 spec:
   selector:
     app: wafer-backend
@@ -55,6 +57,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: wafer-frontend
+  namespace: k8sdemo
 spec:
   replicas: 1
   selector:
@@ -73,7 +76,7 @@ spec:
         - name: ocirsecret
       containers:
       - name: frontend
-        image: ghcr.io/darkschneider1024/wafer-bi-frontend:284ff023ffbf90f72a9279561b2e12ca05eb2094
+        image: ghcr.io/darkschneider1024/wafer-bi-frontend:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80
@@ -97,6 +100,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: wafer-frontend-svc
+  namespace: k8sdemo
 spec:
   selector:
     app: wafer-frontend

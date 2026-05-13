@@ -13,11 +13,21 @@ spec:
   policyTypes:
     - Ingress
   ingress:
-    # Allow all pods to receive traffic from within the namespace
+    # 1. Allow all pods to receive traffic from within the same namespace
     - from:
         - podSelector: {}
+    # 2. Allow traffic from the Ingress Controller (typically in ingress-nginx namespace)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+    # 3. For OKE/OCI LoadBalancer compatibility, allow traffic from kube-system
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
 ---
-# Restrict direct access to databases â€?only backend services can connect
+# Restrict direct access to databases: only backend services can connect
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

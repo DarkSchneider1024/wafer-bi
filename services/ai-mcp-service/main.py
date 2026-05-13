@@ -86,7 +86,7 @@ async def chat(request: ChatRequest, req: Request):
         raise HTTPException(status_code=401, detail="API_KEY_MISSING")
 
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         
         # 1. Prepare history for Gemini
         gemini_history = []

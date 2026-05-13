@@ -149,6 +149,7 @@ function App() {
   const [users, setUsers] = useState<any[]>([]);
   const [newUserForm, setNewUserForm] = useState({ username: '', email: '', password: '', name: '', userGroup: 'demo01' });
   const [userActionLoading, setUserActionLoading] = useState(false);
+  const [showAddUserForm, setShowAddUserForm] = useState(false);
 
   const t = translations[lang];
 
@@ -182,6 +183,7 @@ function App() {
     try {
       await axios.post(`${API_BASE}/auth/register`, newUserForm);
       setNewUserForm({ username: '', email: '', password: '', name: '', userGroup: 'demo01' });
+      setShowAddUserForm(false);
       fetchUsers();
     } catch (err: any) {
       alert(err.response?.data?.error || "Failed to add user");
@@ -262,13 +264,17 @@ function App() {
   };
 
   const handleEditUser = (u: any) => {
+    const newName = prompt("Enter new name:", u.name);
     const newUsername = prompt("Enter new username:", u.username);
+    const newEmail = prompt("Enter new email:", u.email);
     const newGroup = prompt("Enter new group (demo01/admin):", u.user_group);
-    if (newUsername || newGroup) {
+    
+    if (newName || newUsername || newEmail || newGroup) {
       handleUpdateUser(u.id, { 
+        name: newName || u.name,
         username: newUsername || u.username, 
-        userGroup: newGroup || u.user_group,
-        name: u.name // Keep original name
+        email: newEmail || u.email,
+        userGroup: newGroup || u.user_group
       });
     }
   };
@@ -898,18 +904,25 @@ function App() {
 
         {view === 'user-management' && (
           <div className="user-management-view">
-            <div className="grid" style={{ gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
+            <div className="grid" style={{ gridTemplateColumns: showAddUserForm && user?.user_group === 'admin' ? '2fr 1fr' : '1fr', gap: '2rem' }}>
               <div className="glass-card">
-                <h3 style={{ marginTop: 0 }}>{t.userManagement}</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <h3 style={{ margin: 0 }}>{t.userManagement}</h3>
+                  {user?.user_group === 'admin' && (
+                    <button className="btn-primary" onClick={() => setShowAddUserForm(!showAddUserForm)}>
+                      {showAddUserForm ? '取消新增' : t.addUser}
+                    </button>
+                  )}
+                </div>
                 <div className="table-container">
                   <table className="data-table">
                     <thead>
                       <tr>
                         <th>ID</th>
                         <th>{t.name}</th>
-                        <th>{t.email}</th>
+                        <th>{t.username}</th>
                         <th>{t.group}</th>
-                        <th>Actions</th>
+                        {user?.user_group === 'admin' && <th>Actions</th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -917,21 +930,23 @@ function App() {
                         <tr key={u.id}>
                           <td>{u.id}</td>
                           <td style={{ fontWeight: 600 }}>{u.name}</td>
-                          <td>{u.email}</td>
+                          <td>{u.username}</td>
                           <td><span className="badge" style={{ background: u.user_group === 'admin' ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)' }}>{u.user_group}</span></td>
-                          <td>
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                              <button className="btn-icon" title="Edit User" onClick={() => handleEditUser(u)} style={{ padding: '4px' }}>
-                                <Settings size={14} />
-                              </button>
-                              <button className="btn-icon" title="Reset Password" onClick={() => handleResetPassword(u.id)} style={{ padding: '4px' }}>
-                                <RefreshCw size={14} />
-                              </button>
-                              <button className="btn-icon" title="Delete User" onClick={() => handleDeleteUser(u.id)} style={{ padding: '4px', color: '#ef4444' }}>
-                                <Package size={14} />
-                              </button>
-                            </div>
-                          </td>
+                          {user?.user_group === 'admin' && (
+                            <td>
+                              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button className="btn-icon" title="Edit User" onClick={() => handleEditUser(u)} style={{ padding: '4px' }}>
+                                  <Settings size={14} />
+                                </button>
+                                <button className="btn-icon" title="Reset Password" onClick={() => handleResetPassword(u.id)} style={{ padding: '4px' }}>
+                                  <RefreshCw size={14} />
+                                </button>
+                                <button className="btn-icon" title="Delete User" onClick={() => handleDeleteUser(u.id)} style={{ padding: '4px', color: '#ef4444' }}>
+                                  <Package size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -939,33 +954,35 @@ function App() {
                 </div>
               </div>
 
-              <div className="glass-card">
-                <h3 style={{ marginTop: 0 }}>{t.addUser}</h3>
-                <form onSubmit={handleAddUser}>
-                  <div className="control-group">
-                    <label>{t.name}</label>
-                    <input type="text" value={newUserForm.name} onChange={e => setNewUserForm({...newUserForm, name: e.target.value})} required />
-                  </div>
-                  <div className="control-group" style={{ marginTop: '1rem' }}>
-                    <label>{t.username}</label>
-                    <input type="text" value={newUserForm.username} onChange={e => setNewUserForm({...newUserForm, username: e.target.value, email: e.target.value})} required />
-                  </div>
-                  <div className="control-group" style={{ marginTop: '1rem' }}>
-                    <label>{t.password}</label>
-                    <input type="password" value={newUserForm.password} onChange={e => setNewUserForm({...newUserForm, password: e.target.value})} required />
-                  </div>
-                  <div className="control-group" style={{ marginTop: '1rem' }}>
-                    <label>{t.group}</label>
-                    <select value={newUserForm.userGroup} onChange={e => setNewUserForm({...newUserForm, userGroup: e.target.value})}>
-                      <option value="demo01">demo01</option>
-                      <option value="admin">admin</option>
-                    </select>
-                  </div>
-                  <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1.5rem' }} disabled={userActionLoading}>
-                    {userActionLoading ? t.loading : t.addUser}
-                  </button>
-                </form>
-              </div>
+              {showAddUserForm && user?.user_group === 'admin' && (
+                <div className="glass-card" style={{ height: 'fit-content' }}>
+                  <h3 style={{ marginTop: 0 }}>{t.addUser}</h3>
+                  <form onSubmit={handleAddUser}>
+                    <div className="control-group">
+                      <label>{t.name}</label>
+                      <input type="text" value={newUserForm.name} onChange={e => setNewUserForm({...newUserForm, name: e.target.value})} required />
+                    </div>
+                    <div className="control-group" style={{ marginTop: '1rem' }}>
+                      <label>{t.username}</label>
+                      <input type="text" value={newUserForm.username} onChange={e => setNewUserForm({...newUserForm, username: e.target.value, email: e.target.value})} required />
+                    </div>
+                    <div className="control-group" style={{ marginTop: '1rem' }}>
+                      <label>{t.password}</label>
+                      <input type="password" value={newUserForm.password} onChange={e => setNewUserForm({...newUserForm, password: e.target.value})} required />
+                    </div>
+                    <div className="control-group" style={{ marginTop: '1rem' }}>
+                      <label>{t.group}</label>
+                      <select value={newUserForm.userGroup} onChange={e => setNewUserForm({...newUserForm, userGroup: e.target.value})}>
+                        <option value="demo01">demo01</option>
+                        <option value="admin">admin</option>
+                      </select>
+                    </div>
+                    <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1.5rem' }} disabled={userActionLoading}>
+                      {userActionLoading ? t.loading : t.addUser}
+                    </button>
+                  </form>
+                </div>
+              )}
             </div>
           </div>
         )}

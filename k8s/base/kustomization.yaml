@@ -4,7 +4,6 @@ namespace: k8sdemo
 
 resources:
   - namespace.yaml
-  - argocd-ingress.yaml
   - app-config.yaml
   - configmap.yaml
   - ingress.yaml

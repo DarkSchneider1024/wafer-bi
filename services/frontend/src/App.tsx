@@ -882,7 +882,7 @@ function App() {
                       </tr>
                     </thead>
                     <tbody>
-                      {users.map(u => (
+                      {users?.map(u => (
                         <tr key={u.id}>
                           <td>{u.id}</td>
                           <td style={{ fontWeight: 600 }}>{u.name}</td>

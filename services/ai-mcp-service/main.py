@@ -38,40 +38,9 @@ RATE_LIMIT_WINDOW = 60    # 1 minute window
 MAX_REQUESTS = 30         # Max requests per window (increased from 10)
 BLOCK_TIME = 600         # 10 minutes block duration
 
+# Rate limiting middleware removed to prevent unintended blocks in demo environment
 @app.middleware("http")
-async def rate_limit_middleware(request: Request, call_next):
-    if request.url.path != "/api/ai/chat":
-        return await call_next(request)
-
-    client_ip = request.headers.get("x-forwarded-for", request.client.host).split(",")[0]
-    now = time.time()
-
-    # Check if user is blocked
-    if client_ip in blocked_until:
-        if now < blocked_until[client_ip]:
-            retry_after = int(blocked_until[client_ip] - now)
-            raise HTTPException(
-                status_code=429, 
-                detail=f"Rate limit exceeded. Please try again after {retry_after // 60} minutes."
-            )
-        else:
-            del blocked_until[client_ip]
-
-    # Update request history
-    history = user_history.get(client_ip, [])
-    # Filter out old requests
-    history = [t for t in history if now - t < RATE_LIMIT_WINDOW]
-    history.append(now)
-    user_history[client_ip] = history
-
-    # Check if threshold reached
-    if len(history) > MAX_REQUESTS:
-        blocked_until[client_ip] = now + BLOCK_TIME
-        raise HTTPException(
-            status_code=429, 
-            detail="Too many requests. You are blocked for 10 minutes."
-        )
-
+async def skip_rate_limit_middleware(request: Request, call_next):
     return await call_next(request)
 
 # Configure Gemini

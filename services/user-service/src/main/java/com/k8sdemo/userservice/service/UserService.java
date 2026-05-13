@@ -48,9 +48,8 @@ public class UserService {
      */
     public User register(RegisterRequest request) {
         if (request.username() == null || request.username().isBlank()
-                || request.password() == null || request.password().isBlank()
-                || request.name() == null || request.name().isBlank()) {
-            throw new IllegalArgumentException("Username, password and name are required");
+                || request.password() == null || request.password().isBlank()) {
+            throw new IllegalArgumentException("Username and password are required");
         }
 
         if (userRepository.existsByUsername(request.username())) {
@@ -61,7 +60,7 @@ public class UserService {
         user.setUsername(request.username());
         user.setEmail(request.email());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
-        user.setName(request.name());
+        user.setName(request.username());
         
         // Find group by name
         String groupName = (request.userGroup() != null && !request.userGroup().isBlank()) ? request.userGroup() : "user";
@@ -131,7 +130,7 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         if (request.email() != null) user.setEmail(request.email());
-        if (request.name() != null) user.setName(request.name());
+
         if (request.userGroup() != null) {
             String groupName = request.userGroup();
             Group group = groupRepository.findByName(groupName)

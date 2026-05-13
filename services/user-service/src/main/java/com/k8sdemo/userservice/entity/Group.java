@@ -15,6 +15,7 @@ public class Group {
     private String name;
 
     @ManyToMany(fetch = FetchType.EAGER)
+    @OrderBy("sortOrder ASC")
     @JoinTable(
         name = "menu_groups",
         joinColumns = @JoinColumn(name = "group_id"),

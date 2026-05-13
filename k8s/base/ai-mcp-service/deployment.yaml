@@ -15,13 +15,13 @@ spec:
         env: production
         managed-by: argocd
       annotations:
-        deployed-at: "2026-05-13 07:00:00"
+        deployed-at: "2026-05-13 07:28:46"
     spec:
       imagePullSecrets:
         - name: ocirsecret
       containers:
       - name: ai-mcp
-        image: ghcr.io/darkschneider1024/ai-mcp-service:latest
+        image: ghcr.io/darkschneider1024/ai-mcp-service:313357a327a28516e104ea15bda734b428bc20b1
         imagePullPolicy: Always
         ports:
         - containerPort: 8001

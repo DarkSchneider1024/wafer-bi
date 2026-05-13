@@ -4,7 +4,7 @@ import axios from 'axios';
 import { 
   LayoutGrid, ChevronRight, 
   BarChart3, FlaskConical, Sun, Moon, Languages,
-  Settings, Package, Database, Search, Activity, ShieldCheck, Cpu, ExternalLink, RefreshCw, Play
+  Settings, Package, Database, Search, Activity, ShieldCheck, Cpu, ExternalLink, RefreshCw, Play, Bot
 } from 'lucide-react';
 import './index.css';
 import AIAssistant from './components/AIAssistant';
@@ -128,7 +128,7 @@ function App() {
   const [selectedLot, setSelectedLot] = useState('Lot1');
   const [selectedWafer, setSelectedWafer] = useState('W01');
   const [selectedParam, setSelectedParam] = useState('Thickness');
-  const [view, setView] = useState<'lot-overview' | 'wafer-detail' | 'statistical-analysis' | 'data-report' | 'user-management' | 'system-status'>('lot-overview');
+  const [view, setView] = useState<'lot-overview' | 'wafer-detail' | 'statistical-analysis' | 'data-report' | 'user-management' | 'system-status' | 'ai-assistant'>('lot-overview');
   
   const [systemInfo, setSystemInfo] = useState<any>(null);
   const [loadingSystem, setLoadingSystem] = useState(false);

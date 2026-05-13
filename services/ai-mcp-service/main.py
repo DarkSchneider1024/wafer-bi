@@ -10,6 +10,24 @@ load_dotenv()
 
 app = FastAPI(title="Wafer AI Assistant API (Gemini)")
 
+import uuid
+import time
+from fastapi import Request
+
+@app.middleware("http")
+async def trace_middleware(request: Request, call_next):
+    trace_id = request.headers.get("x-trace-id", str(uuid.uuid4())[:8])
+    # Store trace_id in request state for access in routes
+    request.state.trace_id = trace_id
+    
+    start_time = time.time()
+    response = await call_next(request)
+    duration = time.time() - start_time
+    
+    response.headers["X-Trace-Id"] = trace_id
+    print(f"[{trace_id}] {request.method} {request.url.path} - {response.status_code} ({duration:.2f}s)")
+    return response
+
 # Configure Gemini
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("OPENAI_API_KEY")
 if GEMINI_API_KEY:
@@ -37,7 +55,8 @@ class ChatRequest(BaseModel):
     history: list = []
 
 @app.post("/api/ai/chat")
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest, req: Request):
+    trace_id = getattr(req.state, "trace_id", "unknown")
     if not GEMINI_API_KEY:
         raise HTTPException(status_code=401, detail="API_KEY_MISSING")
 
@@ -103,7 +122,7 @@ async def chat(request: ChatRequest):
         return {"answer": response.text}
 
     except Exception as e:
-        print(f"Gemini Chat Error: {str(e)}")
+        print(f"[{trace_id}] Gemini Chat Error: {str(e)}")
         if "API_KEY_INVALID" in str(e) or "401" in str(e):
             raise HTTPException(status_code=401, detail="API_KEY_INVALID")
         raise HTTPException(status_code=500, detail=str(e))

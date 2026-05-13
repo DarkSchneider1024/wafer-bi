@@ -6,6 +6,9 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
 
     <changeSet id="20260507-002" author="wafer-bi">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM users WHERE email = 'admin' OR username = 'admin'</sqlCheck>
+        </preConditions>
         <!-- Insert Admin User with MD5 password: admin@carrot -->
         <insert tableName="users">
             <column name="email" value="admin"/>

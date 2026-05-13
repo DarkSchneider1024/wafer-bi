@@ -79,22 +79,32 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("OPENAI_API_KEY")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "ai-mcp-service"}
+
 @app.on_event("startup")
 async def startup_event():
     """Perform initial ingestion on startup if DB is empty"""
-    from chroma_manager import ChromaManager
+    print("AI service starting up...")
     try:
+        from chroma_manager import ChromaManager
         manager = ChromaManager()
         # Check if collection has data
         count = manager.collection.count()
+        print(f"Current ChromaDB count: {count}")
         if count == 0:
             print("ChromaDB is empty. Performing initial ingestion...")
-            DELTA_PATH = os.getenv("DELTA_PATH", "../wafer-bi/wafer_delta_table")
+            # Use local baked-in path as fallback
+            DELTA_PATH = os.getenv("DELTA_PATH", "./wafer_delta_table")
             manager.ingest_from_delta(DELTA_PATH)
+            print("Initial ingestion complete.")
         else:
             print(f"ChromaDB already contains {count} records. Skipping initial ingestion.")
     except Exception as e:
-        print(f"Failed to perform initial ingestion: {e}")
+        print(f"CRITICAL: Failed to initialize AI service: {e}")
+        # We don't raise here to allow the container to stay up for debugging if needed,
+        # but the health check might fail if we can't initialize.
 
 class ChatRequest(BaseModel):
     message: str

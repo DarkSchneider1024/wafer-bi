@@ -10,6 +10,9 @@ const promClient = require('prom-client');
 const app = express();
 const PORT = process.env.API_GATEWAY_PORT || 8080;
 
+// Trust the first proxy (Nginx Ingress) for X-Forwarded-For headers
+app.set('trust proxy', 1);
+
 // ====================
 // Prometheus Metrics
 // ====================

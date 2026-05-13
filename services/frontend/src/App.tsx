@@ -45,6 +45,7 @@ const translations = {
     demoAccount: "演示帳號",
     adminAccount: "管理員帳號",
     userManagement: "用戶管理",
+    aiAssistant: "AI 駐守助手",
     addUser: "新增用戶",
     name: "姓名",
     group: "群組",
@@ -88,6 +89,7 @@ const translations = {
     demoAccount: "Demo Account",
     adminAccount: "Admin Account",
     userManagement: "User Management",
+    aiAssistant: "AI Assistant",
     addUser: "Add User",
     name: "Name",
     group: "Group",
@@ -195,7 +197,13 @@ function App() {
     }
   }, [token]);
 
-  const handleLogin = async (e?: React.FormEvent) => {
+  useEffect(() => {
+    if (view === 'ai-assistant') {
+      window.dispatchEvent(new CustomEvent('open-ai-assistant'));
+    }
+  }, [view]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     if (e) e.preventDefault();
     setAuthError('');
     try {
@@ -956,6 +964,26 @@ function App() {
                   </button>
                 </form>
               </div>
+            </div>
+          </div>
+        )}
+
+        {view === 'ai-assistant' && (
+          <div className="ai-assistant-view">
+            <div className="glass-card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+              <Bot size={64} color="var(--accent-color)" style={{ marginBottom: '2rem' }} />
+              <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>{t.aiAssistant}</h2>
+              <p style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', maxWidth: '600px', margin: '0 auto 3rem' }}>
+                您的智能晶圓數據助手已經就緒。點擊右下角的對話圖標，或是點擊下方按鈕開始對話。
+                我可以幫您搜尋晶圓狀態、分析參數趨勢以及回答製程相關問題。
+              </p>
+              <button 
+                className="btn-primary" 
+                style={{ padding: '1rem 3rem', fontSize: '1.1rem' }}
+                onClick={() => window.dispatchEvent(new CustomEvent('open-ai-assistant'))}
+              >
+                立即開始對話
+              </button>
             </div>
           </div>
         )}

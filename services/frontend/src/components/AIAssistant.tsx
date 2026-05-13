@@ -11,10 +11,16 @@ const AIAssistant: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: '您好！我是 Wafer AI 助手。我可以幫您查詢晶圓狀態或分析數據。請問有什麼我可以幫您的嗎？' }
+    { role: 'assistant', content: '您好！我是晶圓 BI 駐守助手。有什麼我可以幫您的嗎？' }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOpen = () => setIsOpen(true);
+    window.addEventListener('open-ai-assistant', handleOpen);
+    return () => window.removeEventListener('open-ai-assistant', handleOpen);
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {

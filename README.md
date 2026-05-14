@@ -16,6 +16,7 @@
 
 ### 🚀 部署與維運 (Deployment & Ops)
 - **[終極部署與 CI/CD 維運全書](./docs/function-tech/deployment-sop.md)**：包含 OKE 搭建、GitHub Actions 動態標籤、Argo CD GitOps 實作。
+- **[Argo CD 異常處理與除錯指南](./docs/function-tech/troubleshooting-guide.md)**：如何透過 Argo CD 查看日誌與排查服務異常。
 - **[常用維運指令集 (急救包)](./docs/function-tech/k8s-arch-guide.md#5-常用維運指令集-troubleshooting-cheat-sheet)**：當 Pod 出錯或需要手動清理數據時的快速參考。
 
 ### 🔬 業務功能 (Business)

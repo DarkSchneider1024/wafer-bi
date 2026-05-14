@@ -106,7 +106,7 @@ const AIAssistant: React.FC = () => {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Bot size={20} />
-              <span style={{ fontWeight: 600 }}>AI 駐守助手</span>
+              <span style={{ fontWeight: 600 }}>AI 助手</span>
             </div>
             <button onClick={() => setIsOpen(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
               <X size={20} />

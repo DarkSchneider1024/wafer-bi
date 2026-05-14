@@ -143,12 +143,12 @@ async def chat(request: ChatRequest, req: Request):
             
             # Send tool response back to Gemini
             second_response = chat_session.send_message(
-                genai.types.Content(
-                    parts=[genai.types.Part.from_function_response(
-                        name=function_name,
-                        response={"result": result_text}
-                    )]
-                )
+                parts=[{
+                    "function_response": {
+                        "name": function_name,
+                        "response": {"result": result_text}
+                    }
+                }]
             )
             return {"answer": second_response.text}
         

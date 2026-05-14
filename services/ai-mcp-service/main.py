@@ -143,7 +143,7 @@ async def chat(request: ChatRequest, req: Request):
             
             # Send tool response back to Gemini
             second_response = chat_session.send_message(
-                parts=[{
+                [{
                     "function_response": {
                         "name": function_name,
                         "response": {"result": result_text}

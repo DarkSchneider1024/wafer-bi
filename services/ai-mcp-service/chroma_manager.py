@@ -10,7 +10,7 @@ load_dotenv()
 
 class GeminiEmbeddingFunction(EmbeddingFunction):
     """Custom Embedding Function for Gemini to avoid chromadb SDK bugs"""
-    def __init__(self, api_key: str, model_name: str = "models/embedding-001"):
+    def __init__(self, api_key: str, model_name: str = "models/text-embedding-004"):
         if not api_key:
             raise ValueError("GEMINI_API_KEY is required for embeddings")
         # Configure genai once
@@ -40,7 +40,7 @@ class ChromaManager:
         # Using our custom Gemini embedding function
         self.gemini_ef = GeminiEmbeddingFunction(
             api_key=api_key,
-            model_name="models/embedding-001"
+            model_name="models/text-embedding-004"
         )
         
         self.collection = self.client.get_or_create_collection(

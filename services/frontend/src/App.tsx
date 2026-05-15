@@ -719,11 +719,6 @@ function App() {
     );
   }
 
-  const dynamicMenus = menus.map(m => ({
-    id: m.code,
-    label: lang === 'zh' ? m.name : m.code.replace(/-/g, ' ').toUpperCase(),
-    roles: ['*'] // 已經由後端過濾
-  }));
 
   const NAV_ITEMS = [
     { id: 'yield-report', label: t.yieldReport, roles: ['admin', 'demo01', 'user'] },
@@ -899,7 +894,9 @@ function App() {
                         </tr>
                       </thead>
                       <tbody>
-                        {yieldLots.length === 0 ? (
+                        {loadingYield ? (
+                          <tr><td colSpan={3} style={{ textAlign: 'center', padding: '2rem' }}>{t.loading}</td></tr>
+                        ) : yieldLots.length === 0 ? (
                           <tr><td colSpan={3} style={{ textAlign: 'center', padding: '2rem' }}>{t.noRecords}</td></tr>
                         ) : yieldLots.map(l => (
                           <tr 

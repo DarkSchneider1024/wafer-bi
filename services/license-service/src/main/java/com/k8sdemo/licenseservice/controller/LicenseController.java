@@ -24,17 +24,26 @@ public class LicenseController {
     public static class LicenseRequest {
         private String customer_name;
         private String machine_id;
-        private int expiry_days = 365;
+        private Integer expiry_days;
+        private String expiry_date; // Format: YYYY-MM-DD
         private List<String> features = List.of("core");
     }
 
     @PostMapping("/generate")
     public Map<String, String> generate(@RequestBody LicenseRequest req) throws Exception {
         // 1. Prepare payload
+        LocalDateTime expiry;
+        if (req.getExpiry_date() != null) {
+            expiry = LocalDateTime.parse(req.getExpiry_date() + "T23:59:59");
+        } else {
+            int days = req.getExpiry_days() != null ? req.getExpiry_days() : 365;
+            expiry = LocalDateTime.now().plusDays(days);
+        }
+
         Map<String, Object> payload = Map.of(
                 "customer", req.getCustomer_name(),
                 "machine_id", req.getMachine_id(),
-                "expiry", LocalDateTime.now().plusDays(req.getExpiry_days()).toString(),
+                "expiry", expiry.toString(),
                 "features", req.getFeatures(),
                 "issued_at", LocalDateTime.now().toString()
         );

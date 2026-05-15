@@ -112,6 +112,7 @@ function App() {
   const [menus, setMenus] = useState<any[]>(JSON.parse(localStorage.getItem('menus') || '[]'));
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [authError, setAuthError] = useState('');
+  const [licenseWarning, setLicenseWarning] = useState<string | null>(localStorage.getItem('licenseWarning'));
   const [hasSearched, setHasSearched] = useState(false);
 
   // --- UI States ---
@@ -215,13 +216,15 @@ function App() {
     setAuthError('');
     try {
       const res = await axios.post(`${API_BASE}/auth/login`, loginForm);
-      const { token: newToken, user: newUser, menus: newMenus } = res.data;
+      const { token: newToken, user: newUser, menus: newMenus, licenseWarning: newWarning } = res.data;
       localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(newUser));
       localStorage.setItem('menus', JSON.stringify(newMenus));
+      localStorage.setItem('licenseWarning', newWarning || '');
       setToken(newToken);
       setUser(newUser);
       setMenus(newMenus);
+      setLicenseWarning(newWarning);
     } catch (err: any) {
       setAuthError(err.response?.data?.error || 'Login failed');
     }
@@ -283,8 +286,10 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('licenseWarning');
     setToken(null);
     setUser(null);
+    setLicenseWarning(null);
     setView('lot-overview');
   };
 
@@ -788,6 +793,25 @@ function App() {
             )}
           </div>
         </header>
+
+        {licenseWarning && (
+          <div className="glass-card" style={{ 
+            margin: '1rem', 
+            background: 'rgba(239, 68, 68, 0.1)', 
+            border: '1px solid #ef4444', 
+            color: '#ef4444',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.75rem 1rem'
+          }}>
+            <ShieldCheck size={20} />
+            <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{licenseWarning}</span>
+            <button onClick={() => setLicenseWarning(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
+              <X size={16} />
+            </button>
+          </div>
+        )}
 
         {!hasSearched && view === 'lot-overview' ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 150px)', opacity: 0.5 }}>

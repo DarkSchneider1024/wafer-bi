@@ -9,6 +9,8 @@ import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.spec.X509EncodedKeySpec;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 
 @Component
@@ -16,29 +18,26 @@ public class LicenseValidator {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    /**
-     * Verifies a license key.
-     * @param licenseKeyBase64 The base64 encoded license string from the client.
-     * @param publicKeyPem The public key in PEM format (from Vault/OpenBao).
-     * @return true if valid, false otherwise.
-     */
-    public boolean validate(String licenseKeyBase64, String publicKeyPem) {
+    public record ValidationResult(
+            boolean isValid,
+            boolean isExpired,
+            long daysRemaining,
+            String expiryDate,
+            String message
+    ) {}
+
+    public ValidationResult validate(String licenseKeyBase64, String publicKeyPem) {
         try {
-            // 1. Decode the full license object
             byte[] decodedBytes = Base64.getDecoder().decode(licenseKeyBase64);
             JsonNode root = objectMapper.readTree(decodedBytes);
             
             JsonNode payloadNode = root.get("payload");
-            String signatureStr = root.get("signature").asText(); // format: vault:v1:base64...
-            
-            // 2. Prepare data for verification (the same string that was signed)
+            String signatureStr = root.get("signature").asText();
             String payloadJson = objectMapper.writeValueAsString(payloadNode);
             
-            // 3. Extract raw signature bytes from Vault format
             String rawSignatureBase64 = signatureStr.split(":")[2];
             byte[] signatureBytes = Base64.getDecoder().decode(rawSignatureBase64);
             
-            // 4. Load Public Key
             String cleanKey = publicKeyPem
                     .replace("-----BEGIN PUBLIC KEY-----", "")
                     .replace("-----END PUBLIC KEY-----", "")
@@ -48,16 +47,31 @@ public class LicenseValidator {
             KeyFactory kf = KeyFactory.getInstance("RSA");
             PublicKey publicKey = kf.generatePublic(spec);
             
-            // 5. Verify
             Signature sig = Signature.getInstance("SHA256withRSA");
             sig.initVerify(publicKey);
             sig.update(payloadJson.getBytes(StandardCharsets.UTF_8));
             
-            return sig.verify(signatureBytes);
+            if (!sig.verify(signatureBytes)) {
+                return new ValidationResult(false, false, 0, null, "Invalid Signature");
+            }
+
+            JsonNode expiryNode = payloadNode.get("expiry");
+            if (expiryNode != null) {
+                LocalDateTime expiry = LocalDateTime.parse(expiryNode.asText());
+                LocalDateTime now = LocalDateTime.now();
+                long daysRemaining = ChronoUnit.DAYS.between(now, expiry);
+                
+                if (now.isAfter(expiry)) {
+                    return new ValidationResult(false, true, daysRemaining, expiry.toString(), "License Expired");
+                }
+                
+                return new ValidationResult(true, false, daysRemaining, expiry.toString(), "OK");
+            }
+            
+            return new ValidationResult(true, false, 999, null, "OK");
             
         } catch (Exception e) {
-            System.err.println("License validation failed: " + e.getMessage());
-            return false;
+            return new ValidationResult(false, false, 0, null, "Error: " + e.getMessage());
         }
     }
 }

@@ -8,6 +8,7 @@ import com.k8sdemo.userservice.repository.UserRepository;
 import com.k8sdemo.userservice.repository.GroupRepository;
 import com.k8sdemo.userservice.repository.MenuRepository;
 
+import com.k8sdemo.userservice.util.LicenseValidator;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
@@ -15,11 +16,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class UserService {
@@ -28,7 +31,9 @@ public class UserService {
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
     private final MenuRepository menuRepository;
+    private final LicenseValidator licenseValidator;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${app.jwt.secret}")
     private String jwtSecret;
@@ -36,10 +41,17 @@ public class UserService {
     @Value("${app.jwt.expiration-ms}")
     private long jwtExpirationMs;
 
-    public UserService(UserRepository userRepository, GroupRepository groupRepository, MenuRepository menuRepository) {
+    @Value("${app.license.key:}")
+    private String licenseKey;
+
+    @Value("${app.license.service-url:http://license-service:8005}")
+    private String licenseServiceUrl;
+
+    public UserService(UserRepository userRepository, GroupRepository groupRepository, MenuRepository menuRepository, LicenseValidator licenseValidator) {
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.menuRepository = menuRepository;
+        this.licenseValidator = licenseValidator;
     }
 
     /**
@@ -103,6 +115,32 @@ public class UserService {
             throw new SecurityException("Invalid credentials");
         }
 
+        // --- License Check ---
+        String licenseWarning = null;
+        if (licenseKey != null && !licenseKey.isBlank()) {
+            try {
+                Map<String, Object> response = restTemplate.getForObject(licenseServiceUrl + "/public-key", Map.class);
+                String publicKey = (String) response.get("public_key");
+                LicenseValidator.ValidationResult result = licenseValidator.validate(licenseKey, publicKey);
+                
+                if (result.isExpired()) {
+                    throw new SecurityException("license 過期 expri day 5/20 請通知管理員確認");
+                }
+                
+                if (!result.isValid()) {
+                    throw new SecurityException("License 驗證失敗，請聯繫管理員");
+                }
+                
+                if (result.daysRemaining() <= 7) {
+                    licenseWarning = "License 即將於 " + result.expiryDate().substring(0, 10) + " 過期，請及時更新。";
+                }
+            } catch (SecurityException se) {
+                throw se;
+            } catch (Exception e) {
+                log.error("License validation failed during login", e);
+            }
+        }
+
         String token = generateToken(user);
         log.info("User logged in: id={}, email={}", user.getId(), user.getEmail());
         
@@ -111,7 +149,7 @@ public class UserService {
             menus = List.copyOf(user.getGroup().getMenus());
         }
         
-        return new LoginResponse(token, user, menus);
+        return new LoginResponse(token, user, menus, licenseWarning);
     }
 
     /**

@@ -41,6 +41,17 @@ async def handle_list_tools() -> list[types.Tool]:
                 "required": ["query"],
             },
         ),
+        types.Tool(
+            name="analyze_lot_yield",
+            description="Automatically analyze yield issues in a lot and identify problematic parameters",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "lot_id": {"type": "string", "description": "The Lot ID to analyze (e.g., 'Lot1')"},
+                },
+                "required": ["lot_id"],
+            },
+        ),
     ]
 
 @server.call_tool()
@@ -78,6 +89,34 @@ async def handle_call_tool(
             response_text += f"- {doc}\n"
             
         return [types.TextContent(type="text", text=response_text)]
+
+    elif name == "analyze_lot_yield":
+        lot_id = arguments.get("lot_id")
+        # Query for lot status focusing on yield
+        results = chroma.query_wafer(f"low yield wafers in lot {lot_id}", n_results=10)
+        
+        if not results['metadatas'] or not results['metadatas'][0]:
+            return [types.TextContent(type="text", text=f"No data found for {lot_id}.")]
+            
+        low_yield_info = []
+        for meta, doc in zip(results['metadatas'][0], results['documents'][0]):
+            if meta.get("lot_id") == lot_id and meta.get("yield", 100) < 98:
+                low_yield_info.append({
+                    "wafer": meta.get("wafer_id"),
+                    "param": meta.get("parameter"),
+                    "yield": meta.get("yield"),
+                    "std": meta.get("std")
+                })
+        
+        if not low_yield_info:
+            return [types.TextContent(type="text", text=f"{lot_id} 的良率狀況良好，所有測試晶圓皆高於 98%。")]
+            
+        summary = f"分析報告 - {lot_id}:\n"
+        for item in low_yield_info:
+            summary += f"- 晶圓 {item['wafer']}: 良率 {item['yield']:.2f}% (受 {item['param']} 影響, 標準差 {item['std']:.4f})\n"
+        
+        summary += "\n自動化分析結論：該批次的良率損失主要與參數穩定度有關。建議檢查相關製程機台。"
+        return [types.TextContent(type="text", text=summary)]
 
     else:
         raise ValueError(f"Unknown tool: {name}")

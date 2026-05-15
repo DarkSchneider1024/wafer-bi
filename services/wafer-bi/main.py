@@ -212,6 +212,41 @@ async def get_report(
         "data": report_df.to_dict(orient="records")
     }
 
+@app.get("/yield/lots")
+@app.get("/api/yield/lots")
+async def get_lot_yields(product_id: str = None):
+    df = get_df()
+    if product_id:
+        df = df[df["product_id"] == product_id]
+    
+    # Aggregating yield by lot
+    # Each wafer in each parameter has a yield, we take the average per lot
+    lot_yields = df.groupby("lot_id").agg({
+        "yield": "mean",
+        "product_id": "first"
+    }).reset_index()
+    
+    lot_yields = lot_yields.sort_values(by="lot_id", ascending=False).head(25)
+    
+    return lot_yields.to_dict(orient="records")
+
+@app.get("/yield/wafers/{lot_id}")
+@app.get("/api/yield/wafers/{lot_id}")
+async def get_wafer_yields(lot_id: str):
+    df = get_df()
+    lot_df = df[df["lot_id"] == lot_id]
+    
+    if lot_df.empty:
+        raise HTTPException(status_code=404, detail="Lot not found")
+        
+    # Get yield per wafer (first parameter's yield is enough since it's per wafer)
+    wafer_yields = lot_df.groupby("wafer_id").agg({
+        "yield": "mean",
+        "parameter": "first"
+    }).reset_index()
+    
+    return wafer_yields.to_dict(orient="records")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -102,9 +102,9 @@ async def chat(request: ChatRequest, req: Request):
         raise HTTPException(status_code=401, detail="API_KEY_MISSING")
 
     try:
-        # Use gemini-1.5-flash-preview as per user confirmation
+        # Use gemini-3-flash-preview as per user confirmation
         model = genai.GenerativeModel(
-            'gemini-1.5-flash-preview',
+            'gemini-3-flash-preview',
             system_instruction=SYSTEM_INSTRUCTION
         )
         

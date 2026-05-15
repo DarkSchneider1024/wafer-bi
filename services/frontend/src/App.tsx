@@ -696,11 +696,7 @@ function App() {
           </button>
         </div>
 
-        <div className="glass-card" style={{ padding: '0.75rem', marginBottom: '1.5rem', background: 'rgba(255,255,255,0.05)' }}>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t.welcome}</div>
-          <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{user?.name}</div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--accent-color)', opacity: 0.8 }}>Group: {user?.user_group}</div>
-        </div>
+        <div style={{ marginBottom: '1.5rem' }}></div>
 
         <div className="sidebar-group">
           <div className="sidebar-title">{t.filters}</div>
@@ -776,6 +772,14 @@ function App() {
             </nav>
           </div>
           
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            {/* User Info */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.2 }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{t.welcome}</div>
+              <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{user?.name}</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--accent-color)', opacity: 0.8 }}>Group: {user?.user_group}</div>
+            </div>
+          
           <div className="settings-container" ref={settingsRef}>
             <button className="btn-icon" onClick={() => setShowSettings(!showSettings)}>
               <Settings size={20} />
@@ -798,7 +802,8 @@ function App() {
               </div>
             )}
           </div>
-        </header>
+        </div>
+      </header>
 
         {licenseWarning && (
           <div className="glass-card" style={{ 

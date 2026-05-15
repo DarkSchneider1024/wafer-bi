@@ -23,7 +23,7 @@ spec:
         env: production
         managed-by: argocd
       annotations:
-        deployed-at: "2026-05-15 05:47:05"
+        deployed-at: "2026-05-15 06:38:23"
     spec:
       initContainers:
         - name: wait-for-postgres
@@ -42,7 +42,7 @@ spec:
         - name: ocirsecret
       containers:
         - name: user-service
-          image: ghcr.io/darkschneider1024/user-service:1637a3491dc0e39fa7cae3905dd39a36af755433
+          image: ghcr.io/darkschneider1024/user-service:c75270a6c86080a2141d7cc8c4c865ab250153c3
           imagePullPolicy: Always
           ports:
             - containerPort: 3002

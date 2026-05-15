@@ -127,9 +127,29 @@ const AIAssistant: React.FC = () => {
                 <div style={{ fontSize: '0.7rem', opacity: 0.8 }}>Online | Wafer BI Expert</div>
               </div>
             </div>
-            <button onClick={() => setIsOpen(false)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', cursor: 'pointer', padding: '6px', borderRadius: '50%', display: 'flex' }}>
-              <X size={18} />
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button 
+                onClick={() => handleSend("請幫我分析當前批次的良率問題")}
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  border: 'none',
+                  color: 'white',
+                  cursor: 'pointer',
+                  padding: '4px 12px',
+                  borderRadius: '12px',
+                  fontSize: '0.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontWeight: 600
+                }}
+              >
+                <Activity size={14} /> 自動檢查良率
+              </button>
+              <button onClick={() => setIsOpen(false)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', cursor: 'pointer', padding: '6px', borderRadius: '50%', display: 'flex' }}>
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
           {/* Messages */}

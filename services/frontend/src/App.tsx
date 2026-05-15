@@ -56,7 +56,12 @@ const translations = {
     version: "版本號",
     healthChecks: "健康檢查連結",
     debugTools: "偵錯工具",
-    lastUpdated: "最後更新"
+    lastUpdated: "最後更新",
+    yieldReport: "良率報表",
+    lotYield: "批次良率",
+    waferYield: "晶圓良率",
+    autoYieldAnalysis: "自動良率檢查",
+    analyzing: "正在分析中..."
   },
   en: {
     title: "Wafer BI",
@@ -101,7 +106,12 @@ const translations = {
     version: "Version",
     healthChecks: "Health Checks",
     debugTools: "Debug Tools",
-    lastUpdated: "Last Updated"
+    lastUpdated: "Last Updated",
+    yieldReport: "Yield Report",
+    lotYield: "Lot Yield",
+    waferYield: "Wafer Yield",
+    autoYieldAnalysis: "Auto Yield Check",
+    analyzing: "Analyzing..."
   }
 };
 
@@ -129,7 +139,12 @@ function App() {
   const [selectedLot, setSelectedLot] = useState('Lot1');
   const [selectedWafer, setSelectedWafer] = useState('W01');
   const [selectedParam, setSelectedParam] = useState('Thickness');
-  const [view, setView] = useState<'lot-overview' | 'wafer-detail' | 'statistical-analysis' | 'data-report' | 'user-management' | 'system-status' | 'ai-assistant'>('lot-overview');
+  const [view, setView] = useState<'yield-report' | 'lot-overview' | 'wafer-detail' | 'statistical-analysis' | 'data-report' | 'user-management' | 'system-status' | 'ai-assistant'>('yield-report');
+  
+  const [yieldLots, setYieldLots] = useState<any[]>([]);
+  const [yieldWafers, setYieldWafers] = useState<any[]>([]);
+  const [selectedYieldLot, setSelectedYieldLot] = useState('');
+  const [loadingYield, setLoadingYield] = useState(false);
   
   const [systemInfo, setSystemInfo] = useState<any>(null);
   const [loadingSystem, setLoadingSystem] = useState(false);
@@ -283,10 +298,47 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    if (view === 'yield-report') {
+      fetchYieldLots();
+    }
+  }, [view, selectedProduct]);
+
+  useEffect(() => {
+    if (selectedYieldLot) {
+      fetchWaferYields(selectedYieldLot);
+    }
+  }, [selectedYieldLot]);
+
+  const fetchYieldLots = async () => {
+    setLoadingYield(true);
+    try {
+      const res = await axios.get(`${API_BASE}/yield/lots${selectedProduct ? `?product_id=${selectedProduct}` : ''}`);
+      setYieldLots(res.data);
+      if (res.data.length > 0) {
+        setSelectedYieldLot(res.data[0].lot_id);
+      }
+    } catch (err) {
+      console.error("Failed to fetch lot yield", err);
+    } finally {
+      setLoadingYield(false);
+    }
+  };
+
+  const fetchWaferYields = async (lotId: string) => {
+    try {
+      const res = await axios.get(`${API_BASE}/yield/wafers/${lotId}`);
+      setYieldWafers(res.data);
+    } catch (err) {
+      console.error("Failed to fetch wafer yield", err);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('licenseWarning');
+    localStorage.removeItem('menus');
     setToken(null);
     setUser(null);
     setLicenseWarning(null);
@@ -673,12 +725,11 @@ function App() {
     roles: ['*'] // 已經由後端過濾
   }));
 
-  // 如果是 admin 且沒有獲得 menus (例如資料庫為空)，保留預設管理選單
-  const NAV_ITEMS = dynamicMenus.length > 0 ? dynamicMenus : [
-    { id: 'lot-overview', label: t.lotOverview, roles: ['admin', 'demo01'] },
-    { id: 'wafer-detail', label: t.waferDetail, roles: ['admin', 'demo01'] },
+  const NAV_ITEMS = [
+    { id: 'yield-report', label: t.yieldReport, roles: ['admin', 'demo01', 'user'] },
+    { id: 'lot-overview', label: t.lotOverview, roles: ['admin', 'demo01', 'user'] },
     { id: 'statistical-analysis', label: t.statsAnalysis, roles: ['admin', 'demo01'] },
-    { id: 'data-report', label: t.dataReport, roles: ['admin'] },
+    { id: 'data-report', label: t.dataReport, roles: ['admin', 'demo01'] },
     { id: 'user-management', label: t.userManagement, roles: ['admin'] },
     { id: 'system-status', label: t.systemStatus, roles: ['admin'] }
   ].filter(item => item.roles.includes(user?.user_group || 'user'));
@@ -831,6 +882,78 @@ function App() {
           </div>
         ) : (
           <>
+            {view === 'yield-report' && (
+              <div className="grid" style={{ gridTemplateColumns: '1.5fr 1fr' }}>
+                <div className="glass-card">
+                  <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <LayoutGrid size={22} color="var(--accent-color)" />
+                    {t.lotYield} (Top 25)
+                  </h3>
+                  <div className="table-container">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>{t.lot}</th>
+                          <th>{t.product}</th>
+                          <th>Yield (%)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {yieldLots.length === 0 ? (
+                          <tr><td colSpan={3} style={{ textAlign: 'center', padding: '2rem' }}>{t.noRecords}</td></tr>
+                        ) : yieldLots.map(l => (
+                          <tr 
+                            key={l.lot_id} 
+                            onClick={() => setSelectedYieldLot(l.lot_id)}
+                            style={{ 
+                              cursor: 'pointer', 
+                              background: selectedYieldLot === l.lot_id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            <td style={{ fontWeight: 600 }}>{l.lot_id}</td>
+                            <td><span className="badge" style={{ background: 'var(--nav-hover)' }}>{l.product_id}</span></td>
+                            <td style={{ color: l.yield < 98 ? '#ef4444' : '#22c55e', fontWeight: 600 }}>
+                              {l.yield.toFixed(2)}%
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                
+                <div className="glass-card">
+                  <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <Activity size={22} color="var(--accent-color)" />
+                    {t.waferYield} - {selectedYieldLot || '---'}
+                  </h3>
+                  <div className="table-container">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Wafer ID</th>
+                          <th>Yield (%)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {yieldWafers.length === 0 ? (
+                          <tr><td colSpan={2} style={{ textAlign: 'center', padding: '2rem' }}>{t.noRecords}</td></tr>
+                        ) : yieldWafers.map(w => (
+                          <tr key={w.wafer_id}>
+                            <td>{w.wafer_id}</td>
+                            <td style={{ color: w.yield < 98 ? '#ef4444' : '#22c55e', fontWeight: 600 }}>
+                              {w.yield.toFixed(2)}%
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {view === 'lot-overview' && (
           <div className="lot-view">
             <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: '2rem' }}>

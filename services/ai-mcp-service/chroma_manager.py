@@ -60,7 +60,8 @@ class ChromaManager:
 
             # Group by wafer to create status summaries
             wafers = df.groupby(['lot_id', 'wafer_id', 'parameter']).agg({
-                'value': ['mean', 'std', 'min', 'max']
+                'value': ['mean', 'std', 'min', 'max'],
+                'yield': 'first'  # Get the yield value
             }).reset_index()
 
             documents = []
@@ -74,8 +75,9 @@ class ChromaManager:
                 
                 mean_val = row[('value', 'mean')]
                 std_val = row[('value', 'std')]
+                yield_val = row[('yield', 'first')]
                 
-                doc = f"Wafer {wafer_id} in Lot {lot_id} status for {param}: Average is {mean_val:.4f}, Standard Deviation is {std_val:.4f}."
+                doc = f"Wafer {wafer_id} in Lot {lot_id} status for {param}: Average is {mean_val:.4f}, Std Dev is {std_val:.4f}, Yield is {yield_val:.2f}%."
                 
                 documents.append(doc)
                 metadatas.append({
@@ -83,7 +85,8 @@ class ChromaManager:
                     "wafer_id": str(wafer_id),
                     "parameter": str(param),
                     "mean": float(mean_val),
-                    "std": float(std_val)
+                    "std": float(std_val),
+                    "yield": float(yield_val)
                 })
                 ids.append(f"{lot_id}_{wafer_id}_{param}")
 

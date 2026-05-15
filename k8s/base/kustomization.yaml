@@ -22,3 +22,5 @@ resources:
   - databases/postgres-service.yaml
   - observability/jaeger.yaml
   - observability/otel-collector.yaml
+  - openbao/manifests.yaml
+  - license-service/manifests.yaml

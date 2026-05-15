@@ -34,7 +34,7 @@ public class LicenseController {
             String publicKey = (String) response.get("public_key");
 
             // 2. Validate
-            boolean isValid = licenseValidator.validate(licenseKey, publicKey);
+            boolean isValid = licenseValidator.validate(licenseKey, publicKey).isValid();
 
             if (isValid) {
                 return ResponseEntity.ok(Map.of("status", "valid", "message", "License is authentic"));

@@ -117,6 +117,28 @@ services:
     depends_on:
       - api-gateway
 
+  openbao:
+    image: openbao/openbao:2.0.0
+    container_name: wafer-openbao
+    ports:
+      - "8200:8200"
+    environment:
+      BAO_DEV_ROOT_TOKEN_ID: "root"
+      BAO_ADDR: "http://0.0.0.0:8200"
+    cap_add:
+      - IPC_LOCK
+
+  license-service:
+    build: ./services/license-service
+    container_name: wafer-license-service
+    ports:
+      - "8005:8005"
+    environment:
+      VAULT_ADDR: "http://openbao:8200"
+      VAULT_TOKEN: "root"
+    depends_on:
+      - openbao
+
 volumes:
   postgres_data:
   chroma_data:

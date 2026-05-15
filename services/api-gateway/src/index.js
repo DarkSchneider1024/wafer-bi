@@ -17,6 +17,7 @@ app.set('trust proxy', 1);
 const USER_SERVICE_URL = `http://${process.env.USER_SERVICE_HOST || 'user-service'}:${process.env.USER_SERVICE_PORT || 3002}`;
 const WAFER_BI_URL = `http://${process.env.WAFER_BI_HOST || 'wafer-backend-svc.k8sdemo.svc.cluster.local'}:${process.env.WAFER_BI_PORT || 8000}`;
 const AI_MCP_URL = `http://${process.env.AI_MCP_SERVICE_HOST || 'ai-mcp-service'}:${process.env.AI_MCP_SERVICE_PORT || 8001}`;
+const LICENSE_SERVICE_URL = `http://${process.env.LICENSE_SERVICE_HOST || 'license-service'}:${process.env.LICENSE_SERVICE_PORT || 8005}`;
 
 // ====================
 // Prometheus Metrics
@@ -211,6 +212,16 @@ app.use(
   })
 );
 
+// 4. License Service - Rewrite /api/license -> /
+app.use(
+  createProxyMiddleware('/api/license', {
+    target: LICENSE_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: { '^/api/license': '' },
+    onProxyReq: (proxyReq) => console.log(`[Proxy License] -> ${LICENSE_SERVICE_URL}${proxyReq.path}`)
+  })
+);
+
 // 2. Wafer BI API (Python Service) - Rewrite /api -> /
 // This will change /api/meta to /meta which is what Python now expects
 app.use(
@@ -250,4 +261,5 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`  → Users:    ${USER_SERVICE_URL}`);
   console.log(`  → Wafer BI: ${WAFER_BI_URL}`);
   console.log(`  → AI MCP:   ${AI_MCP_URL}`);
+  console.log(`  → License:  ${LICENSE_SERVICE_URL}`);
 });

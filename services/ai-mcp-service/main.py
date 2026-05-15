@@ -79,6 +79,22 @@ class ChatRequest(BaseModel):
     message: str
     history: list = []
 
+SYSTEM_INSTRUCTION = """
+你是一個專業的晶圓製造商業智慧 (BI) 助手，專門協助用戶查詢晶圓 (Wafer) 數據和分析異常。
+你的目標是透過引導式對話，幫助用戶利用你擁有的 MCP (Model Context Protocol) 工具來解決問題。
+
+你擁有的工具：
+1. get_wafer_status(wafer_id, lot_id): 查詢特定晶圓的目前狀態和統計數據。
+2. search_wafer_issues(query): 使用自然語言搜尋晶圓的潛在問題或異常（例如：搜尋厚度變異高的晶圓）。
+
+引導原則：
+- 如果用戶的問題太模糊（例如：「幫我看看」），請主動詢問他們是想查詢特定晶圓狀態還是搜尋異常，並提供範例。
+- 如果用戶要求的內容目前無法直接提供（例如：「計算 Lot 良率」），請說明局限性，並建議一個相關的替代操作（例如：「雖然我目前無法直接計算良率，但我可以幫你搜尋該批次中是否有異常晶圓。你想試試看嗎？」）。
+- 如果用戶提供了不完整的資訊（例如只給了 Wafer ID 但沒給 Lot ID，且你需要 Lot ID 才能更準確查詢時），請禮貌地請求補充。
+- 始終使用繁體中文回答。
+- 你的回答應該包含對數據的解釋，而不僅僅是原始數據。
+"""
+
 @app.post("/api/ai/chat")
 async def chat(request: ChatRequest, req: Request):
     trace_id = getattr(req.state, "trace_id", "unknown")
@@ -86,7 +102,11 @@ async def chat(request: ChatRequest, req: Request):
         raise HTTPException(status_code=401, detail="API_KEY_MISSING")
 
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        # Use gemini-1.5-flash which is more stable for tool use than newer experimental ones
+        model = genai.GenerativeModel(
+            'gemini-1.5-flash',
+            system_instruction=SYSTEM_INSTRUCTION
+        )
         
         # 1. Prepare history for Gemini
         gemini_history = []
@@ -98,13 +118,8 @@ async def chat(request: ChatRequest, req: Request):
 
         # 2. Get tools from MCP
         tools_list = await handle_list_tools()
-        # For simplicity in this adaptation, we'll use a manual loop or 
-        # a more advanced tool integration if using vertex AI, 
-        # but for standard Gemini API we'll handle tool calls manually or 
-        # use the provided tools in the generation config.
         
         # Mapping MCP tools to Gemini tools
-        # Gemini expects a list of Tool objects, where each Tool contains function_declarations
         gemini_tools = [
             {
                 "function_declarations": [
@@ -125,9 +140,10 @@ async def chat(request: ChatRequest, req: Request):
 
         # 4. Handle tool calls (Function Calling)
         if response.candidates and response.candidates[0].content.parts and \
-           response.candidates[0].content.parts[0].function_call:
+           any(part.function_call for part in response.candidates[0].content.parts):
             
-            fn_call = response.candidates[0].content.parts[0].function_call
+            # Find the function call part
+            fn_call = next(part.function_call for part in response.candidates[0].content.parts if part.function_call)
             function_name = fn_call.name
             function_args = dict(fn_call.args)
             
@@ -150,12 +166,29 @@ async def chat(request: ChatRequest, req: Request):
                     }
                 }]
             )
-            return {"answer": second_response.text}
-        
-        if not response.candidates or not response.candidates[0].content.parts:
-            return {"answer": "抱歉，我無法生成回應。這可能是因為內容觸發了安全過濾器。"}
+            final_text = second_response.text
+        else:
+            if not response.candidates or not response.candidates[0].content.parts:
+                final_text = "抱歉，我無法生成回應。這可能是因為內容觸發了安全過濾器。"
+            else:
+                final_text = response.text
 
-        return {"answer": response.text}
+        # Extract suggestions if the model provided any in its text or generate default ones
+        # For simplicity, we can also use a second pass or just simple regex if the model follows a pattern
+        # But here we will just generate some based on context if not present
+        suggestions = []
+        if "wafer" not in final_text.lower() and "lot" not in final_text.lower():
+            suggestions = ["搜尋異常晶圓", "查詢特定 Wafer 狀態", "有哪些可用工具？"]
+        elif "get_wafer_status" in str(response):
+            suggestions = ["再查另一個晶圓", "搜尋相似異常"]
+        else:
+            suggestions = ["搜尋 Lot1 異常", "查詢 Wafer_001 狀態", "幫助我分析數據"]
+
+        return {
+            "answer": final_text,
+            "suggestions": suggestions
+        }
+
 
     except Exception as e:
         print(f"[{trace_id}] Gemini Chat Error: {str(e)}")

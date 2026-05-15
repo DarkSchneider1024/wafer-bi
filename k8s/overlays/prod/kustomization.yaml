@@ -9,3 +9,8 @@ resources:
 commonAnnotations:
   environment: production
   managed-by: argocd
+
+images:
+  - name: license-service
+    newName: ghcr.io/darkschneider1024/wafer-bi/license-service
+    newTag: latest

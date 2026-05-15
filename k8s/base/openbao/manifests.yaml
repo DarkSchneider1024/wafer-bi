@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openbao
+  labels:
+    app: openbao
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openbao
+  template:
+    metadata:
+      labels:
+        app: openbao
+    spec:
+      containers:
+      - name: openbao
+        image: openbao/openbao:2.0.0
+        ports:
+        - containerPort: 8200
+        env:
+        - name: BAO_DEV_ROOT_TOKEN_ID
+          value: "root"
+        - name: BAO_ADDR
+          value: "http://0.0.0.0:8200"
+        securityContext:
+          capabilities:
+            add: ["IPC_LOCK"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openbao
+spec:
+  selector:
+    app: openbao
+  ports:
+  - protocol: TCP
+    port: 8200
+    targetPort: 8200

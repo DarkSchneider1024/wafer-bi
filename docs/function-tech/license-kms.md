@@ -89,4 +89,54 @@ graph TD
     - 若校驗失敗，限制 AI Assistant 或報表導出功能。
 
 ---
+
+## 6. 具體實作細節
+
+目前已完成初步整合，包含 License 的生成、自動化部署與後端驗證。
+
+### 6.1 License 申請流程 (API 呼叫)
+
+管理員可透過 API Gateway 向 `license-service` 申請授權：
+
+- **Endpoint**: `POST /api/license/generate`
+- **Payload 範例**:
+    ```json
+    {
+      "customer_name": "TSMC",
+      "machine_id": "WAFER-001-XYZ",
+      "expiry_date": "2026-05-18",
+      "features": ["ai-assistant", "advanced-reports"]
+    }
+    ```
+- **邏輯說明**：
+    1.  `license-service` 準備 JSON Payload。
+    2.  呼叫 OpenBao 的 **Transit Engine** 對內容進行數位簽章。
+    3.  返回 Base64 編碼的 `license_key` 與對應的 `public_key`。
+
+### 6.2 後端驗證邏輯
+
+驗證邏輯主要實作於 `user-service` 的 `LicenseValidator` 元件：
+
+1.  **簽章驗證**：使用 RSA-SHA256 驗證 `license_key` 是否由合法的 KMS 簽發。
+2.  **有效期檢查**：
+    - 解析 Payload 中的 `expiry` 欄位。
+    - 計算剩餘天數 (`ChronoUnit.DAYS.between(now, expiry)`)。
+
+### 6.3 預警與攔截機制
+
+在用戶登入流程 (`UserService.login`) 中執行：
+
+- **過期攔截 (Expired)**：
+    - 若當前時間 > 到期日，登入失敗並拋出錯誤。
+    - **訊息**：`license 過期 expri day 5/20 請通知管理員確認`。
+- **即將過期預警 (Expiring Soon)**：
+    - 若剩餘天數 **≤ 7 天**，登入成功的回應中會包含 `licenseWarning`。
+    - **訊息**：`License 即將於 YYYY-MM-DD 過期，請及時更新。`。
+
+### 6.4 前端展示
+
+- **登入頁**：顯示後端回傳的過期錯誤訊息。
+*   **首頁/Dashboard**：若存在 `licenseWarning`，在頁面頂端顯示紅色告警橫幅。
+
+---
 **評估結論**：建議採用 **OpenBao** 作為基礎架構，這不僅能解決 License 簽核的安全問題，更能為 Wafer-BI 提供完善的機密管理 (Secrets Management) 能力，符合企業級 BI 產品的定位。

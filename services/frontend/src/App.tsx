@@ -119,7 +119,6 @@ function App() {
   // --- Auth States ---
   const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem('user') || 'null'));
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [menus, setMenus] = useState<any[]>(JSON.parse(localStorage.getItem('menus') || '[]'));
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [authError, setAuthError] = useState('');
   const [licenseWarning, setLicenseWarning] = useState<string | null>(localStorage.getItem('licenseWarning'));
@@ -231,14 +230,12 @@ function App() {
     setAuthError('');
     try {
       const res = await axios.post(`${API_BASE}/auth/login`, loginForm);
-      const { token: newToken, user: newUser, menus: newMenus, licenseWarning: newWarning } = res.data;
+      const { token: newToken, user: newUser, licenseWarning: newWarning } = res.data;
       localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(newUser));
-      localStorage.setItem('menus', JSON.stringify(newMenus));
       localStorage.setItem('licenseWarning', newWarning || '');
       setToken(newToken);
       setUser(newUser);
-      setMenus(newMenus);
       setLicenseWarning(newWarning);
     } catch (err: any) {
       setAuthError(err.response?.data?.error || 'Login failed');
@@ -359,10 +356,8 @@ function App() {
           const { token: newToken, user: newUser } = res.data;
           localStorage.setItem('token', newToken);
           localStorage.setItem('user', JSON.stringify(newUser));
-          localStorage.setItem('menus', JSON.stringify(res.data.menus || []));
           setToken(newToken);
           setUser(newUser);
-          setMenus(res.data.menus || []);
           
           // 登入成功後清除 URL 參數，避免重新整理時重複觸發
           const newUrl = window.location.pathname + window.location.hash;

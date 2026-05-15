@@ -100,7 +100,7 @@ async def handle_call_tool(
             
         low_yield_info = []
         for meta, doc in zip(results['metadatas'][0], results['documents'][0]):
-            if meta.get("lot_id") == lot_id and meta.get("yield", 100) < 98:
+            if meta.get("lot_id") == lot_id and meta.get("yield", 100) < 96.5:
                 low_yield_info.append({
                     "wafer": meta.get("wafer_id"),
                     "param": meta.get("parameter"),
@@ -109,7 +109,7 @@ async def handle_call_tool(
                 })
         
         if not low_yield_info:
-            return [types.TextContent(type="text", text=f"{lot_id} 的良率狀況良好，所有測試晶圓皆高於 98%。")]
+            return [types.TextContent(type="text", text=f"{lot_id} 的良率狀況良好，所有測試晶圓皆高於 96.5%。")]
             
         summary = f"分析報告 - {lot_id}:\n"
         for item in low_yield_info:

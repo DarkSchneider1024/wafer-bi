@@ -905,7 +905,7 @@ function App() {
                           >
                             <td style={{ fontWeight: 600 }}>{l.lot_id}</td>
                             <td><span className="badge" style={{ background: 'var(--nav-hover)' }}>{l.product_id}</span></td>
-                            <td style={{ color: l.yield < 98 ? '#ef4444' : '#22c55e', fontWeight: 600 }}>
+                            <td style={{ color: l.yield < 96.5 ? '#ef4444' : '#22c55e', fontWeight: 600 }}>
                               {l.yield.toFixed(2)}%
                             </td>
                           </tr>
@@ -934,7 +934,7 @@ function App() {
                         ) : yieldWafers.map(w => (
                           <tr key={w.wafer_id}>
                             <td>{w.wafer_id}</td>
-                            <td style={{ color: w.yield < 98 ? '#ef4444' : '#22c55e', fontWeight: 600 }}>
+                            <td style={{ color: w.yield < 96.5 ? '#ef4444' : '#22c55e', fontWeight: 600 }}>
                               {w.yield.toFixed(2)}%
                             </td>
                           </tr>

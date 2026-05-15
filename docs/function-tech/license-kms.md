@@ -139,4 +139,82 @@ graph TD
 *   **首頁/Dashboard**：若存在 `licenseWarning`，在頁面頂端顯示紅色告警橫幅。
 
 ---
+
+## 7. License 更新 SOP
+
+當系統提示 License 過期或即將過期時，請依照以下步驟進行更新：
+
+### 第一步：生成新的 License Key
+管理員需呼叫 `license-service` 的生成接口。
+
+- **Method**: `POST`
+- **URL**: `http://<api-gateway>/api/license/generate`
+- **Payload**:
+    ```json
+    {
+      "customer_name": "TSMC",
+      "machine_id": "WAFER-001-XYZ",
+      "expiry_date": "2027-05-15",
+      "features": ["ai-assistant", "advanced-reports"]
+    }
+    ```
+- **Action**: 複製回傳結果中的 `"license_key"` 字串。
+
+### 第二步：建立 license.json 文件 (簡化版方式)
+在專案目錄下建立一個 `license.json` 檔案，內容如下：
+```json
+{
+  "license_key": "你的_NEW_LICENSE_KEY_字串"
+}
+```
+
+### 第三步：套用新 Key 到系統環境
+根據部署環境選擇對應方式：
+
+#### A. Kubernetes 環境 (OKE/GitOps)
+1.  **使用 ConfigMap/Secret 掛載檔案**：
+    將 `license.json` 建立為 Secret：
+    ```bash
+    kubectl create secret generic license-file --from-file=license.json -n k8sdemo
+    ```
+2.  **修改 Deployment**：
+    在 `user-service` 的 `deployment.yaml` 中掛載該檔案：
+    ```yaml
+    spec:
+      containers:
+        - name: user-service
+          volumeMounts:
+            - name: license-vol
+              mountPath: /app/license.json
+              subPath: license.json
+      volumes:
+        - name: license-vol
+          secret:
+            secretName: license-file
+    ```
+3.  **重啟服務**：
+    ```bash
+    kubectl rollout restart deployment/user-service -n k8sdemo
+    ```
+
+#### B. Docker Compose 環境 (Local/Demo)
+1.  **掛載本地檔案**：
+    修改 `docker-compose.yml`，將本地的 `license.json` 掛載進去：
+    ```yaml
+    user-service:
+      volumes:
+        - ./license.json:/app/license.json
+    ```
+2.  **重啟容器**：
+    ```bash
+    docker compose up -d user-service
+    ```
+
+### 第四步：驗證更新結果
+1.  重新整理瀏覽器並嘗試登入。
+2.  確認登入後頂端的「過期警告」已消失。
+3.  若仍有問題，請檢查 `user-service` 的啟動 Log，確認是否看到 `License key loaded from file: license.json`。
+
+---
+
 **評估結論**：建議採用 **OpenBao** 作為基礎架構，這不僅能解決 License 簽核的安全問題，更能為 Wafer-BI 提供完善的機密管理 (Secrets Management) 能力，符合企業級 BI 產品的定位。

@@ -9,6 +9,8 @@ import com.k8sdemo.userservice.repository.GroupRepository;
 import com.k8sdemo.userservice.repository.MenuRepository;
 
 import com.k8sdemo.userservice.util.LicenseValidator;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
@@ -17,6 +19,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import jakarta.annotation.PostConstruct;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -34,6 +40,7 @@ public class UserService {
     private final LicenseValidator licenseValidator;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final RestTemplate restTemplate = new RestTemplate();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${app.jwt.secret}")
     private String jwtSecret;
@@ -44,8 +51,30 @@ public class UserService {
     @Value("${app.license.key:}")
     private String licenseKey;
 
+    @Value("${app.license.file-path:license.json}")
+    private String licenseFilePath;
+
     @Value("${app.license.service-url:http://license-service:8005}")
     private String licenseServiceUrl;
+
+    @PostConstruct
+    public void init() {
+        try {
+            Path path = Path.of(licenseFilePath);
+            if (Files.exists(path)) {
+                String content = Files.readString(path);
+                JsonNode node = objectMapper.readTree(content);
+                if (node.has("license_key")) {
+                    this.licenseKey = node.get("license_key").asText();
+                    log.info("License key loaded from file: {}", licenseFilePath);
+                }
+            } else {
+                log.info("No license file found at {}, using environment variable if present.", licenseFilePath);
+            }
+        } catch (Exception e) {
+            log.error("Failed to load license from file: {}", licenseFilePath, e);
+        }
+    }
 
     public UserService(UserRepository userRepository, GroupRepository groupRepository, MenuRepository menuRepository, LicenseValidator licenseValidator) {
         this.userRepository = userRepository;

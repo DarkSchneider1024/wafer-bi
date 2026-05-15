@@ -80,21 +80,21 @@ class ChatRequest(BaseModel):
     history: list = []
 
 SYSTEM_INSTRUCTION = """
-你是一個專業的晶圓製造商業智慧 (BI) 助手，專門協助用戶查詢晶圓 (Wafer) 數據和分析異常。
-你的目標是透過引導式對話，幫助用戶利用你擁有的 MCP (Model Context Protocol) 工具來解決問題。
+你是一個專業的晶圓製造商業智慧 (BI) 駐守助手，具備豐富的半導體製程與數據分析經驗。
+你的目標是透過引導式對話，協助用戶利用 MCP 工具精準掌握晶圓狀態並診斷生產異常。
 
 你擁有的工具：
-1. get_wafer_status(wafer_id, lot_id): 查詢特定晶圓的目前狀態和統計數據。
-2. search_wafer_issues(query): 使用自然語言搜尋晶圓的潛在問題或異常。
-3. analyze_lot_yield(lot_id): 自動分析特定批次 (Lot) 的良率損失原因，並找出有問題的參數。
+1. get_wafer_status(wafer_id, lot_id): 當用戶提供具體的晶圓編號與批次編號時，查詢該晶圓的統計數據與當前狀態。
+2. search_wafer_issues(query): 當用戶描述一個現象（例如：「厚度變異大」、「有刮痕」）但沒有具體 ID 時，使用此工具進行自然語言檢索。
+3. analyze_lot_yield(lot_id): 當用戶詢問「良率為何降低」、「幫我分析這個批次」或提到「自動分析」時，必須優先使用此工具。這能自動篩選異常晶圓並追蹤問題參數。
 
-引導原則：
-- 當用戶提到「良率報表」、「為什麼良率低」或要求「自動分析」時，優先使用 `analyze_lot_yield`。
-- 如果用戶的問題太模糊（例如：「幫我看看」），請主動詢問他們是想查詢特定晶圓狀態還是搜尋異常，並提供範例。
-- 如果用戶要求的內容目前無法直接提供（例如：「計算 Lot 良率」），請說明局限性，並建議一個相關的替代操作（例如：「雖然我目前無法直接計算良率，但我可以幫你搜尋該批次中是否有異常晶圓。你想試試看嗎？」）。
-- 如果用戶提供了不完整的資訊（例如只給了 Wafer ID 但沒給 Lot ID，且你需要 Lot ID 才能更準確查詢時），請禮貌地請求補充。
-- 始終使用繁體中文回答。
-- 你的回答應該包含對數據的解釋，而不僅僅是原始數據。
+專業行為準則：
+- **主動性**：如果用戶的請求涉及良率或異常，請主動調用工具。不要只說「我可以幫你分析」，而是直接開始分析並展示結果。
+- **直觀解釋**：在回傳工具數據後，請將技術指標轉化為易懂的商務見解（例如：將「標準差 3.5」解釋為「製程變異度顯著高於管制標準」）。
+- **引導後續**：分析完成後，請主動建議下一步操作（例如：建議檢查特定機台或查詢相關晶圓的詳情）。
+- **語氣與格式**：使用專業且親切的繁體中文。適當使用粗體和列表使資訊易於閱讀。
+
+如果用戶提供的資訊不足（例如：只有 Wafer ID 但缺 Lot ID），請禮貌地說明你需要更多資訊才能精準查詢，並提供可能的範例引導他們。
 """
 
 @app.post("/api/ai/chat")
@@ -140,40 +140,48 @@ async def chat(request: ChatRequest, req: Request):
             tools=gemini_tools
         )
 
-        # 4. Handle tool calls (Function Calling)
-        if response.candidates and response.candidates[0].content.parts and \
-           any(part.function_call for part in response.candidates[0].content.parts):
+        # 4. Handle tool calls (Function Calling) Loop
+        MAX_TURNS = 5
+        turns = 0
+        while turns < MAX_TURNS:
+            turns += 1
+            # Check if there are any function calls in the response
+            fn_calls = [part.function_call for part in response.candidates[0].content.parts if part.function_call]
             
-            # Find the function call part
-            fn_call = next(part.function_call for part in response.candidates[0].content.parts if part.function_call)
-            function_name = fn_call.name
-            function_args = dict(fn_call.args)
-            
-            print(f"[{trace_id}] Executing tool: {function_name} with {function_args}")
-            
-            # Execute tool using our MCP handler
-            try:
-                tool_result = await handle_call_tool(function_name, function_args)
-                result_text = tool_result[0].text if tool_result else "No result"
-            except Exception as tool_err:
-                print(f"[{trace_id}] Tool Execution Error: {tool_err}")
-                result_text = f"Error executing tool: {str(tool_err)}"
-            
-            # Send tool response back to Gemini
-            second_response = chat_session.send_message(
-                [{
+            if not fn_calls:
+                break
+                
+            tool_responses = []
+            for fn_call in fn_calls:
+                function_name = fn_call.name
+                function_args = dict(fn_call.args)
+                print(f"[{trace_id}] Executing tool: {function_name} with {function_args}")
+                
+                try:
+                    tool_result = await handle_call_tool(function_name, function_args)
+                    result_text = tool_result[0].text if tool_result else "No result"
+                except Exception as tool_err:
+                    print(f"[{trace_id}] Tool Execution Error: {tool_err}")
+                    result_text = f"Error executing tool: {str(tool_err)}"
+                
+                tool_responses.append({
                     "function_response": {
                         "name": function_name,
                         "response": {"result": result_text}
                     }
-                }]
-            )
-            final_text = second_response.text
-        else:
-            if not response.candidates or not response.candidates[0].content.parts:
-                final_text = "抱歉，我無法生成回應。這可能是因為內容觸發了安全過濾器。"
-            else:
-                final_text = response.text
+                })
+            
+            # Send all tool responses back to Gemini
+            response = chat_session.send_message(tool_responses)
+
+        # 5. Extract final text safely
+        try:
+            final_text = response.text
+        except ValueError:
+            # If the response doesn't have text (e.g. only tool calls, which shouldn't happen after the loop)
+            # manually extract any text parts
+            text_parts = [part.text for part in response.candidates[0].content.parts if part.text]
+            final_text = "".join(text_parts) if text_parts else "抱歉，我現在無法產生文字回應。"
 
         # Extract suggestions if the model provided any in its text or generate default ones
         # For simplicity, we can also use a second pass or just simple regex if the model follows a pattern

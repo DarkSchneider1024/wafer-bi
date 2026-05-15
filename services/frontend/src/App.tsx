@@ -4,7 +4,7 @@ import axios from 'axios';
 import { 
   LayoutGrid, ChevronRight, 
   BarChart3, FlaskConical, Sun, Moon, Languages,
-  Settings, Package, Database, Search, Activity, ShieldCheck, Cpu, ExternalLink, RefreshCw, Play, Bot, Menu, X
+  Settings, Package, Database, Search, Activity, ShieldCheck, Cpu, ExternalLink, RefreshCw, Play, Bot, Menu, X, LogOut
 } from 'lucide-react';
 import './index.css';
 import AIAssistant from './components/AIAssistant';
@@ -646,9 +646,15 @@ function App() {
             </button>
           </form>
 
-          <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>{t.demoAccount} Quick Access:</p>
-            <button className="btn-page" onClick={() => { setLoginForm({ username: 'admin', password: 'admin@carrot' }); }}>
+          <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.75rem', textAlign: 'center' }}>
+              {t.demoAccount} Quick Access
+            </p>
+            <button 
+              className="btn-secondary" 
+              style={{ width: '100%' }}
+              onClick={() => { setLoginForm({ username: 'admin', password: 'admin@carrot' }); }}
+            >
               {t.demoAccount}
             </button>
           </div>
@@ -739,11 +745,11 @@ function App() {
         </div>
 
         <button 
-          className="btn-page" 
+          className="btn-danger" 
           onClick={handleLogout}
-          style={{ marginTop: '1rem', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: '#ef4444' }}
+          style={{ marginTop: '1rem', width: '100%' }}
         >
-          {t.logout}
+          <LogOut size={16} /> {t.logout}
         </button>
 
         <div className="sidebar-footer" style={{ marginTop: 'auto', paddingTop: '2rem', fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center' }}>

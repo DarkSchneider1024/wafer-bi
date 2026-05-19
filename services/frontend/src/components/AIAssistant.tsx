@@ -3,7 +3,7 @@ import { Send, X, Bot, User, Activity } from 'lucide-react';
 import axios from 'axios';
 
 interface Message {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'error';
   content: string;
 }
 
@@ -41,10 +41,18 @@ const AIAssistant: React.FC = () => {
     try {
       const response = await axios.post('/api/ai/chat', {
         message: userMessage,
-        history: messages.slice(-10).map(m => ({ role: m.role, content: m.content }))
+        history: messages.slice(-10).filter(m => m.role !== 'error').map(m => ({ role: m.role, content: m.content }))
       });
 
-      setMessages(prev => [...prev, { role: 'assistant', content: response.data.answer }]);
+      setMessages(prev => {
+        let newMsgs: Message[] = [...prev, { role: 'assistant', content: response.data.answer }];
+        if (response.data.errors && response.data.errors.length > 0) {
+          response.data.errors.forEach((err: string) => {
+             newMsgs.push({ role: 'error', content: `[後台報錯] ${err}` });
+          });
+        }
+        return newMsgs;
+      });
       if (response.data.suggestions) {
         setSuggestions(response.data.suggestions);
       }
@@ -52,9 +60,10 @@ const AIAssistant: React.FC = () => {
       console.error('AI Chat Error:', error);
       if (error.response?.status === 401 || error.response?.data?.detail === 'API_KEY_INVALID') {
         alert('⚠️ Gemini API Key 失效或未設置，請聯繫管理員。');
-        setMessages(prev => [...prev, { role: 'assistant', content: '系統配置錯誤：API Key 失效。' }]);
+        setMessages(prev => [...prev, { role: 'error', content: '系統配置錯誤：API Key 失效。' }]);
       } else {
-        setMessages(prev => [...prev, { role: 'assistant', content: '抱歉，我現在無法處理您的請求。請稍後再試。' }]);
+        const detailError = error.response?.data?.detail || error.message;
+        setMessages(prev => [...prev, { role: 'error', content: `[後台重大報錯] ${typeof detailError === 'string' ? detailError : JSON.stringify(detailError)}` }, { role: 'assistant', content: '抱歉，我現在無法處理您的請求。請稍後再試。' }]);
       }
     } finally {
       setIsLoading(false);
@@ -175,25 +184,25 @@ const AIAssistant: React.FC = () => {
                   width: '32px',
                   height: '32px',
                   borderRadius: '10px',
-                  background: msg.role === 'user' ? '#e2e8f0' : 'linear-gradient(135deg, #6366f1, #a855f7)',
+                  background: msg.role === 'user' ? '#e2e8f0' : (msg.role === 'error' ? '#fee2e2' : 'linear-gradient(135deg, #6366f1, #a855f7)'),
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
                   boxShadow: msg.role === 'assistant' ? '0 4px 8px rgba(99, 102, 241, 0.2)' : 'none'
                 }}>
-                  {msg.role === 'user' ? <User size={18} color="#64748b" /> : <Bot size={18} color="white" />}
+                  {msg.role === 'user' ? <User size={18} color="#64748b" /> : <Bot size={18} color={msg.role === 'error' ? '#ef4444' : 'white'} />}
                 </div>
                 <div style={{
                   padding: '0.85rem 1rem',
                   borderRadius: msg.role === 'user' ? '18px 4px 18px 18px' : '4px 18px 18px 18px',
                   fontSize: '0.925rem',
-                  background: msg.role === 'user' ? '#6366f1' : 'white',
-                  color: msg.role === 'user' ? 'white' : '#1e293b',
+                  background: msg.role === 'user' ? '#6366f1' : (msg.role === 'error' ? '#fef2f2' : 'white'),
+                  color: msg.role === 'user' ? 'white' : (msg.role === 'error' ? '#991b1b' : '#1e293b'),
                   boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
                   lineHeight: 1.5,
                   wordBreak: 'break-word',
-                  border: msg.role === 'assistant' ? '1px solid #f1f5f9' : 'none'
+                  border: msg.role === 'assistant' ? '1px solid #f1f5f9' : (msg.role === 'error' ? '1px solid #fecaca' : 'none')
                 }}>
                   {msg.content}
                 </div>

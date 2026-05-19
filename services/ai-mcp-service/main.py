@@ -100,6 +100,8 @@ SYSTEM_INSTRUCTION = """
 @app.post("/api/ai/chat")
 async def chat(request: ChatRequest, req: Request):
     trace_id = getattr(req.state, "trace_id", "unknown")
+    background_errors = []
+    
     if not GEMINI_API_KEY:
         raise HTTPException(status_code=401, detail="API_KEY_MISSING")
 
@@ -161,7 +163,9 @@ async def chat(request: ChatRequest, req: Request):
                     tool_result = await handle_call_tool(function_name, function_args)
                     result_text = tool_result[0].text if tool_result else "No result"
                 except Exception as tool_err:
-                    print(f"[{trace_id}] Tool Execution Error: {tool_err}")
+                    error_msg = f"Tool Execution Error ({function_name}): {str(tool_err)}"
+                    print(f"[{trace_id}] {error_msg}")
+                    background_errors.append(error_msg)
                     result_text = f"Error executing tool: {str(tool_err)}"
                 
                 tool_responses.append({
@@ -196,15 +200,17 @@ async def chat(request: ChatRequest, req: Request):
 
         return {
             "answer": final_text,
-            "suggestions": suggestions
+            "suggestions": suggestions,
+            "errors": background_errors
         }
 
 
     except Exception as e:
-        print(f"[{trace_id}] Gemini Chat Error: {str(e)}")
-        if "API_KEY_INVALID" in str(e) or "401" in str(e):
+        error_msg = str(e)
+        print(f"[{trace_id}] Gemini Chat Error: {error_msg}")
+        if "API_KEY_INVALID" in error_msg or "401" in error_msg:
             raise HTTPException(status_code=401, detail="API_KEY_INVALID")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"System Error: {error_msg}")
 
 @app.post("/api/ai/ingest")
 async def ingest_data():

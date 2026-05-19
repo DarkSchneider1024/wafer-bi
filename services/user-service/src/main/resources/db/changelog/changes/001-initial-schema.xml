@@ -5,19 +5,54 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
 
-    <changeSet id="20260506-001" author="wafer-bi">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="users"/>
-            </not>
-        </preConditions>
+    <!-- 1. Create Tables -->
+    <changeSet id="20260519-baseline-schema" author="wafer-bi">
+        <!-- auth_groups -->
+        <createTable tableName="auth_groups">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- menus -->
+        <createTable tableName="menus">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="code" type="VARCHAR(100)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="path" type="VARCHAR(255)"/>
+            <column name="icon" type="VARCHAR(100)"/>
+            <column name="sort_order" type="INTEGER" defaultValue="99"/>
+        </createTable>
+
+        <!-- menu_groups -->
+        <createTable tableName="menu_groups">
+            <column name="group_id" type="INTEGER">
+                <constraints nullable="false" foreignKeyName="fk_group_menu_group" referencedTableName="auth_groups" referencedColumnNames="id"/>
+            </column>
+            <column name="menu_id" type="INTEGER">
+                <constraints nullable="false" foreignKeyName="fk_group_menu_menu" referencedTableName="menus" referencedColumnNames="id"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="menu_groups" columnNames="group_id, menu_id"/>
+
+        <!-- users -->
         <createTable tableName="users">
             <column name="id" type="SERIAL">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="email" type="VARCHAR(255)">
+            <column name="username" type="VARCHAR(255)">
                 <constraints unique="true" nullable="false"/>
             </column>
+            <column name="email" type="VARCHAR(255)"/>
             <column name="password_hash" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
@@ -25,7 +60,43 @@
                 <constraints nullable="false"/>
             </column>
             <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="group_id" type="INTEGER">
+                <constraints foreignKeyName="fk_user_group" referencedTableName="auth_groups" referencedColumnNames="id"/>
+            </column>
         </createTable>
+    </changeSet>
+
+    <!-- 2. Seed Data -->
+    <changeSet id="20260519-baseline-seed" author="wafer-bi">
+        <sql>
+            -- Insert groups
+            INSERT INTO auth_groups (name) VALUES ('admin');
+            INSERT INTO auth_groups (name) VALUES ('user');
+
+            -- Insert menus
+            INSERT INTO menus (name, code, sort_order) VALUES ('Lot Overview', 'lot-overview', 10);
+            INSERT INTO menus (name, code, sort_order) VALUES ('Wafer Detail', 'wafer-detail', 20);
+            INSERT INTO menus (name, code, sort_order) VALUES ('Statistical Analysis', 'statistical-analysis', 30);
+            INSERT INTO menus (name, code, sort_order) VALUES ('AI 助手', 'ai-assistant', 99);
+
+            -- Map menu_groups
+            INSERT INTO menu_groups (group_id, menu_id)
+            SELECT g.id, m.id FROM auth_groups g, menus m
+            WHERE g.name = 'admin';
+
+            INSERT INTO menu_groups (group_id, menu_id)
+            SELECT g.id, m.id FROM auth_groups g, menus m
+            WHERE g.name = 'user' AND m.code = 'ai-assistant';
+
+            -- Insert admin user
+            INSERT INTO users (username, password_hash, name, group_id)
+            VALUES (
+                'admin', 
+                '$2a$10$AbH/qTEO2wWmeHTt.1KWaeeRCnNCA6uDd33QYAsbN4Gka7hq9BY9e', 
+                'System Admin', 
+                (SELECT id FROM auth_groups WHERE name = 'admin')
+            );
+        </sql>
     </changeSet>
 
 </databaseChangeLog>

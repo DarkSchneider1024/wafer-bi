@@ -7,8 +7,8 @@ metadata:
 data:
   POSTGRES_HOST: "postgres-service"
   POSTGRES_PORT: "5432"
-  POSTGRES_DB: "k8sdemo"
-  POSTGRES_USER: "admin"
+  POSTGRES_DB: "waferbi_db"
+  POSTGRES_USER: "waferbi"
   USER_SERVICE_PORT: "3002"
   WAFER_BI_HOST: "wafer-backend-svc.k8sdemo.svc.cluster.local"
   WAFER_BI_PORT: "8000"

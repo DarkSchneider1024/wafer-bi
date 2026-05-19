@@ -60,9 +60,9 @@ spec:
               command:
                 - pg_isready
                 - -U
-                - admin
+                - waferbi
                 - -d
-                - k8sdemo
+                - waferbi_db
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
@@ -70,9 +70,9 @@ spec:
               command:
                 - pg_isready
                 - -U
-                - admin
+                - waferbi
                 - -d
-                - k8sdemo
+                - waferbi_db
             initialDelaySeconds: 5
             periodSeconds: 5
       volumes:

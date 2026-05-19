@@ -63,8 +63,8 @@ graph TD
 ### 4.2 應用程式機密 (由 CICD 注入 K8S Secret)
 | Secret Name | 說明 | 預設值 (演示用) |
 |-------------|------|-----------------|
-| `POSTGRES_USER` | 資料庫管理員帳號 | `admin` |
-| `POSTGRES_PASSWORD` | 資料庫管理員密碼 | `postgres_password_123` |
+| `POSTGRES_USER` | 資料庫管理員帳號 | `waferbi` |
+| `POSTGRES_PASSWORD` | 資料庫管理員密碼 | `waferbi_password_123` |
 | `JWT_SECRET` | JWT 簽名金鑰 | `super_secret_jwt_key_2024` |
 
 ### 4.3 演示用帳號 (Default Demo Accounts)

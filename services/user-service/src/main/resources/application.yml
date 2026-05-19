@@ -6,9 +6,9 @@ spring:
     name: user-service
 
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:k8sdemo}
-    username: ${POSTGRES_USER:admin}
-    password: ${POSTGRES_PASSWORD:postgres_password_123}
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:waferbi_db}
+    username: ${POSTGRES_USER:waferbi}
+    password: ${POSTGRES_PASSWORD:waferbi_password_123}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 5

@@ -6,9 +6,9 @@
 # ⚠️ In Production, these values are managed via GitHub Secrets.
 
 # --- Database ---
-POSTGRES_USER=admin
+POSTGRES_USER=waferbi
 POSTGRES_PASSWORD=your_secure_password_here
-POSTGRES_DB=k8sdemo
+POSTGRES_DB=waferbi_db
 
 # --- Security ---
 # Use a long random string for JWT_SECRET

@@ -7,6 +7,9 @@
 
     <!-- 1. Create Tables -->
     <changeSet id="20260519-baseline-schema" author="wafer-bi">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="auth_groups"/></not>
+        </preConditions>
         <!-- auth_groups -->
         <createTable tableName="auth_groups">
             <column name="id" type="SERIAL">
@@ -68,6 +71,9 @@
 
     <!-- 2. Seed Data -->
     <changeSet id="20260519-baseline-seed" author="wafer-bi">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM auth_groups</sqlCheck>
+        </preConditions>
         <sql>
             -- Insert groups
             INSERT INTO auth_groups (name) VALUES ('admin');

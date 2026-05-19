@@ -18,14 +18,22 @@ class GeminiEmbeddingFunction(EmbeddingFunction):
         self._model_name = model_name
 
     def __call__(self, input: Documents) -> Embeddings:
-        # Call Google's API directly
+        import time
+        # Chunk input into batches of 100 to avoid API payload/batch size limits
+        batch_size = 100
+        all_embeddings = []
         try:
-            response = genai.embed_content(
-                model=self._model_name,
-                content=input,
-                task_type="retrieval_document",
-            )
-            return response["embedding"]
+            for i in range(0, len(input), batch_size):
+                batch = input[i:i + batch_size]
+                if i > 0:
+                    time.sleep(0.5)  # Avoid rate limits (e.g. 429 Too Many Requests)
+                response = genai.embed_content(
+                    model=self._model_name,
+                    content=batch,
+                    task_type="retrieval_document",
+                )
+                all_embeddings.extend(response["embedding"])
+            return all_embeddings
         except Exception as e:
             print(f"Embedding error: {e}")
             # Return zero embeddings as fallback or re-raise

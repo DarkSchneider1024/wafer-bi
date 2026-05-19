@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="20260519-010" author="wafer-bi">
+        <comment>Migrate old user_group values to group_id foreign key mapping</comment>
+        <sql>
+            UPDATE users 
+            SET group_id = (SELECT id FROM auth_groups WHERE name = 'admin') 
+            WHERE username = 'admin' AND group_id IS NULL;
+            
+            UPDATE users 
+            SET group_id = (SELECT id FROM auth_groups WHERE name = 'user') 
+            WHERE username != 'admin' AND group_id IS NULL;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

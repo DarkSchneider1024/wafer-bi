@@ -66,29 +66,73 @@ class ChromaManager:
             dt = DeltaTable(delta_path)
             df = dt.to_pandas()
 
+            # Check if product_id is in dataframe, if not add a dummy
+            if 'product_id' not in df.columns:
+                df['product_id'] = 'Unknown'
+            
+            # Check if yield is in dataframe, if not add a dummy
+            if 'yield' not in df.columns:
+                df['yield'] = 100.0
+
             # Group by wafer to create status summaries
-            wafers = df.groupby(['lot_id', 'wafer_id', 'parameter']).agg({
+            wafers = df.groupby(['product_id', 'lot_id', 'wafer_id', 'parameter']).agg({
                 'value': ['mean', 'std', 'min', 'max'],
-                'yield': 'first'  # Get the yield value
+                'yield': 'first'
             }).reset_index()
 
             documents = []
             metadatas = []
             ids = []
 
+            # 1. Create Lot-level summary chunks
+            lots = df.groupby(['product_id', 'lot_id', 'parameter']).agg({
+                'value': ['mean', 'std'],
+                'yield': 'mean'
+            }).reset_index()
+            
+            for _, row in lots.iterrows():
+                product_id = row['product_id'][0] if isinstance(row['product_id'], tuple) else row['product_id']
+                lot_id = row['lot_id'][0] if isinstance(row['lot_id'], tuple) else row['lot_id']
+                param = row['parameter'][0] if isinstance(row['parameter'], tuple) else row['parameter']
+                
+                mean_val = row[('value', 'mean')]
+                std_val = row[('value', 'std')]
+                yield_val = row[('yield', 'mean')]
+                
+                doc = f"Lot Summary: Lot {lot_id} (Product {product_id}) status for {param}. Overall Average is {mean_val:.4f}, Std Dev is {std_val:.4f}, Average Yield is {yield_val:.2f}%."
+                documents.append(doc)
+                metadatas.append({
+                    "type": "lot_summary",
+                    "product_id": str(product_id),
+                    "lot_id": str(lot_id),
+                    "parameter": str(param)
+                })
+                ids.append(f"lot_{lot_id}_{param}")
+
+            # 2. Create Wafer-level chunks
             for _, row in wafers.iterrows():
+                product_id = row['product_id'][0] if isinstance(row['product_id'], tuple) else row['product_id']
                 lot_id = row['lot_id'][0] if isinstance(row['lot_id'], tuple) else row['lot_id']
                 wafer_id = row['wafer_id'][0] if isinstance(row['wafer_id'], tuple) else row['wafer_id']
                 param = row['parameter'][0] if isinstance(row['parameter'], tuple) else row['parameter']
                 
                 mean_val = row[('value', 'mean')]
                 std_val = row[('value', 'std')]
+                min_val = row[('value', 'min')]
+                max_val = row[('value', 'max')]
                 yield_val = row[('yield', 'first')]
                 
-                doc = f"Wafer {wafer_id} in Lot {lot_id} status for {param}: Average is {mean_val:.4f}, Std Dev is {std_val:.4f}, Yield is {yield_val:.2f}%."
+                # Check for anomalies (e.g. Scratches might be indicated by high std dev or extreme max/min)
+                anomaly_note = ""
+                if std_val > 2.0 or yield_val < 90.0:
+                    anomaly_note = " Note: Potential anomaly or scratches detected due to high variance or low yield."
+                
+                doc = f"Wafer Detail: Wafer {wafer_id} in Lot {lot_id} (Product {product_id}) status for {param}. Average is {mean_val:.4f}, Std Dev is {std_val:.4f}, Min is {min_val:.4f}, Max is {max_val:.4f}, Yield is {yield_val:.2f}%.{anomaly_note}"
                 
                 documents.append(doc)
                 metadatas.append({
+                    "type": "wafer_detail",
+                    "product_id": str(product_id),
                     "lot_id": str(lot_id),
                     "wafer_id": str(wafer_id),
                     "parameter": str(param),
@@ -96,7 +140,7 @@ class ChromaManager:
                     "std": float(std_val),
                     "yield": float(yield_val)
                 })
-                ids.append(f"{lot_id}_{wafer_id}_{param}")
+                ids.append(f"wafer_{lot_id}_{wafer_id}_{param}")
 
             if documents:
                 self.collection.upsert(

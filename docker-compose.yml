@@ -112,7 +112,7 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       DELTA_PATH: /app/wafer_delta_table
     volumes:
-      - chroma_data:/app/chroma_db
+      - ./services/ai-mcp-service/chroma_db:/app/chroma_db
       - ./services/wafer-bi/wafer_delta_table:/app/wafer_delta_table
     depends_on:
       - api-gateway

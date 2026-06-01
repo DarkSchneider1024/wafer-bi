@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, X, Bot, User, Activity } from 'lucide-react';
+import { Send, X, Bot, User, Activity, HelpCircle } from 'lucide-react';
 import axios from 'axios';
 
 interface Message {
@@ -13,7 +13,7 @@ const AIAssistant: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: '您好！我是晶圓 BI 駐守。我可以協助您查詢晶圓狀態或搜尋生產異常。您想從哪裡開始？' }
   ]);
-  const [suggestions, setSuggestions] = useState<string[]>(['搜尋異常晶圓', '查詢特定 Wafer 狀態', '有哪些可用工具？']);
+  const [suggestions, setSuggestions] = useState<string[]>(['系統操作導讀', '搜尋異常晶圓', '查詢特定 Wafer 狀態', '有哪些可用工具？']);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -30,7 +30,10 @@ const AIAssistant: React.FC = () => {
   }, [messages, suggestions]);
 
   const handleSend = async (overrideMessage?: string) => {
-    const userMessage = overrideMessage || input.trim();
+    let userMessage = overrideMessage || input.trim();
+    if (userMessage === "系統操作導讀") {
+      userMessage = "系統操作導讀：請告訴我如何使用這個晶圓 BI 系統，有哪些常用的指令或查詢範例可以學習？";
+    }
     if (!userMessage || isLoading) return;
 
     setInput('');
@@ -137,6 +140,25 @@ const AIAssistant: React.FC = () => {
               </div>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button 
+                onClick={() => handleSend("系統操作導讀")}
+                title="AI 系統導讀"
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  border: 'none',
+                  color: 'white',
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                  borderRadius: '12px',
+                  fontSize: '0.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontWeight: 600
+                }}
+              >
+                <HelpCircle size={16} /> 導讀
+              </button>
               <button 
                 onClick={() => handleSend("請幫我分析當前批次的良率問題")}
                 style={{

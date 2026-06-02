@@ -270,6 +270,10 @@ function App() {
   };
 
   const handleDeleteUser = async (id: number) => {
+    if (id === user?.id) {
+      alert("您無法刪除目前登入的帳號！");
+      return;
+    }
     if (!confirm("Are you sure you want to delete this user?")) return;
     setUserActionLoading(true);
     try {
@@ -1193,9 +1197,15 @@ function App() {
                                 <button className="btn-icon" title="Reset Password" onClick={() => handleResetPassword(u.id)} style={{ padding: '4px' }}>
                                   <RefreshCw size={14} />
                                 </button>
-                                <button className="btn-icon" title="Delete User" onClick={() => handleDeleteUser(u.id)} style={{ padding: '4px', color: '#ef4444' }}>
-                                  <Package size={14} />
-                                </button>
+                                {u.id !== user?.id ? (
+                                  <button className="btn-icon" title="Delete User" onClick={() => handleDeleteUser(u.id)} style={{ padding: '4px', color: '#ef4444' }}>
+                                    <Package size={14} />
+                                  </button>
+                                ) : (
+                                  <button className="btn-icon" title="無法刪除目前登入帳號" style={{ padding: '4px', color: '#cbd5e1', cursor: 'not-allowed' }} disabled>
+                                    <Package size={14} />
+                                  </button>
+                                )}
                               </div>
                             </td>
                           )}

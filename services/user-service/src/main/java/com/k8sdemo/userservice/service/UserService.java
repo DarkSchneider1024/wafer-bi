@@ -235,6 +235,28 @@ public class UserService {
         log.info("User deleted: id={}", id);
     }
 
+    /**
+     * Extract user ID from authorization token header.
+     */
+    public Integer getUserIdFromToken(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return null;
+        }
+        try {
+            String token = authHeader.substring(7);
+            SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+            io.jsonwebtoken.Claims claims = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            return claims.get("user_id", Integer.class);
+        } catch (Exception e) {
+            log.error("Failed to parse JWT token: {}", e.getMessage());
+            return null;
+        }
+    }
+
     private String generateToken(User user) {
         SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
         return Jwts.builder()

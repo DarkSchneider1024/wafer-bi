@@ -51,7 +51,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "id", user.getId(),
                     "message", "User registered successfully"
-            ));
+                ));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (IllegalStateException e) {
@@ -104,8 +104,12 @@ public class UserController {
     }
 
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
+    public ResponseEntity<?> deleteUser(@PathVariable Integer id, @RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
+            Integer requesterId = userService.getUserIdFromToken(authHeader);
+            if (requesterId != null && requesterId.equals(id)) {
+                return ResponseEntity.badRequest().body(Map.of("error", "You cannot delete your own account"));
+            }
             userService.deleteUser(id);
             return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
         } catch (Exception e) {

@@ -7,7 +7,7 @@ interface Message {
   content: string;
 }
 
-const AIAssistant: React.FC = () => {
+const AIAssistant: React.FC<{ contextInfo?: string }> = ({ contextInfo }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
@@ -44,6 +44,7 @@ const AIAssistant: React.FC = () => {
     try {
       const response = await axios.post('/api/ai/chat', {
         message: userMessage,
+        context: contextInfo,
         history: messages.slice(-10).filter(m => m.role !== 'error').map(m => ({ role: m.role, content: m.content }))
       });
 

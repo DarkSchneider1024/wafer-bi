@@ -77,6 +77,7 @@ async def startup_event():
 
 class ChatRequest(BaseModel):
     message: str
+    context: str = ""
     history: list = []
 
 SYSTEM_INSTRUCTION = """
@@ -94,7 +95,7 @@ SYSTEM_INSTRUCTION = """
 - **引導後續**：分析完成後，請主動建議下一步操作（例如：建議檢查特定機台或查詢相關晶圓的詳情）。
 - **語氣與格式**：使用專業且親切的繁體中文。適當使用粗體和列表使資訊易於閱讀。
 
-如果用戶提供的資訊不足（例如：只有 Wafer ID 但缺 Lot ID），請禮貌地說明你需要更多資訊才能精準查詢，並提供可能的範例引導他們。
+如果用戶提供的資訊不足（例如：只有 Wafer ID 但缺 Lot ID），請參考[使用者當前畫面上下文]來獲取相關的 ID 資訊。
 """
 
 @app.post("/api/ai/chat")
@@ -137,8 +138,12 @@ async def chat(request: ChatRequest, req: Request):
         ]
 
         # 3. Generate content with tools
+        user_message_with_context = request.message
+        if request.context:
+            user_message_with_context = f"[使用者當前畫面上下文: {request.context}]\n\n" + request.message
+
         response = chat_session.send_message(
-            request.message,
+            user_message_with_context,
             tools=gemini_tools
         )
 

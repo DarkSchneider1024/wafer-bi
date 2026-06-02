@@ -1248,7 +1248,7 @@ function App() {
       </>
     )}
       </main>
-      <AIAssistant />
+      <AIAssistant contextInfo={`Product: ${selectedProduct}, Lot: ${selectedLot}, Wafer: ${selectedWafer}, Parameter: ${selectedParam}`} />
     </div>
   );
 }

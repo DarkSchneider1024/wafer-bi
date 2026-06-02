@@ -212,6 +212,42 @@ async def get_report(
         "data": report_df.to_dict(orient="records")
     }
 
+@app.get("/regression/{lot_id}")
+@app.get("/api/regression/{lot_id}")
+async def get_regression(lot_id: str, parameter: str = "Thickness"):
+    df = get_df()
+    lot_df = df[(df["lot_id"] == lot_id) & (df["parameter"] == parameter)]
+    
+    if lot_df.empty:
+        raise HTTPException(status_code=404, detail="Data not found")
+        
+    # Get mean per wafer
+    wafer_means = lot_df.groupby("wafer_id")["value"].mean().reset_index()
+    wafer_means = wafer_means.sort_values("wafer_id")
+    
+    # Calculate linear regression
+    y = wafer_means["value"].values
+    x = np.arange(len(y))
+    
+    slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
+    
+    # Generate regression line points
+    regression_line = (slope * x + intercept).tolist()
+    
+    return {
+        "lot_id": lot_id,
+        "parameter": parameter,
+        "wafer_ids": wafer_means["wafer_id"].tolist(),
+        "means": y.tolist(),
+        "regression_line": regression_line,
+        "slope": float(slope),
+        "intercept": float(intercept),
+        "r_squared": float(r_value ** 2) if not np.isnan(r_value) else 0.0,
+        "p_value": float(p_value) if not np.isnan(p_value) else 1.0,
+        "std_err": float(std_err) if not np.isnan(std_err) else 0.0,
+        "formula": f"y = {slope:.6f}x + {intercept:.4f}"
+    }
+
 @app.get("/yield/lots")
 @app.get("/api/yield/lots")
 async def get_lot_yields(product_id: str = None):

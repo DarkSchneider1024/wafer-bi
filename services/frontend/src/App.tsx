@@ -152,6 +152,7 @@ function App() {
   const [waferData, setWaferData] = useState<any>(null);
   const [cdfData, setCdfData] = useState<any>(null);
   const [statsData, setStatsData] = useState<any>(null);
+  const [regressionData, setRegressionData] = useState<any>(null);
   const [reportData, setReportData] = useState<any[]>([]);
   const [reportTotal, setReportTotal] = useState(0);
   const [reportPage, setReportPage] = useState(1);
@@ -412,6 +413,9 @@ function App() {
     }
     if (view === 'statistical-analysis' || view === 'lot-overview') {
       axios.get(`${API_BASE}/stats/${selectedLot}?parameter=${selectedParam}`).then(res => setStatsData(res.data));
+      axios.get(`${API_BASE}/regression/${selectedLot}?parameter=${selectedParam}`)
+        .then(res => setRegressionData(res.data))
+        .catch(err => console.error("Failed to fetch regression:", err));
     }
     axios.get(`${API_BASE}/cdf/${selectedLot}?parameter=${selectedParam}`).then(res => setCdfData(res.data));
   }, [selectedLot, selectedWafer, selectedParam, view]);
@@ -653,6 +657,75 @@ function App() {
         symbolSize: 8,
         lineStyle: { width: 3 }
       }]
+    };
+  };
+
+  const getRegressionOption = () => {
+    if (!regressionData) return {};
+    return {
+      title: { 
+        text: `${selectedLot} : ${selectedParam} Regression Analysis`, 
+        subtext: `Formula: ${regressionData.formula}  |  R² = ${regressionData.r_squared.toFixed(4)}`,
+        left: 'center', 
+        top: '2%',
+        textStyle: { color: 'var(--text-primary)', fontSize: 16 } 
+      },
+      tooltip: { 
+        trigger: 'axis',
+        formatter: (params: any) => {
+          let res = params[0].name + '<br/>';
+          params.forEach((p: any) => {
+            res += `${p.marker} ${p.seriesName}: <b>${p.value.toFixed(4)}</b><br/>`;
+          });
+          return res;
+        }
+      },
+      legend: {
+        data: ['Wafer Mean', 'Regression Line'],
+        bottom: '0%',
+        textStyle: { color: 'var(--text-primary)' }
+      },
+      toolbox: {
+        right: '2%',
+        top: '2%',
+        feature: {
+          dataZoom: { yAxisIndex: 'none', title: { zoom: 'Zoom', back: 'Back' } },
+          restore: { title: 'Restore' },
+          saveAsImage: { title: 'Save' }
+        }
+      },
+      dataZoom: [{ type: 'inside' }, { type: 'slider', bottom: '8%' }],
+      grid: { top: '18%', bottom: '22%', left: '10%', right: '10%' },
+      xAxis: { 
+        name: 'Wafer ID',
+        nameLocation: 'middle',
+        nameGap: 30,
+        type: 'category', 
+        data: regressionData.wafer_ids, 
+        axisLine: { lineStyle: { color: 'var(--text-secondary)' } } 
+      },
+      yAxis: { 
+        name: 'Mean Value',
+        type: 'value', 
+        axisLine: { lineStyle: { color: 'var(--text-secondary)' } },
+        splitLine: { lineStyle: { color: 'var(--border-color)' } }
+      },
+      series: [
+        {
+          name: 'Wafer Mean',
+          data: regressionData.means,
+          type: 'scatter',
+          symbolSize: 10,
+          itemStyle: { color: 'var(--accent-color)' }
+        },
+        {
+          name: 'Regression Line',
+          data: regressionData.regression_line,
+          type: 'line',
+          lineStyle: { width: 3, type: 'dashed', color: '#f46d43' },
+          symbol: 'none'
+        }
+      ]
     };
   };
 
@@ -1002,9 +1075,27 @@ function App() {
 
         {view === 'statistical-analysis' && (
           <div className="stats-view">
-            <div className="grid" style={{ gridTemplateColumns: '1fr', gap: '2rem' }}>
-              <div className="glass-card"><div style={{ height: '400px' }}><ReactECharts option={getBoxplotOption()} style={{ height: '100%' }} /></div></div>
-              <div className="glass-card"><div style={{ height: '400px' }}><ReactECharts option={getTrendOption()} style={{ height: '100%' }} /></div></div>
+            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: '2rem' }}>
+              <div className="glass-card">
+                <div style={{ height: '400px' }}>
+                  <ReactECharts option={getBoxplotOption()} style={{ height: '100%' }} notMerge={true} />
+                </div>
+              </div>
+              <div className="glass-card">
+                <div style={{ height: '400px' }}>
+                  <ReactECharts option={getTrendOption()} style={{ height: '100%' }} notMerge={true} />
+                </div>
+              </div>
+              <div className="glass-card">
+                <div style={{ height: '400px' }}>
+                  <ReactECharts option={getRegressionOption()} style={{ height: '100%' }} notMerge={true} />
+                </div>
+              </div>
+              <div className="glass-card">
+                <div style={{ height: '400px' }}>
+                  <ReactECharts option={getCDFOption()} style={{ height: '100%' }} notMerge={true} />
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -1248,7 +1339,10 @@ function App() {
       </>
     )}
       </main>
-      <AIAssistant contextInfo={`Product: ${selectedProduct}, Lot: ${selectedLot}, Wafer: ${selectedWafer}, Parameter: ${selectedParam}`} />
+      <AIAssistant contextInfo={
+        `Product: ${selectedProduct}, Lot: ${selectedLot}, Wafer: ${selectedWafer}, Parameter: ${selectedParam}` + 
+        (view === 'statistical-analysis' && regressionData ? ` | Regression Stats: Formula is ${regressionData.formula}, R-squared is ${regressionData.r_squared.toFixed(4)}, slope is ${regressionData.slope.toFixed(6)}` : '')
+      } />
     </div>
   );
 }

@@ -78,6 +78,7 @@ async def startup_event():
 class ChatRequest(BaseModel):
     message: str
     context: str = ""
+    model: str = "gemini-3-flash-preview"
     history: list = []
 
 SYSTEM_INSTRUCTION = """
@@ -98,124 +99,183 @@ SYSTEM_INSTRUCTION = """
 如果用戶提供的資訊不足（例如：只有 Wafer ID 但缺 Lot ID），請參考[使用者當前畫面上下文]來獲取相關的 ID 資訊。
 """
 
+from openai import AsyncOpenAI
+
 @app.post("/api/ai/chat")
 async def chat(request: ChatRequest, req: Request):
     trace_id = getattr(req.state, "trace_id", "unknown")
     background_errors = []
     
-    if not GEMINI_API_KEY:
-        raise HTTPException(status_code=401, detail="API_KEY_MISSING")
+    user_message_with_context = request.message
+    if request.context:
+        user_message_with_context = f"[使用者當前畫面上下文: {request.context}]\n\n" + request.message
 
-    try:
-        # Use gemini-3-flash-preview as per user confirmation
-        model = genai.GenerativeModel(
-            'gemini-3-flash-preview',
-            system_instruction=SYSTEM_INSTRUCTION
-        )
-        
-        # 1. Prepare history for Gemini
-        gemini_history = []
-        for msg in request.history:
-            role = "user" if msg['role'] == "user" else "model"
-            gemini_history.append({"role": role, "parts": [msg['content']]})
+    if "gemini" in request.model:
+        if not GEMINI_API_KEY:
+            raise HTTPException(status_code=401, detail="API_KEY_MISSING")
+
+        try:
+            model = genai.GenerativeModel(
+                request.model,
+                system_instruction=SYSTEM_INSTRUCTION
+            )
             
-        chat_session = model.start_chat(history=gemini_history)
+            gemini_history = []
+            for msg in request.history:
+                role = "user" if msg['role'] == "user" else "model"
+                gemini_history.append({"role": role, "parts": [msg['content']]})
+                
+            chat_session = model.start_chat(history=gemini_history)
+            tools_list = await handle_list_tools()
+            
+            gemini_tools = [
+                {
+                    "function_declarations": [
+                        {
+                            "name": t.name,
+                            "description": t.description,
+                            "parameters": t.inputSchema
+                        } for t in tools_list
+                    ]
+                }
+            ]
 
-        # 2. Get tools from MCP
-        tools_list = await handle_list_tools()
-        
-        # Mapping MCP tools to Gemini tools
-        gemini_tools = [
-            {
-                "function_declarations": [
-                    {
+            response = chat_session.send_message(
+                user_message_with_context,
+                tools=gemini_tools
+            )
+
+            MAX_TURNS = 5
+            turns = 0
+            while turns < MAX_TURNS:
+                turns += 1
+                fn_calls = [part.function_call for part in response.candidates[0].content.parts if part.function_call]
+                
+                if not fn_calls:
+                    break
+                    
+                tool_responses = []
+                for fn_call in fn_calls:
+                    function_name = fn_call.name
+                    function_args = dict(fn_call.args)
+                    print(f"[{trace_id}] Executing tool: {function_name} with {function_args}")
+                    
+                    try:
+                        tool_result = await handle_call_tool(function_name, function_args)
+                        result_text = tool_result[0].text if tool_result else "No result"
+                    except Exception as tool_err:
+                        error_msg = f"Tool Execution Error ({function_name}): {str(tool_err)}"
+                        print(f"[{trace_id}] {error_msg}")
+                        background_errors.append(error_msg)
+                        result_text = f"Error executing tool: {str(tool_err)}"
+                    
+                    tool_responses.append({
+                        "function_response": {
+                            "name": function_name,
+                            "response": {"result": result_text}
+                        }
+                    })
+                
+                response = chat_session.send_message(tool_responses)
+
+            try:
+                final_text = response.text
+            except ValueError:
+                text_parts = [part.text for part in response.candidates[0].content.parts if part.text]
+                final_text = "".join(text_parts) if text_parts else "抱歉，我現在無法產生文字回應。"
+
+        except Exception as e:
+            error_msg = str(e)
+            print(f"[{trace_id}] Gemini Chat Error: {error_msg}")
+            if "API_KEY_INVALID" in error_msg or "401" in error_msg:
+                raise HTTPException(status_code=401, detail="API_KEY_INVALID")
+            raise HTTPException(status_code=500, detail=f"System Error: {error_msg}")
+
+    else:
+        # Local model via OpenAI client (Ollama)
+        try:
+            client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+            messages = [{"role": "system", "content": SYSTEM_INSTRUCTION}]
+            for msg in request.history:
+                # ollama doesn't support 'error' role, map to assistant
+                role = "assistant" if msg['role'] == "error" else msg['role']
+                messages.append({"role": role, "content": msg['content']})
+            messages.append({"role": "user", "content": user_message_with_context})
+            
+            tools_list = await handle_list_tools()
+            openai_tools = [
+                {
+                    "type": "function",
+                    "function": {
                         "name": t.name,
                         "description": t.description,
                         "parameters": t.inputSchema
-                    } for t in tools_list
-                ]
-            }
-        ]
-
-        # 3. Generate content with tools
-        user_message_with_context = request.message
-        if request.context:
-            user_message_with_context = f"[使用者當前畫面上下文: {request.context}]\n\n" + request.message
-
-        response = chat_session.send_message(
-            user_message_with_context,
-            tools=gemini_tools
-        )
-
-        # 4. Handle tool calls (Function Calling) Loop
-        MAX_TURNS = 5
-        turns = 0
-        while turns < MAX_TURNS:
-            turns += 1
-            # Check if there are any function calls in the response
-            fn_calls = [part.function_call for part in response.candidates[0].content.parts if part.function_call]
-            
-            if not fn_calls:
-                break
-                
-            tool_responses = []
-            for fn_call in fn_calls:
-                function_name = fn_call.name
-                function_args = dict(fn_call.args)
-                print(f"[{trace_id}] Executing tool: {function_name} with {function_args}")
-                
-                try:
-                    tool_result = await handle_call_tool(function_name, function_args)
-                    result_text = tool_result[0].text if tool_result else "No result"
-                except Exception as tool_err:
-                    error_msg = f"Tool Execution Error ({function_name}): {str(tool_err)}"
-                    print(f"[{trace_id}] {error_msg}")
-                    background_errors.append(error_msg)
-                    result_text = f"Error executing tool: {str(tool_err)}"
-                
-                tool_responses.append({
-                    "function_response": {
-                        "name": function_name,
-                        "response": {"result": result_text}
                     }
-                })
+                } for t in tools_list
+            ]
             
-            # Send all tool responses back to Gemini
-            response = chat_session.send_message(tool_responses)
+            MAX_TURNS = 5
+            turns = 0
+            while turns < MAX_TURNS:
+                turns += 1
+                response = await client.chat.completions.create(
+                    model=request.model,
+                    messages=messages,
+                    tools=openai_tools
+                )
+                
+                message = response.choices[0].message
+                messages.append(message)
+                
+                if not message.tool_calls:
+                    final_text = message.content or ""
+                    break
+                    
+                for tool_call in message.tool_calls:
+                    function_name = tool_call.function.name
+                    try:
+                        function_args = json.loads(tool_call.function.arguments)
+                    except:
+                        function_args = {}
+                        
+                    print(f"[{trace_id}] Executing tool: {function_name} with {function_args}")
+                    
+                    try:
+                        tool_result = await handle_call_tool(function_name, function_args)
+                        result_text = tool_result[0].text if tool_result else "No result"
+                    except Exception as tool_err:
+                        error_msg = f"Tool Execution Error ({function_name}): {str(tool_err)}"
+                        print(f"[{trace_id}] {error_msg}")
+                        background_errors.append(error_msg)
+                        result_text = f"Error executing tool: {str(tool_err)}"
+                        
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "content": result_text
+                    })
+            else:
+                final_text = "抱歉，工具調用次數過多，請重新提問。"
+                
+        except Exception as e:
+            error_msg = str(e)
+            print(f"[{trace_id}] Local Model Chat Error: {error_msg}")
+            raise HTTPException(status_code=500, detail=f"Local Model Error: {error_msg}")
 
-        # 5. Extract final text safely
-        try:
-            final_text = response.text
-        except ValueError:
-            # If the response doesn't have text (e.g. only tool calls, which shouldn't happen after the loop)
-            # manually extract any text parts
-            text_parts = [part.text for part in response.candidates[0].content.parts if part.text]
-            final_text = "".join(text_parts) if text_parts else "抱歉，我現在無法產生文字回應。"
+    # Extract suggestions
+    suggestions = []
+    if "wafer" not in final_text.lower() and "lot" not in final_text.lower():
+        suggestions = ["搜尋異常晶圓", "查詢特定 Wafer 狀態", "有哪些可用工具？"]
+    elif "get_wafer_status" in str(final_text):
+        suggestions = ["再查另一個晶圓", "搜尋相似異常"]
+    else:
+        suggestions = ["搜尋 Lot1 異常", "查詢 Wafer_001 狀態", "幫助我分析數據"]
 
-        # Extract suggestions if the model provided any in its text or generate default ones
-        # For simplicity, we can also use a second pass or just simple regex if the model follows a pattern
-        # But here we will just generate some based on context if not present
-        suggestions = []
-        if "wafer" not in final_text.lower() and "lot" not in final_text.lower():
-            suggestions = ["搜尋異常晶圓", "查詢特定 Wafer 狀態", "有哪些可用工具？"]
-        elif "get_wafer_status" in str(response):
-            suggestions = ["再查另一個晶圓", "搜尋相似異常"]
-        else:
-            suggestions = ["搜尋 Lot1 異常", "查詢 Wafer_001 狀態", "幫助我分析數據"]
-
-        return {
-            "answer": final_text,
-            "suggestions": suggestions,
-            "errors": background_errors
-        }
-
-
-    except Exception as e:
-        error_msg = str(e)
-        print(f"[{trace_id}] Gemini Chat Error: {error_msg}")
-        if "API_KEY_INVALID" in error_msg or "401" in error_msg:
-            raise HTTPException(status_code=401, detail="API_KEY_INVALID")
-        raise HTTPException(status_code=500, detail=f"System Error: {error_msg}")
+    return {
+        "answer": final_text,
+        "suggestions": suggestions,
+        "errors": background_errors
+    }
 
 @app.post("/api/ai/ingest")
 async def ingest_data():

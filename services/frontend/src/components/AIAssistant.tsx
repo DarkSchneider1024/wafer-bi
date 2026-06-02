@@ -10,6 +10,7 @@ interface Message {
 const AIAssistant: React.FC<{ contextInfo?: string }> = ({ contextInfo }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
+  const [selectedModel, setSelectedModel] = useState('gemini-3-flash-preview');
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: '您好！我是晶圓 BI 駐守。我可以協助您查詢晶圓狀態或搜尋生產異常。您想從哪裡開始？' }
   ]);
@@ -45,6 +46,7 @@ const AIAssistant: React.FC<{ contextInfo?: string }> = ({ contextInfo }) => {
       const response = await axios.post('/api/ai/chat', {
         message: userMessage,
         context: contextInfo,
+        model: selectedModel,
         history: messages.slice(-10).filter(m => m.role !== 'error').map(m => ({ role: m.role, content: m.content }))
       });
 
@@ -337,8 +339,29 @@ const AIAssistant: React.FC<{ contextInfo?: string }> = ({ contextInfo }) => {
                 <Send size={20} />
               </button>
             </div>
-            <div style={{ fontSize: '0.65rem', color: '#94a3b8', textAlign: 'center' }}>
-              Powered by Gemini 1.5 Flash & MCP
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: '#64748b', padding: '0 4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontWeight: 500 }}>Model:</span>
+                <select 
+                  value={selectedModel} 
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  style={{
+                    background: '#f1f5f9',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    padding: '2px 6px',
+                    fontSize: '0.7rem',
+                    color: '#475569',
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="gemini-3-flash-preview">Gemini 3 Flash</option>
+                  <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                  <option value="qwen2.5:1.5b">Local Qwen (地端輕量)</option>
+                </select>
+              </div>
+              <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Powered by MCP</div>
             </div>
           </div>
         </div>

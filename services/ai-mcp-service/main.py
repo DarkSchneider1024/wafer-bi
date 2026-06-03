@@ -195,7 +195,8 @@ async def chat(request: ChatRequest, req: Request):
     else:
         # Local model via OpenAI client (Ollama)
         try:
-            client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+            ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434/v1")
+            client = AsyncOpenAI(base_url=ollama_host, api_key="ollama")
             messages = [{"role": "system", "content": SYSTEM_INSTRUCTION}]
             for msg in request.history:
                 # ollama doesn't support 'error' role, map to assistant

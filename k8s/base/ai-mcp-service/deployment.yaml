@@ -33,6 +33,8 @@ spec:
             secretKeyRef:
               name: app-secrets
               key: GEMINI_API_KEY
+        - name: OLLAMA_HOST
+          value: "http://ollama-service:11434/v1"
         - name: DELTA_PATH
           value: "/app/wafer_delta_table"
         volumeMounts:

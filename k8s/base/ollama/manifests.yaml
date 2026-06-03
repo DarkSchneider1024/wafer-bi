@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: k8sdemo
+  labels:
+    app: ollama
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+        env: production
+        managed-by: argocd
+    spec:
+      containers:
+      - name: ollama
+        image: docker.io/ollama/ollama:latest
+        ports:
+        - containerPort: 11434
+          name: api
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: ollama-storage
+          mountPath: /root/.ollama
+      - name: model-puller
+        image: docker.io/curlimages/curl:8.7.1
+        command:
+        - sh
+        - -c
+        - |
+          echo "Waiting for Ollama API to start..."
+          until curl -s http://localhost:11434/ > /dev/null; do
+            sleep 3
+          done
+          echo "Ollama is ready. Pulling Qwen 1.5B model..."
+          curl -X POST http://localhost:11434/api/pull -d '{"name": "qwen2.5:1.5b"}'
+          echo "Model pull command sent!"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+      volumes:
+      - name: ollama-storage
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama-service
+  namespace: k8sdemo
+spec:
+  selector:
+    app: ollama
+  ports:
+  - protocol: TCP
+    port: 11434
+    targetPort: 11434

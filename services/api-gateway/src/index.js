@@ -207,6 +207,8 @@ app.use(
   createProxyMiddleware('/api/ai', {
     target: AI_MCP_URL,
     changeOrigin: true,
+    timeout: 600000,      // 10 minutes
+    proxyTimeout: 600000, // 10 minutes
     // Keep /api/ai as the service expects it
     onProxyReq: (proxyReq) => console.log(`[Proxy AI] -> ${AI_MCP_URL}${proxyReq.path}`)
   })

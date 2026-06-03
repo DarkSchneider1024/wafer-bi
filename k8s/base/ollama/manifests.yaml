@@ -46,6 +46,8 @@ spec:
           echo "Ollama is ready. Pulling Qwen 1.5B model..."
           curl -X POST http://localhost:11434/api/pull -d '{"name": "qwen2.5:1.5b"}'
           echo "Model pull command sent!"
+          # Keep container running to prevent Kubernetes from restarting it
+          tail -f /dev/null
         resources:
           requests:
             memory: "64Mi"

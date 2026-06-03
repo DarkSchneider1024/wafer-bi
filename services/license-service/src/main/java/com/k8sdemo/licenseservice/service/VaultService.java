@@ -4,8 +4,9 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 import org.springframework.vault.core.VaultOperations;
 import org.springframework.vault.core.VaultTransitOperations;
+import org.springframework.vault.support.Plaintext;
 import org.springframework.vault.support.VaultTransitContext;
-import org.springframework.vault.support.VaultTransitKeyConfiguration;
+import org.springframework.vault.support.VaultTransitKeyCreationRequest;
 
 import java.util.Base64;
 import java.util.Map;
@@ -26,9 +27,7 @@ public class VaultService {
             VaultTransitOperations transit = vaultOperations.opsForTransit();
             // Create key if not exists
             if (transit.getKeys().stream().noneMatch(k -> k.equals(KEY_NAME))) {
-                transit.createKey(KEY_NAME, VaultTransitKeyConfiguration.builder()
-                        .type("rsa-4096")
-                        .build());
+                transit.createKey(KEY_NAME, VaultTransitKeyCreationRequest.ofKeyType("rsa-4096"));
             }
         } catch (Exception e) {
             System.err.println("Failed to initialize Vault Transit key: " + e.getMessage());
@@ -38,7 +37,7 @@ public class VaultService {
     public String sign(String data) {
         VaultTransitOperations transit = vaultOperations.opsForTransit();
         String plaintextBase64 = Base64.getEncoder().encodeToString(data.getBytes());
-        return transit.sign(KEY_NAME, plaintextBase64);
+        return transit.sign(KEY_NAME, Plaintext.of(plaintextBase64)).getSignature();
     }
 
     public String getPublicKey() {

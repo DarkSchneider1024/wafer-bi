@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: license-service
-        image: ${DOCKER_IMAGE_LICENSE_SERVICE:-license-service:latest}
+        image: ghcr.io/darkschneider1024/license-service:latest
         ports:
         - containerPort: 8005
         env:

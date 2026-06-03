@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: openbao
-        image: openbao/openbao:2.0.0
+        image: docker.io/openbao/openbao:2.0.0
         ports:
         - containerPort: 8200
         env:

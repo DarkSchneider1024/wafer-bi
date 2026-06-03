@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [wafer-bi-backend, wafer-bi-frontend, api-gateway, user-service, ai-mcp-service]
+        service: [wafer-bi-backend, wafer-bi-frontend, api-gateway, user-service, ai-mcp-service, license-service]
         include:
           - service: wafer-bi-backend
             context: ./services/wafer-bi
@@ -48,6 +48,8 @@ jobs:
             context: ./services/user-service
           - service: ai-mcp-service
             context: ./services/ai-mcp-service
+          - service: license-service
+            context: ./services/license-service
     
     name: Build ${{ matrix.service }}
     steps:
@@ -102,6 +104,7 @@ jobs:
           sed -i "s|image: ghcr.io/${OWNER_LC}/wafer-bi-backend:.*|image: ghcr.io/${OWNER_LC}/wafer-bi-backend:${{ github.sha }}|g" k8s/base/wafer-bi-deployment.yaml
           sed -i "s|image: ghcr.io/${OWNER_LC}/wafer-bi-frontend:.*|image: ghcr.io/${OWNER_LC}/wafer-bi-frontend:${{ github.sha }}|g" k8s/base/wafer-bi-deployment.yaml
           sed -i "s|image: ghcr.io/${OWNER_LC}/ai-mcp-service:.*|image: ghcr.io/${OWNER_LC}/ai-mcp-service:${{ github.sha }}|g" k8s/base/ai-mcp-service/deployment.yaml
+          sed -i "s|image: ghcr.io/${OWNER_LC}/license-service:.*|image: ghcr.io/${OWNER_LC}/license-service:${{ github.sha }}|g" k8s/base/license-service/manifests.yaml
           
           # 設定 Git 使用者資訊並提交
           git config --global user.name "github-actions[bot]"

@@ -28,10 +28,10 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- Spring Vault -->
         <dependency>
             <groupId>org.springframework.vault</groupId>
             <artifactId>spring-vault-core</artifactId>
+            <version>3.1.1</version>
         </dependency>
 
         <dependency>

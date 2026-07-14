@@ -10,8 +10,12 @@ spec:
     repoURL: https://github.com/DarkSchneider1024/wafer-bi.git
     # 監控的分支
     targetRevision: main
-    # K8s 設定檔存放的路徑 (改用 prod overlay)
-    path: k8s/overlays/prod
+    # K8s 設定檔存放的路徑 (改用 Helm Chart)
+    path: helm/wafer-bi
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-production.yaml
   destination:
     # 部署到當前的 Kubernetes 叢集
     server: https://kubernetes.default.svc

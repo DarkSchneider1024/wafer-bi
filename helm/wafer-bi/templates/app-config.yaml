@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "wafer-bi.labels" . | nindent 4 }}
+data:
+  POSTGRES_HOST: {{ .Values.appConfig.postgresHost | quote }}
+  POSTGRES_PORT: {{ .Values.appConfig.postgresPort | quote }}
+  POSTGRES_DB: {{ .Values.appConfig.postgresDb | quote }}
+  POSTGRES_USER: "waferbi"
+  USER_SERVICE_PORT: {{ .Values.appConfig.userServicePort | quote }}
+  WAFER_BI_HOST: {{ .Values.appConfig.waferBiHost | quote }}
+  WAFER_BI_PORT: {{ .Values.appConfig.waferBiPort | quote }}
+  API_GATEWAY_PORT: {{ .Values.appConfig.apiGatewayPort | quote }}
+  NODE_ENV: {{ .Values.appConfig.nodeEnv | quote }}
+  LOG_LEVEL: {{ .Values.appConfig.logLevel | quote }}
+  AI_MCP_SERVICE_HOST: {{ .Values.appConfig.aiMcpServiceHost | quote }}
+  AI_MCP_SERVICE_PORT: {{ .Values.appConfig.aiMcpServicePort | quote }}
+  SPRING_LIQUIBASE_ENABLED: {{ .Values.appConfig.springLiquibaseEnabled | quote }}

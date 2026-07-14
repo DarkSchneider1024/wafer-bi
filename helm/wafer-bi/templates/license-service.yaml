@@ -1,0 +1,55 @@
+{{- if .Values.licenseService.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: license-service
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "wafer-bi.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: license-service
+  template:
+    metadata:
+      labels:
+        app: license-service
+    spec:
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.global.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: license-service
+        image: "{{ .Values.licenseService.image.repository }}:{{ .Values.licenseService.image.tag }}"
+        imagePullPolicy: {{ .Values.licenseService.image.pullPolicy }}
+        ports:
+        - containerPort: 8005
+        env:
+        - name: VAULT_ADDR
+          value: "http://openbao:8200"
+        - name: VAULT_TOKEN
+          value: "root"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8005
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: license-service
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "wafer-bi.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: license-service
+  ports:
+  - protocol: TCP
+    port: 8005
+    targetPort: 8005
+{{- end }}

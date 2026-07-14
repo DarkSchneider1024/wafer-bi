@@ -1,0 +1,83 @@
+{{- if .Values.aiMcpService.replicas }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: chroma-data-pvc
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "wafer-bi.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.aiMcpService.pvc.storage | quote }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-mcp-service
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "wafer-bi.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.aiMcpService.replicas }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: ai-mcp-service
+  template:
+    metadata:
+      labels:
+        app: ai-mcp-service
+        env: {{ .Values.global.environment }}
+      annotations:
+        deployed-at: {{ now | date "2006-01-02 15:04:05" | quote }}
+    spec:
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.global.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: ai-mcp
+        image: "{{ .Values.aiMcpService.image.repository }}:{{ .Values.aiMcpService.image.tag }}"
+        imagePullPolicy: {{ .Values.aiMcpService.image.pullPolicy }}
+        ports:
+        - containerPort: 8001
+        env:
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: GEMINI_API_KEY
+        - name: OLLAMA_HOST
+          value: "http://ollama-service:11434/v1"
+        - name: DELTA_PATH
+          value: "/app/wafer_delta_table"
+        volumeMounts:
+        - name: chroma-storage
+          mountPath: /app/chroma_db
+        resources:
+          {{- toYaml .Values.aiMcpService.resources | nindent 10 }}
+      volumes:
+      - name: chroma-storage
+        persistentVolumeClaim:
+          claimName: chroma-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-mcp-service
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "wafer-bi.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: ai-mcp-service
+  ports:
+  - protocol: TCP
+    port: 8001
+    targetPort: 8001
+  type: ClusterIP
+{{- end }}

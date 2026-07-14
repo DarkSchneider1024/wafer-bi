@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wafer-frontend
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "wafer-bi.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.waferFrontend.replicas }}
+  selector:
+    matchLabels:
+      app: wafer-frontend
+  template:
+    metadata:
+      labels:
+        app: wafer-frontend
+        env: {{ .Values.global.environment }}
+      annotations:
+        deployed-at: {{ now | date "2006-01-02 15:04:05" | quote }}
+    spec:
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.global.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: frontend
+        image: "{{ .Values.waferFrontend.image.repository }}:{{ .Values.waferFrontend.image.tag }}"
+        imagePullPolicy: {{ .Values.waferFrontend.image.pullPolicy }}
+        ports:
+        - containerPort: 80
+        env:
+        - name: VITE_API_URL
+          valueFrom:
+            configMapKeyRef:
+              name: wafer-config
+              key: VITE_API_URL
+        resources:
+          {{- toYaml .Values.waferFrontend.resources | nindent 10 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wafer-frontend-svc
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "wafer-bi.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: wafer-frontend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: ClusterIP

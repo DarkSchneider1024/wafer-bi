@@ -1,0 +1,47 @@
+# ====================================================================
+# Wafer BI - Production Helm Values Override
+# ====================================================================
+
+global:
+  environment: production
+
+# --- Production Replicas Override ---
+waferBackend:
+  replicas: 2
+
+waferFrontend:
+  replicas: 2
+
+apiGateway:
+  replicas: 2
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPU: 70
+
+userService:
+  replicas: 2
+
+# --- Image Overrides for Production ---
+licenseService:
+  image:
+    repository: ghcr.io/darkschneider1024/wafer-bi/license-service
+    tag: latest
+    pullPolicy: Always
+
+# --- Infrastructure Storage / Scaling (If applicable) ---
+postgres:
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 2000m
+      memory: 1Gi
+  pvc:
+    storage: 5Gi
+
+aiMcpService:
+  pvc:
+    storage: 5Gi

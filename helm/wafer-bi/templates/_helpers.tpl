@@ -1,15 +1,15 @@
 {{/*
 Common labels for all resources
 */}}
-{{- define "k8sdemo.labels" -}}
-app.kubernetes.io/part-of: k8sdemo
+{{- define "wafer-bi.labels" -}}
+app.kubernetes.io/part-of: wafer-bi
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 {{- end -}}
 
 {{/*
-Selector labels
+Selector labels for a service
 */}}
-{{- define "k8sdemo.selectorLabels" -}}
+{{- define "wafer-bi.selectorLabels" -}}
 app: {{ .name }}
 {{- end -}}

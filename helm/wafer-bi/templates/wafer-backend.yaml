@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wafer-backend
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "wafer-bi.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.waferBackend.replicas }}
+  selector:
+    matchLabels:
+      app: wafer-backend
+  template:
+    metadata:
+      labels:
+        app: wafer-backend
+        env: {{ .Values.global.environment }}
+      annotations:
+        deployed-at: {{ now | date "2006-01-02 15:04:05" | quote }}
+    spec:
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.global.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: backend
+        image: "{{ .Values.waferBackend.image.repository }}:{{ .Values.waferBackend.image.tag }}"
+        imagePullPolicy: {{ .Values.waferBackend.image.pullPolicy }}
+        ports:
+        - containerPort: 8000
+        resources:
+          {{- toYaml .Values.waferBackend.resources | nindent 10 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wafer-backend-svc
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "wafer-bi.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: wafer-backend
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000
+  type: ClusterIP

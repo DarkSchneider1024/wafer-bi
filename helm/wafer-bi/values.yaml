@@ -1,0 +1,172 @@
+# ====================================================================
+# Wafer BI - Default Helm Values (Development/General)
+# ====================================================================
+
+global:
+  namespace: k8sdemo
+  environment: development
+  imagePullSecrets:
+    - name: ocirsecret
+
+# --- ConfigMap Defaults ---
+waferConfig:
+  viteApiUrl: "https://wafer.carrot-atelier.online/api"
+
+appConfig:
+  postgresHost: "postgres-service"
+  postgresPort: "5432"
+  postgresDb: "waferbi_db"
+  userServicePort: "3002"
+  waferBiHost: "wafer-backend-svc.k8sdemo.svc.cluster.local"
+  waferBiPort: "8000"
+  apiGatewayPort: "8080"
+  nodeEnv: "production"
+  logLevel: "info"
+  aiMcpServiceHost: "ai-mcp-service"
+  aiMcpServicePort: "8001"
+  springLiquibaseEnabled: "true"
+
+# --- Wafer Backend ---
+waferBackend:
+  replicas: 1
+  image:
+    repository: ghcr.io/darkschneider1024/wafer-bi-backend
+    tag: a840fafd1ce53d38268e0f67ef001b4c2394cf09
+    pullPolicy: Always
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# --- Wafer Frontend ---
+waferFrontend:
+  replicas: 1
+  image:
+    repository: ghcr.io/darkschneider1024/wafer-bi-frontend
+    tag: a840fafd1ce53d38268e0f67ef001b4c2394cf09
+    pullPolicy: Always
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# --- API Gateway ---
+apiGateway:
+  replicas: 1
+  image:
+    repository: ghcr.io/darkschneider1024/api-gateway
+    tag: a840fafd1ce53d38268e0f67ef001b4c2394cf09
+    pullPolicy: Always
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  hpa:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPU: 70
+
+# --- User Service ---
+userService:
+  replicas: 1
+  image:
+    repository: ghcr.io/darkschneider1024/user-service
+    tag: a840fafd1ce53d38268e0f67ef001b4c2394cf09
+    pullPolicy: Always
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# --- AI MCP Service ---
+aiMcpService:
+  replicas: 1
+  image:
+    repository: ghcr.io/darkschneider1024/ai-mcp-service
+    tag: a840fafd1ce53d38268e0f67ef001b4c2394cf09
+    pullPolicy: Always
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  pvc:
+    storage: 2Gi
+
+# --- Postgres ---
+postgres:
+  image: public.ecr.aws/docker/library/postgres:16.1
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+  pvc:
+    storage: 2Gi
+
+# --- Jaeger (Observability) ---
+jaeger:
+  enabled: true
+  image: docker.io/jaegertracing/all-in-one:1.60.0
+
+# --- OTel Collector (Observability) ---
+otelCollector:
+  enabled: true
+  image: docker.io/otel/opentelemetry-collector-contrib:0.90.0
+
+# --- OpenBao (Security) ---
+openbao:
+  enabled: true
+  image: docker.io/openbao/openbao:2.0.0
+
+# --- License Service ---
+licenseService:
+  enabled: true
+  image:
+    repository: ghcr.io/darkschneider1024/license-service
+    tag: a840fafd1ce53d38268e0f67ef001b4c2394cf09
+    pullPolicy: Always
+
+# --- Ollama (AI Model) ---
+ollama:
+  enabled: true
+  image: docker.io/ollama/ollama:latest
+  model: "qwen2.5:1.5b"
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+
+# --- Ingress ---
+ingress:
+  enabled: true
+  className: "nginx"
+  host: "wafer.carrot-atelier.online"
+  tlsSecret: "wafer-bi-tls"
+  clusterIssuer: "letsencrypt-prod"
+
+# --- ArgoCD Ingress ---
+argocdIngress:
+  enabled: true
+  host: "argo.carrot-atelier.online"
+  tlsSecret: "wafer-bi-tls"

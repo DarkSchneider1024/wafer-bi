@@ -11,7 +11,7 @@
 
 ## 🧪 技術深度補強 (面試準備)
 - [ ] **IaC 導入**：將 OCI 資源（VCN, OKE）改用 Terraform 腳本定義。
-- [ ] **Helm 化**：將 `k8s/` 目錄下的 YAML 檔案封裝成 Helm Chart，支援多環境配置。
+- [x] **Helm 化**：將 `k8s/` 目錄下的 YAML 檔案封裝成 Helm Chart，支援多環境配置。
 - [ ] **可觀測性升級**：在 K8S 中佈署 Prometheus + Grafana 監控指標。
 - [ ] **灰度發布**：評估導入 Argo Rollouts 以支援 Canary 部署。
 

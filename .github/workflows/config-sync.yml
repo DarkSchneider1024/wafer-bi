@@ -1,0 +1,25 @@
+# 檢查本地開發 (docker-compose.yml) / K8S 部署 (helm/wafer-bi) / CI (deploy.yml)
+# 三方的服務清單是否同步，漏改任何一邊都會讓這個檢查亮紅燈。
+# 連動規則見 k8s/README.md。
+name: Config Sync Check
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docker-compose.yml'
+      - 'helm/**'
+      - 'services/**'
+      - 'scripts/check-config-sync.py'
+      - '.github/workflows/**'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 檢查 compose / helm / CI 服務清單同步
+        run: python3 scripts/check-config-sync.py

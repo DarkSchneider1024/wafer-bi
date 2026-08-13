@@ -9,9 +9,9 @@ on:
   push:
     branches: [ main ]
     # 只有當這些路徑下的檔案變動時，才觸發整個流水線（或特定 Job）
+    # 注意：helm/ 的變動不需要重建 Image，ArgoCD 會直接同步
     paths:
       - 'services/**'
-      - 'k8s/**'
       - '.github/workflows/**'
 
 permissions:
@@ -82,7 +82,19 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # 所有 Build 完成後，統一更新 K8s 部署時間戳記觸發 Rollout
+      # 供應鏈安全掃描：CRITICAL 漏洞直接讓這個 job 失敗，擋在 deploy-trigger 之前
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ghcr.io/${{ needs.setup.outputs.owner_lc }}/${{ matrix.service }}:${{ github.sha }}
+          format: table
+          severity: CRITICAL
+          exit-code: '1'
+
+  # 所有 Build 完成後，更新 Helm values 的 image tag。
+  # ArgoCD 監看的是 helm/wafer-bi/（見 k8s/argocd-app.yaml），
+  # 所以「只有」改 helm/wafer-bi/values.yaml 會觸發實際部署——改 k8s/legacy/ 沒有任何效果。
+  # 新增服務時，下方的 bump 清單要同步更新（scripts/check-config-sync.py 會檢查）。
   deploy-trigger:
     needs: [setup, build-services]
     runs-on: ubuntu-latest
@@ -90,27 +102,18 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Trigger Kubernetes Rollout
+      - name: Bump image tags in Helm values
         run: |
-          DEPLOY_DATE=$(date +'%Y-%m-%d %H:%M:%S')
-          OWNER_LC=${{ needs.setup.outputs.owner_lc }}
-          
-          # 更新所有部署檔的時間戳記
-          find k8s/ -name "*.yaml" -exec sed -i "s|deployed-at:.*|deployed-at: \"${DEPLOY_DATE}\"|g" {} +
-          
-          # 更新映像檔標籤
-          sed -i "s|image: ghcr.io/${OWNER_LC}/user-service:.*|image: ghcr.io/${OWNER_LC}/user-service:${{ github.sha }}|g" k8s/base/user-service/deployment.yaml
-          sed -i "s|image: ghcr.io/${OWNER_LC}/api-gateway:.*|image: ghcr.io/${OWNER_LC}/api-gateway:${{ github.sha }}|g" k8s/base/api-gateway/deployment.yaml
-          sed -i "s|image: ghcr.io/${OWNER_LC}/wafer-bi-backend:.*|image: ghcr.io/${OWNER_LC}/wafer-bi-backend:${{ github.sha }}|g" k8s/base/wafer-bi-deployment.yaml
-          sed -i "s|image: ghcr.io/${OWNER_LC}/wafer-bi-frontend:.*|image: ghcr.io/${OWNER_LC}/wafer-bi-frontend:${{ github.sha }}|g" k8s/base/wafer-bi-deployment.yaml
-          sed -i "s|image: ghcr.io/${OWNER_LC}/ai-mcp-service:.*|image: ghcr.io/${OWNER_LC}/ai-mcp-service:${{ github.sha }}|g" k8s/base/ai-mcp-service/deployment.yaml
-          sed -i "s|image: ghcr.io/${OWNER_LC}/license-service:.*|image: ghcr.io/${OWNER_LC}/license-service:${{ github.sha }}|g" k8s/base/license-service/manifests.yaml
-          
+          # 逐一更新每個服務的 image tag，ArgoCD 偵測到 commit 後自動 Rollout
+          for key in waferBackend waferFrontend apiGateway userService aiMcpService licenseService; do
+            yq -i ".${key}.image.tag = \"${{ github.sha }}\"" helm/wafer-bi/values.yaml
+          done
+
           # 設定 Git 使用者資訊並提交
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          git add k8s/
-          git commit -m "deploy: trigger rollout at ${DEPLOY_DATE} [skip ci]" || echo "No changes to commit"
+
+          git add helm/wafer-bi/values.yaml
+          git commit -m "deploy: bump image tags to ${GITHUB_SHA:0:7} [skip ci]" || echo "No changes to commit"
           git pull --rebase origin main
           git push

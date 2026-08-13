@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: wafer-config
-data:
-  # This value is safe to be public but can be overridden
-  VITE_API_URL: "https://wafer.carrot-atelier.online/api"

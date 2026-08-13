@@ -1,0 +1,33 @@
+version: 2
+updates:
+  - package-ecosystem: "maven"
+    directories:
+      - "/services/user-service"
+      - "/services/license-service"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "pip"
+    directories:
+      - "/services/wafer-bi"
+      - "/services/ai-mcp-service"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "npm"
+    directories:
+      - "/services/api-gateway"
+      - "/services/frontend"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "docker"
+    directories:
+      - "/services/*"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

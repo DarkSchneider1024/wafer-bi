@@ -1,5 +1,11 @@
 # ====================================================================
 # Wafer BI - Default Helm Values (Development/General)
+# --------------------------------------------------------------------
+# ⚠️ 這裡是 K8S 部署的唯一真相來源（ArgoCD 監看 helm/wafer-bi/）。
+#    - image.tag 由 CI（.github/workflows/deploy.yml）自動 bump，勿手改
+#    - 新增／刪除服務時，請同步更新 docker-compose.yml（本地開發）
+#      與 deploy.yml，並在 scripts/check-config-sync.py 登記 MAPPING
+#    - 連動規則詳見 k8s/README.md
 # ====================================================================
 
 global:

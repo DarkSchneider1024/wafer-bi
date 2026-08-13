@@ -45,3 +45,10 @@ docs/鐵人賽/
 
 # 個人求職筆記（保留在本機，不進版控）
 docs/function-tech/interview-guide.md
+
+# ChromaDB 的向量資料：執行期產物，正式環境掛在 chroma-data-pvc 上，
+# image 裡那份會被 PVC 蓋掉。放版控只會讓每次 commit 都塞進幾 MB 二進位檔。
+services/ai-mcp-service/chroma_db/
+
+# 瀏覽器自動化工具的暫存產物
+.playwright-mcp/

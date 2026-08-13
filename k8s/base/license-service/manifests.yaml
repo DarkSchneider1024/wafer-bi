@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: license-service
-        image: ghcr.io/darkschneider1024/license-service:d316560dda78e323df65b2e9c515595689f8739a
+        image: ghcr.io/darkschneider1024/license-service:0ad3eafd161d8e32f737bdc5bc430c666fef5208
         ports:
         - containerPort: 8005
         env:

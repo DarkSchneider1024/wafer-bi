@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Path, Query
 from fastapi.middleware.cors import CORSMiddleware
 from deltalake import DeltaTable
 import pandas as pd
@@ -140,9 +140,31 @@ async def get_lot_wafers(lot_id: str, parameter: str = "Thickness"):
     
     return result
 
-@app.get("/stats/{lot_id}")
-@app.get("/api/stats/{lot_id}")
-async def get_lot_stats(lot_id: str, parameter: str = "Thickness"):
+@app.get(
+    "/stats/{lot_id}",
+    tags=["Statistics"],
+    summary="取得批次的統計盒鬚圖數據",
+    response_description="每片晶圓的 min/q1/median/q3/max 五數概括，以及各晶圓平均值的趨勢序列",
+)
+@app.get("/api/stats/{lot_id}", include_in_schema=False)
+async def get_lot_stats(
+    lot_id: str = Path(..., description="批次編號", examples=["Lot1"]),
+    parameter: str = Query(
+        "Thickness",
+        description="要統計的測試參數名稱，對應資料表裡的 parameter 欄位",
+        examples=["Thickness", "Resistance"],
+    ),
+):
+    """
+    依批次 (Lot) 與參數 (Parameter) 計算每片晶圓的五數概括統計 (Five-Number Summary)，
+    是箱型圖 (Box Plot) 與趨勢圖的資料來源。
+
+    計算方式：先篩選出屬於這個批次、這個參數的所有量測值，
+    再依 `wafer_id` 分組，對每片晶圓的數值算出 min / Q1(25百分位) / median / Q3(75百分位) / max，
+    並取平均值當作跨晶圓比較的趨勢指標。
+
+    找不到符合條件的資料時回傳 404。
+    """
     df = get_df()
     lot_df = df[(df["lot_id"] == lot_id) & (df["parameter"] == parameter)]
     

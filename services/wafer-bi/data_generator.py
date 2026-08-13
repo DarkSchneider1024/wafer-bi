@@ -74,7 +74,7 @@ def main():
         delta_path = os.environ.get("DELTA_PATH")
 
     print(f"Writing to Delta Lake at {delta_path}...")
-    write_deltalake(delta_path, full_df, mode="overwrite")
+    write_deltalake(delta_path, full_df, mode="overwrite", schema_mode="overwrite")
     print("Done!")
 
 if __name__ == "__main__":

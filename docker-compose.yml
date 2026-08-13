@@ -1,3 +1,12 @@
+# ====================================================================
+# Wafer BI - 本地開發環境（docker compose up -d --build 一鍵啟動）
+# --------------------------------------------------------------------
+# ⚠️ 連動提醒：這裡只管「本地開發」。K8S 實際部署吃的是 helm/wafer-bi/
+#    （ArgoCD 監看，見 k8s/README.md）。新增／刪除／改名服務時，
+#    請同步更新 helm/wafer-bi/ 與 .github/workflows/deploy.yml，
+#    並在 scripts/check-config-sync.py 的 MAPPING 登記——CI 會自動檢查。
+# 例外：frontend 本地用 `npm run dev`（vite 熱更新），刻意不進 compose。
+# ====================================================================
 services:
   # ============ Infrastructure ============
   postgres:
@@ -17,54 +26,12 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
-    container_name: k8sdemo-redis
-    ports:
-      - "6379:6379"
-    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-
   # ============ Backend Services ============
-  product-service:
-    build: ./services/product-service
-    container_name: k8sdemo-product-service
+  wafer-backend:
+    build: ./services/wafer-bi
+    container_name: k8sdemo-wafer-backend
     ports:
-      - "5000:5000"
-    environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: "5432"
-      POSTGRES_DB: waferbi_db
-      POSTGRES_USER: waferbi
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_local_properties}
-      PRODUCT_SERVICE_PORT: "5000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  order-service:
-    build: ./services/order-service
-    container_name: k8sdemo-order-service
-    ports:
-      - "3001:3001"
-    environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: "5432"
-      POSTGRES_DB: waferbi_db
-      POSTGRES_USER: waferbi
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_local_properties}
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
-      ORDER_SERVICE_PORT: "3001"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - "8000:8000"
 
   user-service:
     build: ./services/user-service
@@ -77,8 +44,12 @@ services:
       POSTGRES_DB: waferbi_db
       POSTGRES_USER: waferbi
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_local_properties}
-      JWT_SECRET: ${JWT_SECRET:-change_me_in_local_properties}
+      JWT_SECRET: ${JWT_SECRET:-local_dev_jwt_secret_must_be_at_least_32_bytes}
       USER_SERVICE_PORT: "3002"
+      # 種子帳號密碼：只給本地開發用。沒設定的話 DataSeeder 就不會建立帳號，
+      # 正式環境刻意不在 helm/ 裡提供這兩個變數。
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-admin@carrot}
+      SEED_DEMO_PASSWORD: ${SEED_DEMO_PASSWORD:-demo01_local_dev}
     depends_on:
       postgres:
         condition: service_healthy
@@ -91,17 +62,14 @@ services:
       - "8080:8080"
     environment:
       API_GATEWAY_PORT: "8080"
-      PRODUCT_SERVICE_HOST: product-service
-      PRODUCT_SERVICE_PORT: "5000"
-      ORDER_SERVICE_HOST: order-service
-      ORDER_SERVICE_PORT: "3001"
       USER_SERVICE_HOST: user-service
       USER_SERVICE_PORT: "3002"
-      JWT_SECRET: ${JWT_SECRET:-change_me_in_local_properties}
+      WAFER_BI_HOST: wafer-backend
+      WAFER_BI_PORT: "8000"
+      JWT_SECRET: ${JWT_SECRET:-local_dev_jwt_secret_must_be_at_least_32_bytes}
     depends_on:
-      - product-service
-      - order-service
       - user-service
+      - wafer-backend
 
   ai-mcp-service:
     build: ./services/ai-mcp-service
@@ -109,6 +77,7 @@ services:
     ports:
       - "8001:8001"
     environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       DELTA_PATH: /app/wafer_delta_table
     volumes:

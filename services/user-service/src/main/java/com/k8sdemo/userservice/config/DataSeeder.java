@@ -58,30 +58,35 @@ public class DataSeeder {
                 return groupRepo.save(g);
             });
 
-            // 3. Seed Demo User
-            if (userRepo.findByUsername("demo01").isEmpty()) {
-                User demo = new User();
-                demo.setName("Demo Sudo User");
-                demo.setUsername("demo01");
-                demo.setEmail("demo01@carrot-atelier.online");
-                demo.setPasswordHash(encoder.encode("demo01_password_123"));
-                demo.setGroup(adminGroup);
-                userRepo.save(demo);
-                log.info("Seeded demo01 user in admin group");
-            }
-            
+            // 3. Seed Demo User —— 密碼一律由環境變數提供，沒設就不建立。
+            //    種子帳號的密碼寫死在原始碼裡，等於把可用憑證publish到公開 repo。
+            seedUser(userRepo, encoder, adminGroup, "demo01", "Demo Sudo User",
+                     "demo01@example.com", System.getenv("SEED_DEMO_PASSWORD"));
+
             // 4. Seed Admin User
-            if (userRepo.findByUsername("admin").isEmpty()) {
-                User admin = new User();
-                admin.setName("System Admin");
-                admin.setUsername("admin");
-                admin.setEmail("admin@carrot-atelier.online");
-                admin.setPasswordHash(encoder.encode("admin@carrot"));
-                admin.setGroup(adminGroup);
-                userRepo.save(admin);
-                log.info("Seeded default admin user");
-            }
+            seedUser(userRepo, encoder, adminGroup, "admin", "System Admin",
+                     "admin@example.com", System.getenv("SEED_ADMIN_PASSWORD"));
         };
+    }
+
+    private void seedUser(UserRepository userRepo, BCryptPasswordEncoder encoder, Group group,
+                          String username, String displayName, String email, String rawPassword) {
+        if (!userRepo.findByUsername(username).isEmpty()) {
+            return;
+        }
+        if (rawPassword == null || rawPassword.isBlank()) {
+            log.warn("Skipping seed for '{}': password env var is not set. "
+                   + "Set SEED_ADMIN_PASSWORD / SEED_DEMO_PASSWORD to enable seeding.", username);
+            return;
+        }
+        User user = new User();
+        user.setName(displayName);
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPasswordHash(encoder.encode(rawPassword));
+        user.setGroup(group);
+        userRepo.save(user);
+        log.info("Seeded '{}' user", username);
     }
 
     private Menu getOrCreateMenu(MenuRepository repo, String name, String code, String path, String icon) {

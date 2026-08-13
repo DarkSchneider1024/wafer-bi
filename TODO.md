@@ -2,13 +2,19 @@
 
 ## 🔴 安全性緊急事項
 - [x] **撤銷已外洩的 OCI API Key**：commit `35e55dc`（2026-05-06）誤將私鑰檔案 `gueiwan1024@gmail.com-2026-05-05T18_42_52.071Z.pem` 推上 repo，該 commit 仍存在於 public 的 `origin/main` 歷史中。已比對外洩金鑰的公鑰指紋（`13:09:73:25:86:08:0c:4f:39:fe:d8:c2:b5:8f:13:3a`），確認就是 2026-05-05T18:44 建立、且仍為 ACTIVE 的那把 OCI API Key；同時確認本機 `~/.oci/oci_api_key.pem`（指紋 `12:80:...a1:71`，2026-06-03 建立）是另一把、CI/CD workflow 也沒有引用任何 OCI 憑證，確定不影響現有存取後，已於 2026-08-03 用 `oci iam user api-key delete` 撤銷該外洩金鑰
-- [ ] （選擇性、非替代方案，尚未執行）用 `git filter-repo` 改寫歷史並 force push，把該私鑰檔案徹底從 git 歷史清除——金鑰已撤銷所以不再是資安風險，純粹是清潔歷史紀錄；**注意 force push 會改變所有 commit hash**，Day 18/19 文章截圖裡引用了具體 commit hash（如 `48d794f`），改寫前要評估是否影響
-- [x] **面試筆記從版控移除（第一層，2026-08-13）**：`docs/function-tech/interview-guide.md` 已 `git rm --cached` 並加入 `.gitignore`，檔案保留在本機；同時移除 `README.md` 的「🎤 面試與發展」區塊（那個連結本來就是壞的，指向不存在的 `docs/INTERVIEW_GUIDE.md`）與 `TODO.md` 標題裡的「面試準備」字樣
-- [ ] **面試筆記清除 git 歷史（第二層，鐵人賽結束後再做）**：上面那步只擋住未來的 commit，**內容從 initial commit `b662c8e` 就在公開 repo 的歷史裡**（舊路徑 `INTERVIEW_GUIDE.md`，後來搬到 `docs/function-tech/`，commit `87a924c`），任何人現在都翻得到。要真正清掉必須 `git filter-repo` + force push
-  - 敏感點：檔案裡指名了真實人物「邱宏瑋 (hwchiuk) 主管」並轉述其要求、明確寫出目標公司台積電 (TSMC) 與職缺、以及「面試說法」這類求職策略語言
-  - **排程：等 30 天鐵人賽全部發完再執行**。理由是 force push 會改變所有 commit hash，而發文中的截圖引用了具體 hash（跟上面那條私鑰清除是同一個顧慮，建議兩件事一次做完）
-  - 執行時順便確認：`docs/function-tech/` 底下其他 13 個檔案是否也屬於不該公開的私人筆記（目前只排除了 interview-guide.md）
-- [ ] 評估 `services/frontend/src/App.tsx` 裡寫死的一鍵登入 admin 帳密（`admin@carrot`）是否要移除，公開後任何人都能用這組登入正式站台
+- [x] **git 歷史改寫完成（2026-08-13）**：用 `git filter-repo` 一次清掉三類敏感內容並 force push（`6bdc539` → `d4467a7`，312 個 commit 全部重寫）。已驗證：重新從 GitHub clone 下來查不到任何一筆命中
+  - 面試筆記的三個歷史路徑——檔案保留在本機、已列入 `.gitignore`
+  - 上面那條已撤銷的外洩 OCI 金鑰檔
+  - **改寫過程中新發現的第三把 RSA 私鑰**（2048-bit，早期 commit 加入、後來刪除但仍留在歷史）。查證後確認它**沒有註冊在 OCI 帳號**（帳號目前只有一把 ACTIVE，即本機 `~/.oci/oci_api_key.pem`），repo 裡也沒有任何程式引用，研判是當初金鑰下載失敗時另外產生、最後沒用上的棄用金鑰，不需輪替憑證，但仍一併清除
+  - *（各檔案的確切路徑與 commit 位置不寫在這裡——這份 TODO 是公開的，寫明等於幫還留著舊歷史的人指路。細節見本機備份。）*
+- [ ] **殘留風險追蹤（force push 不等於內容消失）**
+  - GitHub 會保留一段時間的無主 commit，知道舊 SHA 的人仍可能透過 URL 直接存取；要徹底清除需另外寫信請 GitHub Support 執行 GC
+  - 任何在 2026-08-13 之前 fork 或 clone 過本 repo 的人，手上那份舊歷史不受影響
+  - 文章截圖裡引用的舊 hash（`6bdc539`、`29cca35` 等，出現在 Day18/19/20/29 的五張圖與 `Day18.md` 內文一處）在新歷史中已不存在，屬預期內的副作用，不影響閱讀
+- [ ] 檢視 `docs/function-tech/` 底下其他 13 個檔案是否也屬於不該公開的私人筆記（目前只排除了 interview-guide.md）
+- [x] **種子帳號密碼移出原始碼（2026-08-13）**：`DataSeeder.java` 原本把 `admin` / `admin@carrot` 與 `demo01` / `demo01_password_123` 寫死在程式裡，而且 `demo01`（名為 Demo Sudo User）其實掛在 **admin 群組**。已改成從 `SEED_ADMIN_PASSWORD` / `SEED_DEMO_PASSWORD` 讀取，**沒設定就不建立帳號並記一筆 warn**；本地預設值放在 `docker-compose.yml`，Helm Chart 刻意不提供這兩個變數，正式環境不會自動長出可登入帳號。種子帳號的 email 也從真實網域改成 `@example.com`
+- [x] **公開文件移除真實帳密（2026-08-13）**：`docs/function-tech/system-architecture.md` 原本用表格明文列出 `POSTGRES_PASSWORD` / `JWT_SECRET` 的預設值與兩組可用帳密。已確認那兩把「機密」的預設值**沒有真的在用**（叢集 Secret 是另一組），所以不需要輪替金鑰；文件改為只列變數名稱與來源。另外 `docs/function-tech/license-kms.md` 的 License 範例把 `customer_name` 寫成真實公司 TSMC，已改為虛構名稱
+- [ ] 評估 `services/frontend/src/App.tsx` 裡寫死的一鍵登入 admin 帳密（`admin@carrot`）是否要移除——目前它與 `docker-compose.yml` 的 `SEED_ADMIN_PASSWORD` 預設值一致才能運作，本地開發方便但公開後任何人都能用這組登入有種子帳號的實例
 - [x] **移除 API Gateway 的硬編碼 JWT 預設密鑰**（2026-08-08）：`services/api-gateway/src/index.js` 原本寫 `jwt.verify(token, process.env.JWT_SECRET || 'wafer_bi_platform_default_secret_key_32_bytes_long', ...)`，而這串預設值就在 public repo 裡——只要部署時漏掉 `JWT_SECRET`，Gateway 就會用一組公開的密鑰驗簽，任何人都能自簽 token 通過 `/api/users`，且服務照常啟動、健康檢查全綠。Java 端（`application.yml` 的 `${JWT_SECRET}`）本來就沒有預設值、少了會啟動失敗，Node 端現在對齊成同樣的 fail-fast，並加上 32 bytes 長度檢查（對齊 `Keys.hmacShaKeyFor()` 的 256 bit 下限）與 `algorithms: ['HS256','HS384','HS512']` 白名單（擋 `alg=none` 之類的演算法混淆）
   - [ ] **部署前置條件（因上一項而來的副作用）**：`JWT_SECRET` 現在是硬性需求，缺了會 exit 1 → Pod CrashLoopBackOff。Helm chart 只有 `envFrom: secretRef: app-secrets`（`helm/wafer-bi/templates/api-gateway.yaml`），但 chart **不負責建立** `app-secrets`，部署前務必確認每個環境的這個 Secret 裡都有 `JWT_SECRET`，且與 user-service 用的是同一組
   - [x] 已確認 `services/user-service/target/classes/application.yml` 這個舊編譯產物（裡面仍留著 `${JWT_SECRET:wafer_bi_platform_default_secret_key_32_bytes_long}` 的舊預設值）不會進到 image——Dockerfile 的 builder stage 只 `COPY pom.xml` 與 `src/`，`target/` 從未被複製，image 裡的是 build 階段用 `src/main/resources/application.yml`（無預設值）重新編譯的版本

@@ -61,17 +61,24 @@ graph TD
 | `OKE_CLUSTER_ID` | OKE 叢集 OCID |
 
 ### 4.2 應用程式機密 (由 CICD 注入 K8S Secret)
-| Secret Name | 說明 | 預設值 (演示用) |
-|-------------|------|-----------------|
-| `POSTGRES_USER` | 資料庫管理員帳號 | `waferbi` |
-| `POSTGRES_PASSWORD` | 資料庫管理員密碼 | `waferbi_password_123` |
-| `JWT_SECRET` | JWT 簽名金鑰 | `super_secret_jwt_key_2024` |
+| Secret Name | 說明 |
+|-------------|------|
+| `POSTGRES_USER` | 資料庫管理員帳號 |
+| `POSTGRES_PASSWORD` | 資料庫管理員密碼 |
+| `JWT_SECRET` | JWT 簽名金鑰（HS256，長度需 ≥ 32 bytes） |
 
-### 4.3 演示用帳號 (Default Demo Accounts)
-| 帳號 | 密碼 | 初始群組 | 說明 |
-|-------|------|----------|------|
-| `admin` | `admin` | `admin` | 系統管理員 (使用 **BCrypt** 強雜湊加密) |
-| `demo01` | `demo01_password_123` | `user` | 演示專用帳號 |
+> 實際數值一律由環境的 K8S Secret 注入，本文件不記錄任何真實值。本地開發用的預設值寫在 `docker-compose.yml`，僅供本機使用。
+
+### 4.3 種子帳號 (Seeded Accounts)
+
+`DataSeeder` 會在資料庫是空的時候建立兩個帳號，**密碼來自環境變數，沒設定就不建立**：
+
+| 帳號 | 密碼來源 | 初始群組 | 說明 |
+|-------|----------|----------|------|
+| `admin` | `SEED_ADMIN_PASSWORD` | `admin` | 系統管理員（BCrypt 雜湊儲存） |
+| `demo01` | `SEED_DEMO_PASSWORD` | `admin` | 演示帳號，注意它也在 admin 群組 |
+
+> 這兩個變數只在 `docker-compose.yml` 有本地預設值；Helm Chart 刻意不提供，所以正式環境不會自動長出可登入的帳號。
 
 ---
 

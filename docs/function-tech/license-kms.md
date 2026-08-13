@@ -102,7 +102,7 @@ graph TD
 - **Payload 範例**:
     ```json
     {
-      "customer_name": "TSMC",
+      "customer_name": "ACME Semiconductor",
       "machine_id": "WAFER-001-XYZ",
       "expiry_date": "2026-05-18",
       "features": ["ai-assistant", "advanced-reports"]
@@ -152,7 +152,7 @@ graph TD
 - **Payload**:
     ```json
     {
-      "customer_name": "TSMC",
+      "customer_name": "ACME Semiconductor",
       "machine_id": "WAFER-001-XYZ",
       "expiry_date": "2027-05-15",
       "features": ["ai-assistant", "advanced-reports"]

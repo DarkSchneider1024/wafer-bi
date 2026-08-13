@@ -10,6 +10,28 @@ const promClient = require('prom-client');
 const app = express();
 const PORT = process.env.API_GATEWAY_PORT || 8080;
 
+// ====================
+// JWT Secret (fail fast)
+// ====================
+// Must be injected from the environment. Falling back to a hard-coded default
+// would mean verifying signatures against a value that is public in this repo,
+// i.e. anyone could forge a token. Refuse to start instead of pretending to
+// protect the routes. The 32-byte floor matches the Java side, where
+// Keys.hmacShaKeyFor() rejects anything shorter than 256 bits.
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error(
+    '[FATAL] JWT_SECRET is not set. The gateway cannot verify tokens without it — refusing to start.'
+  );
+  process.exit(1);
+}
+if (Buffer.byteLength(JWT_SECRET, 'utf8') < 32) {
+  console.error(
+    '[FATAL] JWT_SECRET must be at least 32 bytes to match the signing key on user-service — refusing to start.'
+  );
+  process.exit(1);
+}
+
 // Trust the first proxy (Nginx Ingress) for X-Forwarded-For headers
 app.set('trust proxy', 1);
 
@@ -101,7 +123,9 @@ const authenticateToken = (req, res, next) => {
     return res.status(401).json({ error: 'Access token required' });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET || 'wafer_bi_platform_default_secret_key_32_bytes_long', (err, user) => {
+  // Pin to the HMAC family: user-service signs with Keys.hmacShaKeyFor(), so
+  // anything else (notably 'none' or an asymmetric alg) is an attack, not a client.
+  jwt.verify(token, JWT_SECRET, { algorithms: ['HS256', 'HS384', 'HS512'] }, (err, user) => {
     if (err) {
       return res.status(403).json({ error: 'Invalid or expired token' });
     }
@@ -192,11 +216,12 @@ app.use(
   })
 );
 
+// Auth check for user management (must be a real middleware, not a proxy option)
+app.use('/api/users', authenticateToken);
 app.use(
   createProxyMiddleware('/api/users', {
     target: USER_SERVICE_URL,
     changeOrigin: true,
-    authenticateToken, // Auth check for user management
     pathRewrite: { '^/api/users': '/users' },
     onProxyReq: (proxyReq) => console.log(`[Proxy Users] -> ${USER_SERVICE_URL}${proxyReq.path}`)
   })

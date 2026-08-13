@@ -42,3 +42,6 @@ docs/鐵人賽/
 
 # Private Agent Skills
 .agent/
+
+# 個人求職筆記（保留在本機，不進版控）
+docs/function-tech/interview-guide.md

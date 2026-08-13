@@ -17,14 +17,12 @@
 ### 🚀 部署與維運 (Deployment & Ops)
 - **[終極部署與 CI/CD 維運全書](./docs/function-tech/deployment-sop.md)**：包含 OKE 搭建、GitHub Actions 動態標籤、Argo CD GitOps 實作。
 - **[Argo CD 異常處理與除錯指南](./docs/function-tech/troubleshooting-guide.md)**：如何透過 Argo CD 查看日誌與排查服務異常。
+- **[設定檔連動規範 (k8s/README.md)](./k8s/README.md)**：本地 `docker-compose.yml` 與 K8S `helm/wafer-bi/` 的同步規則；新增服務必讀，CI 會用 `scripts/check-config-sync.py` 強制檢查。
 - **[常用維運指令集 (急救包)](./docs/function-tech/k8s-arch-guide.md#5-常用維運指令集-troubleshooting-cheat-sheet)**：當 Pod 出錯或需要手動清理數據時的快速參考。
 
 ### 🔬 業務功能 (Business)
 - **[Wafer BI 分析功能](./docs/function-book/wafer-bi-analysis.md)**：熱圖、CDF、箱線圖等數據科學功能說明。
 - **[身份認證與權限規範](./docs/function-book/auth-roles.md)**：JWT 安全機制與管理員權限說明。
-
-### 🎤 面試與發展
-- **[技術面試準備指南](./docs/INTERVIEW_GUIDE.md)**：如果您準備攜帶此專案參加面試，請必讀此篇。
 
 ---
 

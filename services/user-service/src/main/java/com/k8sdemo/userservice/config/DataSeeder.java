@@ -60,7 +60,9 @@ public class DataSeeder {
 
             // 3. Seed Demo User —— 密碼一律由環境變數提供，沒設就不建立。
             //    種子帳號的密碼寫死在原始碼裡，等於把可用憑證publish到公開 repo。
-            seedUser(userRepo, encoder, adminGroup, "demo01", "Demo Sudo User",
+            //    這是給任何人試玩的帳號，只能放 user 群組（看得到批次概覽與晶圓細節），
+            //    絕對不要放 adminGroup——它連用戶管理都能碰。
+            seedUser(userRepo, encoder, userGroup, "demo01", "Demo User",
                      "demo01@example.com", System.getenv("SEED_DEMO_PASSWORD"));
 
             // 4. Seed Admin User

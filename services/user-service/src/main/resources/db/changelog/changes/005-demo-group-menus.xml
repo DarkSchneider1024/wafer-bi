@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <!--
+        004 把 demo01 降權到 user 群組之後才發現：user 群組在 001 只被分配到
+        ai-assistant 一張選單，登進去看不到任何晶圓分析畫面，試玩帳號等於沒東西可玩。
+
+        這裡補上三張唯讀性質的分析選單。刻意不給 user-management 與 system-status，
+        那兩張才是真正需要 admin 的。
+    -->
+    <changeSet id="20260813-demo-group-menus" author="carrot">
+        <sql>
+            INSERT INTO menu_groups (group_id, menu_id)
+            SELECT g.id, m.id
+            FROM auth_groups g
+            CROSS JOIN menus m
+            WHERE g.name = 'user'
+              AND m.code IN ('lot-overview', 'wafer-detail', 'statistical-analysis')
+              AND NOT EXISTS (
+                  SELECT 1 FROM menu_groups mg
+                  WHERE mg.group_id = g.id AND mg.menu_id = m.id
+              );
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

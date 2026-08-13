@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <!--
+        001 建立 admin 時沒有給 email，導致登入後簽出來的 JWT 少了 email claim
+        （jjwt 對 null 值的 claim 會直接省略）。這裡補上種子資料。
+        不直接改 001 的 INSERT，是因為既有資料庫早就跑過那個 changeSet，
+        改動內容會讓 Liquibase 的 checksum 驗證失敗。
+    -->
+    <changeSet id="20260808-seed-admin-email" author="carrot">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM users WHERE username = 'admin' AND email IS NULL
+            </sqlCheck>
+        </preConditions>
+        <update tableName="users">
+            <column name="email" value="admin@email.com"/>
+            <where>username = 'admin' AND email IS NULL</where>
+        </update>
+    </changeSet>
+
+</databaseChangeLog>

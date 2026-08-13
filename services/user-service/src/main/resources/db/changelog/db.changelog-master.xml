@@ -6,5 +6,9 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
 
     <include file="changes/001-initial-schema.xml" relativeToChangelogFile="true"/>
+    <include file="changes/002-add-last-login.xml" relativeToChangelogFile="true"/>
+    <include file="changes/003-seed-admin-email.xml" relativeToChangelogFile="true"/>
+    <include file="changes/004-demo-account-least-privilege.xml" relativeToChangelogFile="true"/>
+    <include file="changes/005-demo-group-menus.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

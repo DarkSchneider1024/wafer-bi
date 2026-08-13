@@ -76,7 +76,9 @@ graph TD
 | 帳號 | 密碼來源 | 初始群組 | 說明 |
 |-------|----------|----------|------|
 | `admin` | `SEED_ADMIN_PASSWORD` | `admin` | 系統管理員（BCrypt 雜湊儲存） |
-| `demo01` | `SEED_DEMO_PASSWORD` | `admin` | 演示帳號，注意它也在 admin 群組 |
+| `demo01` | `SEED_DEMO_PASSWORD` | `user` | 公開試玩帳號，密碼刻意公開（就印在登入頁按鈕上） |
+
+`user` 群組可以看批次概覽、晶圓細節、統計分析與 AI 助手，**看不到用戶管理與系統狀態**——那兩張需要 admin。
 
 > 這兩個變數只在 `docker-compose.yml` 有本地預設值；Helm Chart 刻意不提供，所以正式環境不會自動長出可登入的帳號。
 

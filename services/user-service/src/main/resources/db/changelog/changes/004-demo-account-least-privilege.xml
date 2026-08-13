@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <!--
+        demo01 原本被 DataSeeder 放進 admin 群組（顯示名稱還叫 "Demo Sudo User"），
+        等於公開的試玩帳號可以碰用戶管理。這裡把既有資料庫裡的它降權到 user 群組，
+        並把密碼統一成前端一鍵登入用的那組。
+
+        這個帳號的密碼是「故意公開」的——它就印在登入頁的按鈕上，
+        所以雜湊值寫進 changelog 是可接受的；真正不該公開的是 admin 的密碼。
+    -->
+    <changeSet id="20260813-demo-account-least-privilege" author="carrot">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM users WHERE username = 'demo01'
+            </sqlCheck>
+        </preConditions>
+
+        <!-- 降權：admin 群組 -> user 群組 -->
+        <update tableName="users">
+            <column name="group_id"
+                    valueComputed="(SELECT id FROM auth_groups WHERE name = 'user')"/>
+            <where>username = 'demo01'</where>
+        </update>
+
+        <!-- 對齊前端一鍵登入的密碼 demo@carrot（BCrypt, cost 10） -->
+        <update tableName="users">
+            <column name="password_hash"
+                    value="$2a$10$KSWRrDYh2fEvH2AlkZhQue3/2H9LVVFJTB1m0/LWTFUD7h9ZrjP2a"/>
+            <column name="name" value="Demo User"/>
+            <where>username = 'demo01'</where>
+        </update>
+    </changeSet>
+
+</databaseChangeLog>

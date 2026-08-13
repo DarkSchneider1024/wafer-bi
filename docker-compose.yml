@@ -49,7 +49,7 @@ services:
       # 種子帳號密碼：只給本地開發用。沒設定的話 DataSeeder 就不會建立帳號，
       # 正式環境刻意不在 helm/ 裡提供這兩個變數。
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-admin@carrot}
-      SEED_DEMO_PASSWORD: ${SEED_DEMO_PASSWORD:-demo01_local_dev}
+      SEED_DEMO_PASSWORD: ${SEED_DEMO_PASSWORD:-demo@carrot}
     depends_on:
       postgres:
         condition: service_healthy

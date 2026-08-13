@@ -1,11 +1,11 @@
 # ---- Build Stage ----
-FROM node:20-slim AS builder
+FROM node:26-slim AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm install --omit=dev
 
 # ---- Production Stage ----
-FROM node:20-slim
+FROM node:26-slim
 WORKDIR /app
 
 # Security: run as non-root user

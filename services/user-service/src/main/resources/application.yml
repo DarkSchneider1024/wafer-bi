@@ -8,7 +8,7 @@ spring:
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:waferbi_db}
     username: ${POSTGRES_USER:waferbi}
-    password: ${POSTGRES_PASSWORD:waferbi_password_123}
+    password: ${POSTGRES_PASSWORD}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 5
@@ -29,7 +29,7 @@ spring:
 # JWT
 app:
   jwt:
-    secret: ${JWT_SECRET:wafer_bi_platform_default_secret_key_32_bytes_long}
+    secret: ${JWT_SECRET}
     expiration-ms: 86400000  # 24 hours
 
 # Actuator — expose health check endpoints

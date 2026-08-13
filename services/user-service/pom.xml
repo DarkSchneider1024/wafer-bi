@@ -20,7 +20,7 @@
 
     <properties>
         <java.version>21</java.version>
-        <jjwt.version>0.12.5</jjwt.version>
+        <jjwt.version>0.13.0</jjwt.version>
         <!-- Spring Boot 3.3.13 内建的 Tomcat 10.1.42 仍有 CRITICAL CVE，直接覆寫到修補版本 -->
         <tomcat.version>10.1.55</tomcat.version>
     </properties>

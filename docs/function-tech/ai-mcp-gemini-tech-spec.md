@@ -20,6 +20,20 @@
     - 配置 `/api/ai/*` 路由轉發。
     - 實作了 401 錯誤處理與 API Key 失效判定。
 
+### 2.3 RAG 與 Function Calling 混合驅動模式
+系統在處理晶圓數據查詢與良率診斷時，採用了 **RAG (檢索增強生成)** 與 **Function Calling (MCP 工具呼叫)** 結合的混合架構：
+
+1. **RAG 檢索增強模式**：
+   * **應用場景**：自然語言異常搜尋（例如：「搜尋 Lot1 異常」、「哪些晶圓有刮痕」）。
+   * **檢索 (Retrieval)**：`ChromaManager` 透過 `models/gemini-embedding-001` 模型將查詢轉換為 Embedding 向量，並從 ChromaDB 中檢索相似度最高的前 $N$ 筆晶圓統計文檔。
+   * **生成 (Generation)**：Gemini LLM 將檢索到的文檔片段作為 Context，並以專業的繁體中文生成診斷與後續操作建議。
+
+2. **精準數據運算 (Function Calling) 模式**：
+   * **應用場景**：時間與生產順序上的趨勢回歸分析（例如：「針對 Lot1 做回歸分析」）。
+   * **Delta Lake 讀取**：為防止 LLM 進行數值擬合時產生計算幻覺，`get_regression_analysis` 工具會直接讀取本地 **Delta Table** (`wafer_delta_table`) 的晶圓原始量測數據。
+   * **實時計算**：在 Python 後端使用 `numpy` 進行線性回歸計算，精準求得斜率 (Slope)、截距與判定係數 $R^2$。
+   * **專家解讀**：將真實的計算數值與趨勢指標傳回給 Gemini，由 LLM 解讀為靶材耗損、腔體 PM 保養等半導體製程領域的專家見解。
+
 ## 3. Kubernetes 部署與 CI/CD
 - **資源清單**: `Deployment`, `Service`, `PVC` (2Gi)。
 - **機密管理**: 透過 `app-secrets` 管理 `GEMINI_API_KEY`。

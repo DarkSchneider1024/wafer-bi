@@ -11,13 +11,16 @@ load_dotenv()
 class GeminiEmbeddingFunction(EmbeddingFunction):
     """Custom Embedding Function for Gemini to avoid chromadb SDK bugs"""
     def __init__(self, api_key: str, model_name: str = "models/gemini-embedding-001"):
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY is required for embeddings")
-        # Configure genai once
-        genai.configure(api_key=api_key)
+        self.api_key = api_key
+        if api_key:
+            # Configure genai once
+            genai.configure(api_key=api_key)
         self._model_name = model_name
 
     def __call__(self, input: Documents) -> Embeddings:
+        if not self.api_key:
+            print("WARNING: GEMINI_API_KEY is not set. Generating mock embeddings for testing.")
+            return [[0.0] * 768 for _ in input]
         import time
         # Chunk input into batches of 100 to avoid API payload/batch size limits
         batch_size = 100

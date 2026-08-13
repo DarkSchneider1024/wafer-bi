@@ -44,7 +44,7 @@ OKE 叢集內啟用了嚴格的 NetworkPolicy。所有的 Deployment 必須手�
 graph TD
     A[開發者 Push] --> B[GHA: Build Multi-arch Image]
     B --> C[GHA: Push Image to GHCR with SHA Tag]
-    C --> D[GHA: Update k8s/*.yaml with GHCR Tag]
+    C --> D[GHA: Update helm/wafer-bi/values.yaml image tags]
     D --> E[GHA: Push Manifest back to Git]
     E --> F[Argo CD: Detect Git Change]
     F --> G[Argo CD: Rolling Update OKE]
@@ -71,5 +71,9 @@ graph TD
   - 代表 OCI 免費額度已到期，請無視並改用 GitHub Actions + GHCR 流程。
 
 ---
-*Last updated: 2026-05-11*
+> [!NOTE]
+> **架構異動通知 (2026-07-16)**：
+> K8S manifests 已全面 Helm 化，ArgoCD 監看 `helm/wafer-bi/`；CI 改為回填 `helm/wafer-bi/values.yaml` 的 image tag。舊 Kustomize 檔已移至 `k8s/legacy/`（僅供參考，不會被部署）。設定連動規則見 `k8s/README.md`。
+
+*Last updated: 2026-07-16*
 *Maintainer: Golden Carrot Architect (AI Enhanced)*

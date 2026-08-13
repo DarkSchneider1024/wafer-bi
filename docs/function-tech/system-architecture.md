@@ -80,6 +80,12 @@ graph TD
 
 `user` 群組可以看批次概覽、晶圓細節、統計分析與 AI 助手，**看不到用戶管理與系統狀態**——那兩張需要 admin。
 
+除了上表由 `DataSeeder` 建立的帳號之外，Liquibase 的 `001-initial-schema.xml` 在資料庫初始化時也會建立一個 `admin` 帳號，**它的初始密碼是寫在 changelog 裡的公開值**。這是初始密碼的常見做法（同 Jenkins、Grafana 等工具），用意是讓安裝者第一次登得進去：
+
+> **部署 checklist：服務對外開放之前，先登入改掉 `admin` 的密碼。**
+
+`demo01` 則相反，它的密碼是刻意公開的（印在登入頁按鈕上），所以權限被限制在唯讀的分析畫面。
+
 > 這兩個變數只在 `docker-compose.yml` 有本地預設值；Helm Chart 刻意不提供，所以正式環境不會自動長出可登入的帳號。
 
 ---

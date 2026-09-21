@@ -57,24 +57,49 @@ helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
 1. 登入 Cloudflare Dashboard，進入 Networks -> Tunnels。
 2. 點擊 Create a Tunnel，選擇 Cloudflared，命名為 wafer-bi。
 3. 取得安裝指令中的 Token（一長串英數字符號的 Token 字串）。
+
+![](images/day31_cloudflare_create_tunnel.png)
+
+*▲ Cloudflare Tunnel 建立頁面：選擇作業系統架構並取得安裝指令與 Token*
+
 4. 以系統管理員身分開啟 PowerShell，將 `cloudflared` 安裝為 Windows 常駐服務：
 
 ```powershell
 cloudflared.exe service install <YOUR_TUNNEL_TOKEN>
 ```
 
-安裝完成後，Windows 會自動啟動該服務，Cloudflare 後台的 Tunnel 狀態會轉為綠色的 HEALTHY。
+安裝完成後，Windows 會自動啟動該服務，Cloudflare 後台的 Tunnel 狀態會轉為綠色的 HEALTHY：
+
+![](images/day31_cloudflare_tunnel_overview.png)
+
+*▲ Tunnel Overview 狀態頁：Tunnel 處於 Healthy 狀態，成功連線至台北（tpe）邊緣節點*
 
 #### 步驟 3：設定網域託管與路由發布
 
-在 Cloudflare Tunnel 的 Published application routes 標籤頁新增路由：
+若網域尚未託管至 Cloudflare，需先至網域註冊商（如 Namecheap）將 Nameservers 指向 Cloudflare：
+
+![](images/day31_namecheap_custom_dns.png)
+
+*▲ Namecheap 後台：將 Nameservers 設為 Custom DNS 並填入 Cloudflare 指派的名稱伺服器*
+
+DNS 轉移生效後，Cloudflare 儀表板會確認網域狀態：
+
+![](images/day31_cloudflare_domain_active.png)
+
+*▲ Cloudflare 網域概覽頁：網域轉移完成，正式受 Cloudflare 防護*
+
+接著在 Cloudflare Tunnel 的 Published application routes 標籤頁新增路由：
 - **Subdomain**：`wafer`
-- **Domain**：`carrot-atelier.online`（網域已將 Nameservers 指向 Cloudflare）
+- **Domain**：`carrot-atelier.online`
 - **Path**：留空
 - **Service Type**：`HTTP`
 - **URL**：`localhost:80`
 
-儲存後，Cloudflare 會自動建立 CNAME 記錄，將 `wafer.carrot-atelier.online` 的訪問請求透過 Tunnel 導向本機的 80 連接埠。
+儲存後，Cloudflare 會自動建立 CNAME 記錄，將 `wafer.carrot-atelier.online` 的訪問請求透過 Tunnel 導向本機的 80 連接埠：
+
+![](images/day31_cloudflare_published_routes.png)
+
+*▲ Published Application Routes 設定：將 wafer.carrot-atelier.online 流量導向本機 localhost:80*
 
 ### 4. 實戰踩坑與排查記錄
 
@@ -131,7 +156,11 @@ Cloudflare 在邊緣已經完成了 SSL 終結（訪客連 Cloudflare 是 HTTPS�
 
 #### 坑三：數據報表查無資料，後端容器被 OOMKilled
 
-成功開啟網頁並登入系統後，切換到「數據報表」分頁，畫面顯示「查無資料，總計: 0」。
+成功開啟網頁並登入系統後，切換到「數據報表」分頁，畫面顯示「查無資料，總計: 0」：
+
+![](images/day31_wafer_bi_report_empty.png)
+
+*▲ 數據報表異常畫面：因後端容器超限崩潰，前端未收到資料顯示查無資料*
 
 檢查 API Gateway 日誌：
 

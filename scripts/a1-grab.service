@@ -1,0 +1,17 @@
+[Unit]
+Description=Retry launching the Always Free Ampere A1 instance
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+ExecStart=/home/ubuntu/a1-grab-cloud.sh
+# 腳本搶到之後會 exit 0，這時不要重啟；其他非 0 退出才重試
+Restart=on-failure
+RestartSec=300
+StandardOutput=append:/home/ubuntu/a1-grab-service.log
+StandardError=append:/home/ubuntu/a1-grab-service.log
+
+[Install]
+WantedBy=multi-user.target

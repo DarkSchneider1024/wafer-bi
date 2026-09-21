@@ -40,22 +40,53 @@
 
 ## 💻 快速啟動 (Quick Start)
 
-### 1. 地端開發模式 (Local Development)
+### 1. 地端 k8s 開發模式 (Local K8S Development)
 
-由於本專案為微服務架構，地端啟動最簡單的方式是使用 **Docker Compose**。
+本專案支援在本地 Kubernetes（例如 Docker Desktop 內建 K8S、Minikube 或 k3d）直接透過 Helm 部署完整微服務，並可搭配 Cloudflare Tunnel 實現外網穿透。
 
-#### A. 一鍵啟動 (推薦)
+#### A. 一鍵部署 K8S 叢集 (推薦)
+
+**步驟 1：安裝 Ingress Controller (ingress-nginx)**
 ```bash
-# 確保已安裝 Docker Desktop 並啟動
-docker-compose up -d --build
+# 加入並更新 Ingress Nginx Helm Repo
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+
+# 安裝 Ingress Controller 監聽本機 localhost:80 / 443
+helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx --create-namespace
 ```
-這將會自動啟動 PostgreSQL 以及所有的微服務。
+
+**步驟 2：部署 Wafer BI 微服務**
+```bash
+# 透過 Helm 一鍵部署全部微服務至 k8sdemo 命名空間
+helm upgrade --install wafer-bi ./helm/wafer-bi \
+  -n k8sdemo \
+  --create-namespace \
+  --set global.imagePullSecrets=null
+```
+
+**步驟 3：(可選) 透過 Cloudflare Tunnel 發布至公網**
+若需要讓外網直接訪問本地 K8S 服務，可使用 Cloudflare Tunnel：
+```powershell
+# 方式一：註冊為 Windows 系統服務常駐執行 (需管理員權限)
+cloudflared.exe service install <YOUR_TUNNEL_TOKEN>
+
+# 方式二：免設定直接快速生成臨時公開網址
+cloudflared.exe tunnel --url http://localhost:80
+```
 
 > **⚠️ 首次啟動後請立刻更改 `admin` 密碼。**
-> 資料庫初始化時會建立一個 `admin` 帳號，它的初始密碼寫在 Liquibase 的 changelog 裡，也就是**公開可查的**。這組密碼只是為了讓你第一次登得進去，跟 Jenkins、Grafana 那類工具的初始密碼是同樣的性質——**把服務對外開放之前一定要先改掉**。
+> 資料庫初始化時會建立一個 `admin` 帳號，它的初始密碼寫在 Liquibase 的 changelog 裡，也就是**公開可查的**。這組密碼只是為了讓你第一次登得進去，跟 Jenkins、Grafana 那類工具的初始密碼是同樣的性質，**把服務對外開放之前一定要先改掉**。
 > 另外還有一個 `demo01` 帳號（密碼 `demo@carrot`，就印在登入頁的按鈕上），那是刻意公開的試玩帳號，權限限制在唯讀的分析畫面，看不到用戶管理。
 
-#### B. 手動開發模式 (各別啟動)
+#### B. Docker Compose 本地快速模式
+若不使用 Kubernetes，亦可透過 Docker Compose 快速啟動：
+```bash
+docker-compose up -d --build
+```
+
+#### C. 手動開發模式 (各別啟動)
 如果您需要開發特定模組，請按照以下順序啟動：
 1. **基礎設施**：啟動 PostgreSQL 資料庫。
 2. **User Service (Java)**：進入 `services/user-service` 執行 `./mvnw spring-boot:run`。

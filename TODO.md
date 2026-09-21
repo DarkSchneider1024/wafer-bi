@@ -29,7 +29,10 @@
 - [x] 取得 `argocd-initial-admin-secret` 密碼並登入 UI。
 - [x] 將 GitHub 上的 `wafer-bi` 倉庫連接至 ArgoCD。
 - [x] 設定自動同步策略 (Automated Sync Policy)，實現 GitOps 流程。
-- [ ] **[進行中]** 導入 **Sealed Secrets**：加密 `system-config.properties` 以支持開源環境下的安全部署。
+- [x] **導入 Sealed Secrets（2026-08-15 完成）**：controller v0.38.4 已裝在本機叢集，`app-secrets`（POSTGRES_USER / POSTGRES_PASSWORD / JWT_SECRET / GEMINI_API_KEY）已封成 `helm/wafer-bi/templates/sealed-secrets.yaml`，密文可安全進公開 repo。實測通過：解出的值與封裝前逐字元一致、刪掉明文 Secret 後 controller 8 秒內自動補回、`ownerReferences` 指向 SealedSecret
+  - [ ] **上雲時必須重新封裝**：密文與「某一座叢集的金鑰」綁定，本機封的搬到 OKE 解不開
+  - [ ] **私鑰要納入備份**：`kube-system` 的 `sealed-secrets-key*` Secret 掉了，所有封過的東西就都廢了。Day 27 的 Velero 備份範圍要涵蓋它
+  - [ ] 叢集現行服務仍在用舊的 `wafer-secrets`（chart 引用的是 `app-secrets`），改用 chart 部署時要一併切換
 
 ## 🟠 GitOps 鏈路健康度（2026-08-07 實測發現）
 

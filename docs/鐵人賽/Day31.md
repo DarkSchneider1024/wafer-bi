@@ -4,20 +4,20 @@
 
 ### 1. 為什麼需要本地外網穿透
 
-在 Day 9 與 Day 30 討論過，雲端託管 K8S 往往有免費額度耗盡或規格不足的限制，因此整個系列的大部分實作選擇在開發機的 Docker Desktop K8S 上運行。
+在 Day 9 與 Day 30 提過，因為雲端免費規格有限，這系列的實作都在本機 Docker Desktop K8S 運行。
 
-本機運行雖然省下雲端成本，但遇到以下情境就會遇到瓶頸：
-- 想把成果展示給他人看，無法直接給出 `localhost` 連結。
-- 想在手機或其他外網裝置上測試前端介面與 API 響應。
-- 需要測試完整的 HTTPS 流程與外部 Webhook。
+本機運行雖然省下雲端成本，但有幾個限制：
+- 無法直接提供 localhost 連結給他人測試
+- 手機或其他外網裝置連不進來
+- 無法驗證真實網域下的 HTTPS 與外部 Webhook
 
-傳統做法是在家用路由器設定 Port Forwarding、申請 DDNS、手動設定防火牆並處理 Let's Encrypt 憑證。這不僅繁瑣，還會將家中的對外 IP 與通訊埠暴露在網際網路上。
+若要在一般家用網路對外暴露服務，通常需要固定 IP、設定路由器 Port Forwarding 與處理動態 DNS，同時還得把實體 IP 暴露給公網。
 
-Cloudflare Tunnel（Zero Trust）提供不同的架構思維：由本地主動向 Cloudflare Edge 建立出站加密通道（Outbound Tunnel），外部訪客訪問 Cloudflare CDN，流量經由通道轉發進本機。這種架構不需要公網 IP，也不需要在路由器開放任何連接埠。
+改用 Cloudflare Tunnel（Zero Trust）走的是出站加密連線（Outbound Tunnel）：本機向 Cloudflare Edge 建立通道，外部訪客訪問 Cloudflare CDN，流量經由通道轉發進本機，不需要公網 IP，也不用在路由器開放通訊埠。
 
 ### 2. 流量架構與鏈路
 
-整套穿透的流量流轉路徑如下：
+流量流轉路徑如下：
 
 ```text
 [訪客瀏覽器]
@@ -41,7 +41,7 @@ Cloudflare Tunnel（Zero Trust）提供不同的架構思維：由本地主動�
 
 #### 步驟 1：安裝本地 Ingress Controller
 
-要讓本機的 `cloudflared` 能夠將流量分流給多個微服務，最乾淨的方式是讓 K8S 的 Ingress Controller 監聽本機的 80 Port。
+由 K8S Ingress Controller 監聽本機的 80 port，統一做路徑分流：
 
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
@@ -54,8 +54,8 @@ helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
 
 #### 步驟 2：在 Cloudflare Zero Trust 建立 Tunnel
 
-1. 登入 Cloudflare Dashboard，進入 **Zero Trust** -> **Networks** -> **Tunnels**。
-2. 點擊 **Create a Tunnel**，選擇 **Cloudflared**，命名為 `wafer-bi`。
+1. 登入 Cloudflare Dashboard，進入 Networks -> Tunnels。
+2. 點擊 Create a Tunnel，選擇 Cloudflared，命名為 wafer-bi。
 3. 取得安裝指令中的 Token（一長串英數字符號的 Token 字串）。
 4. 以系統管理員身分開啟 PowerShell，將 `cloudflared` 安裝為 Windows 常駐服務：
 
@@ -63,11 +63,11 @@ helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
 cloudflared.exe service install <YOUR_TUNNEL_TOKEN>
 ```
 
-安裝完成後，Windows 會自動啟動該服務，Cloudflare 後台的 Tunnel 狀態會轉為綠色的 **HEALTHY**。
+安裝完成後，Windows 會自動啟動該服務，Cloudflare 後台的 Tunnel 狀態會轉為綠色的 HEALTHY。
 
 #### 步驟 3：設定網域託管與路由發布
 
-在 Cloudflare Tunnel 的 **Published application routes** 標籤頁新增路由：
+在 Cloudflare Tunnel 的 Published application routes 標籤頁新增路由：
 - **Subdomain**：`wafer`
 - **Domain**：`carrot-atelier.online`（網域已將 Nameservers 指向 Cloudflare）
 - **Path**：留空
@@ -78,7 +78,7 @@ cloudflared.exe service install <YOUR_TUNNEL_TOKEN>
 
 ### 4. 實戰踩坑與排查記錄
 
-這次串接過程不是貼上指令就結束，中途踩到了三個問題，依序排查並修正。
+串接過程踩到三個問題，依序排查與修正：
 
 #### 坑一：缺少 CRD 導致 Helm 安裝被拒
 
@@ -131,9 +131,9 @@ Cloudflare 在邊緣已經完成了 SSL 終結（訪客連 Cloudflare 是 HTTPS�
 
 #### 坑三：數據報表查無資料，後端容器被 OOMKilled
 
-成功開啟網頁並登入系統後，切換到「數據報表」分頁，畫面卻顯示「查無資料，總計: 0」。
+成功開啟網頁並登入系統後，切換到「數據報表」分頁，畫面顯示「查無資料，總計: 0」。
 
-直覺可能以為是 API 路由沒接通或資料庫連線失敗。但檢查 API Gateway 日誌時，發現了異常：
+檢查 API Gateway 日誌：
 
 ```text
 [Proxy BI] -> http://wafer-backend-svc.k8sdemo.svc.cluster.local:8000/report?...
@@ -147,7 +147,7 @@ API Gateway 回傳 504，代表後端在處理過程中斷開了連線。接著�
 kubectl describe pod -l app=wafer-backend -n k8sdemo
 ```
 
-輸出中出現了關鍵線索：
+輸出中出現關鍵線索：
 
 ```text
 Last State:     Terminated
@@ -159,7 +159,7 @@ Limits:
 
 **原因**：
 當使用者進入數據報表頁面，後端 FastAPI 會讀取 Delta Table 載入該批次（約 28,000 筆測試點），並在 Pandas 中進行全量排序與分頁切片。
-原本在 Helm `values.yaml` 中配置給 `waferBackend` 的記憶體上限只有 `512Mi`。在做 DataFrame 拷貝與排序時瞬間超出 512MB，直接觸發 Kubernetes 的 OOMKilled（Exit Code 137）將容器強制終止。容器重啟導致 Gateway 逾時，前端捕捉到錯誤後將清單重設為空，才顯示查無資料。
+原本在 Helm `values.yaml` 中配置給 `waferBackend` 的記憶體上限只有 `512Mi`。在做 DataFrame 拷貝與排序時瞬間超出 512 MB，直接觸發 Kubernetes 的 OOMKilled（Exit Code 137）將容器強制終止。容器重啟導致 Gateway 逾時，前端捕捉到錯誤後將清單重設為空，才顯示查無資料。
 
 **解法**：
 將 `helm/wafer-bi/values.yaml` 中 `waferBackend` 的記憶體限制從 `512Mi` 提高至 `1Gi`（CPU 上限調升至 `1000m`），並執行滾動更新：
@@ -179,6 +179,6 @@ waferBackend:
 
 ### 5. 小結
 
-透過 Cloudflare Tunnel 搭配本地 Kubernetes 的 Ingress Controller，不必依賴雲端主機的高昂費用或公網 IP，就能將整套異構微服務安全地發布到外網。
+Cloudflare Tunnel 搭配本機 Ingress Controller，能在不依賴公網 IP 與開 port 的前提下把 K8S 服務發布到外網。
 
-更重要的是，經過這輪穿透測試，排查出了 Ingress 反向代理標頭的信任問題，以及大數據查詢在生產規格下的記憶體瓶頸。這些在本地單機測試時容易被忽略的細節，在對外發布的過程中都得到了驗證與修正。
+實測穿透的價值在於逼出邊界問題：Ingress 的代理標頭信任機制、後端在實際資料量下的記憶體瓶頸，都在流量真正打進來時暴露出來。

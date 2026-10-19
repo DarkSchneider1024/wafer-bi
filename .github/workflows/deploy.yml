@@ -60,7 +60,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Login to GHCR
-        uses: Wandalen/wretry.action@v1.3.0
+        uses: Wandalen/wretry.action@v3.8.0
         with:
           action: docker/login-action@v3
           with: |

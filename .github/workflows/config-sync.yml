@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: 檢查 compose / helm / CI 服務清單同步
         run: python3 scripts/check-config-sync.py

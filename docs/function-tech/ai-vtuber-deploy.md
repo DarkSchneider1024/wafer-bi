@@ -51,33 +51,31 @@ VM 不需要 GitHub 憑證，也不用對外開 SSH 給 CI。
 
 ### 3.1 GitHub
 
-1. ai-vtuber 的 PR 合併進 `main`，等 Actions 的「CI - Build AI VTuber Image」跑完（arm64 走 QEMU，第一次約 15 到 25 分鐘）。
+1. ai-vtuber 的 PR 合併進 `main`，等 Actions 的「CI - Build AI VTuber Image」跑完（約 8 分鐘）。arm64 不經 QEMU 模擬，做法見 ai-vtuber 的 `Dockerfile` 開頭說明。
 2. 到 GitHub 個人頁面 `Packages → ai-vtuber → Package settings`，把 Visibility 改成 Public（同 `deployment-sop.md` 1.1，否則 VM 拉不到 image）。
 
-### 3.2 Cloudflare
-
-1. Zero Trust → Networks → Tunnels → Create a tunnel → Cloudflared，命名 `ai-vtuber`。
-2. 複製安裝指令裡的 Token（`eyJ` 開頭那串），等一下填進 VM 的 `.env`。
-3. Published application routes 新增：
-   - Subdomain：`vtuber`
-   - Domain：`carrot-atelier.online`
-   - Service Type：`HTTP`
-   - URL：`ai-vtuber:3000`
-
-### 3.3 VM
+### 3.2 VM
 
 ```bash
 ssh ubuntu@<VM 公網 IP>
 git clone https://github.com/DarkSchneider1024/ai-vtuber.git
 cd ai-vtuber/deploy/oci-vm
-bash setup.sh          # 第一次：安裝 Docker、建立 .env 後停下
-nano .env              # 填 TUNNEL_TOKEN 與 GEMINI_API_KEY
-bash setup.sh          # 第二次：安裝自動更新 timer 並啟動
+bash setup.sh
 ```
 
-`GEMINI_API_KEY` 沒填也能啟動，主播會改用內建的固定回覆。
+`setup.sh` 會依序：
 
-### 3.4 驗證
+1. 安裝 Docker
+2. 詢問 `GEMINI_API_KEY`（直接 Enter 可跳過，主播會改用內建的固定回覆）
+3. 印出 `https://dash.cloudflare.com/argotunnel?...` 授權連結。用瀏覽器打開，選 `carrot-atelier.online`，按 Authorize
+4. 自動執行 `cloudflared tunnel create ai-vtuber`、`cloudflared tunnel route dns`，在 Cloudflare 建立 `vtuber` 的 CNAME，並產生 `cloudflared/config.yml`
+5. 安裝自動更新 timer，啟動服務
+
+不需要到 Cloudflare 後台手動建立 Tunnel 或新增 Published application route。Tunnel 是 locally-managed，路由寫在 VM 上的 `deploy/oci-vm/cloudflared/config.yml`；這個目錄有 Cloudflare 登入憑證，已列入 `.gitignore`。
+
+`carrot-atelier.online` 的 Nameserver 在 Namecheap 設成 Cloudflare（`bart` / `treasure.ns.cloudflare.com`），所以 DNS 記錄要在 Cloudflare 管理，在 Namecheap 的 Advanced DNS 新增記錄不會生效。
+
+### 3.3 驗證
 
 ```bash
 sudo docker compose ps                       # 兩個容器都是 running
@@ -86,7 +84,7 @@ systemctl list-timers ai-vtuber-update.timer # 下次自動更新時間
 curl -N https://vtuber.carrot-atelier.online/api/live/stream   # 應該立刻收到 snapshot 事件
 ```
 
-Cloudflare Tunnel 頁面的狀態應為 HEALTHY。
+Cloudflare Zero Trust → Networks → Tunnels 裡的 `ai-vtuber` 狀態應為 HEALTHY。
 
 ## 4. 維運
 
@@ -94,6 +92,7 @@ Cloudflare Tunnel 頁面的狀態應為 HEALTHY。
 |------|------|
 | 立即更新到最新版 | `sudo bash update.sh` |
 | 改發言限制 | 編輯 `.env` 後 `sudo docker compose up -d` |
+| 換網域 | 改 `.env` 的 `LIVE_HOSTNAME` 後重跑 `bash setup.sh` |
 | 回滾到某個版本 | `docker-compose.yml` 的 image 改成 `:<commit sha>`，先停掉 timer：`sudo systemctl stop ai-vtuber-update.timer` |
 | 看資源用量 | `sudo docker stats` |
 

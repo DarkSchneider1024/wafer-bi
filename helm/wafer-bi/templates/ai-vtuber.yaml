@@ -1,0 +1,107 @@
+{{- if .Values.aiVtuber.enabled }}
+# AI VTuber（Next.js，原始碼在 DarkSchneider1024/ai-vtuber）
+# image 由 ai-vtuber repo 的 CI 建置並回填 aiVtuber.image.tag
+# 共享直播間的留言佇列存在行程記憶體中，所以固定 1 個 replica，並用 Recreate 避免更新時同時存在兩個房間
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-vtuber
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "wafer-bi.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: ai-vtuber
+  template:
+    metadata:
+      labels:
+        app: ai-vtuber
+        env: {{ .Values.global.environment }}
+        managed-by: argocd
+    spec:
+      containers:
+      - name: ai-vtuber
+        image: "{{ .Values.aiVtuber.image.repository }}:{{ .Values.aiVtuber.image.tag }}"
+        imagePullPolicy: {{ .Values.aiVtuber.image.pullPolicy }}
+        ports:
+        - containerPort: 3000
+        env:
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: GEMINI_API_KEY
+              optional: true
+        - name: LIVE_COOLDOWN_SECONDS
+          value: {{ .Values.aiVtuber.live.cooldownSeconds | quote }}
+        - name: LIVE_IP_LIMIT_PER_MIN
+          value: {{ .Values.aiVtuber.live.ipLimitPerMin | quote }}
+        - name: LIVE_MAX_QUEUE
+          value: {{ .Values.aiVtuber.live.maxQueue | quote }}
+        readinessProbe:
+          httpGet:
+            path: /robots.txt
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /robots.txt
+            port: 3000
+          initialDelaySeconds: 20
+          periodSeconds: 30
+        resources:
+          {{- toYaml .Values.aiVtuber.resources | nindent 10 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-vtuber-svc
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "wafer-bi.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: ai-vtuber
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 3000
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ai-vtuber-ingress
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "wafer-bi.labels" . | nindent 4 }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.clusterIssuer | quote }}
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # 直播間用 Server-Sent Events（/api/live/stream），必須關掉 buffering 並拉長逾時
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  ingressClassName: {{ .Values.ingress.className | quote }}
+  tls:
+    - hosts:
+        - {{ .Values.aiVtuber.host | quote }}
+      secretName: {{ .Values.aiVtuber.tlsSecret | quote }}
+  rules:
+    - host: {{ .Values.aiVtuber.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ai-vtuber-svc
+                port:
+                  number: 80
+{{- end }}

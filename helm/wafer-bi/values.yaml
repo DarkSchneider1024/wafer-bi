@@ -163,6 +163,29 @@ ollama:
       cpu: 1000m
       memory: 2Gi
 
+# --- AI VTuber（外部 repo：DarkSchneider1024/ai-vtuber）---
+# image.tag 由 ai-vtuber repo 的 CI 回填（需要 WAFER_BI_DEPLOY_TOKEN），勿手改。
+# 這個服務不在 services/ 底下，所以不列入 scripts/check-config-sync.py 的 MAPPING。
+aiVtuber:
+  enabled: true
+  host: "vtuber.carrot-atelier.online"
+  tlsSecret: "ai-vtuber-tls"
+  image:
+    repository: ghcr.io/darkschneider1024/ai-vtuber
+    tag: latest
+    pullPolicy: Always
+  live:
+    cooldownSeconds: 20   # 同一位觀眾兩次發言的最短間隔
+    ipLimitPerMin: 6      # 同一 IP 每分鐘最多留言數
+    maxQueue: 30          # 佇列上限，滿了就拒收
+  resources:
+    requests:
+      cpu: 100m
+      memory: 384Mi
+    limits:
+      cpu: 1000m
+      memory: 1536Mi
+
 # --- Ingress ---
 ingress:
   enabled: true

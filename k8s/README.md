@@ -36,7 +36,7 @@ git push (services/**)
 5. `scripts/check-config-sync.py` 的 `MAPPING` 登記對應關係
 
 > 例外：`aiVtuber`（`helm/wafer-bi/templates/ai-vtuber.yaml`）的原始碼在另一個 repo（`DarkSchneider1024/ai-vtuber`），
-> image tag 由那邊的 CI 回填，不在 `services/` 底下，也不列入 `MAPPING`。部署說明見 [`docs/function-tech/ai-vtuber-deploy.md`](../docs/function-tech/ai-vtuber-deploy.md)。
+> 不在 `services/` 底下，也不列入 `MAPPING`。目前跑在單台 OCI VM，chart 裡預設 `aiVtuber.enabled: false`。部署說明見 [`docs/function-tech/ai-vtuber-deploy.md`](../docs/function-tech/ai-vtuber-deploy.md)。
 
 CI 會在每次 push / PR 跑 `scripts/check-config-sync.py`，五處對不起來就會直接紅燈提醒你。本地也可以隨時自己跑：
 

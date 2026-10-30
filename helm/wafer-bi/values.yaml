@@ -164,10 +164,11 @@ ollama:
       memory: 2Gi
 
 # --- AI VTuber（外部 repo：DarkSchneider1024/ai-vtuber）---
-# image.tag 由 ai-vtuber repo 的 CI 回填（需要 WAFER_BI_DEPLOY_TOKEN），勿手改。
+# 目前正式環境跑在單台 OCI A1 VM（docker compose，見 ai-vtuber repo 的 deploy/oci-vm/），
+# 這裡預設關閉，避免叢集與 VM 各跑一個直播間。之後要搬進 K8s 再改成 true。
 # 這個服務不在 services/ 底下，所以不列入 scripts/check-config-sync.py 的 MAPPING。
 aiVtuber:
-  enabled: true
+  enabled: false
   host: "vtuber.carrot-atelier.online"
   tlsSecret: "ai-vtuber-tls"
   image:
